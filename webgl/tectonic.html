@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tectonic Archive | Awwwards</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --text: #f4f4f4;
+            --accent: #ff5900; /* Bioluminescent Safety Orange */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html.lenis, html.lenis body {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Times New Roman', Times, serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #webgl {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Film grain overlay */
+        .grain {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.06;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .meta-data {
+            position: fixed;
+            top: 4vh;
+            right: 4vw;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text);
+            text-align: right;
+            line-height: 1.8;
+            z-index: 20;
+            opacity: 0;
+            /* Added subtle shadow for readability over WebGL lines */
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); 
+        }
+
+        section {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 5vw;
+            position: relative;
+        }
+
+        /* FIX: Removed mix-blend-mode and adjusted sizing to prevent clipping */
+        .hero-title {
+            font-size: clamp(5rem, 18vw, 22rem);
+            font-weight: 400;
+            line-height: 1.1; /* Increased from 0.8 to prevent clipping */
+            letter-spacing: -0.05em;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .line {
+            display: block;
+            overflow: hidden;
+            padding-bottom: 0.15em; /* Prevents descenders/ascenders from being cut off */
+        }
+
+        .line span {
+            display: block;
+            transform: translateY(100%);
+        }
+
+        .line-1 {
+            margin-left: -1vw;
+        }
+
+        .line-2 {
+            margin-left: 25vw;
+            margin-top: -2vw;
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .scroll-cue {
+            position: absolute;
+            bottom: 8vh;
+            left: 5vw;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .scroll-cue::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 1px;
+            background: var(--text);
+            transform-origin: left;
+            animation: pulse 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scaleX(0); }
+            50% { transform: scaleX(1); }
+            100% { transform: scaleX(0); }
+        }
+
+        .manifesto {
+            align-items: flex-end;
+            justify-content: center;
+            padding-right: 8vw;
+        }
+        
+        .manifesto-text {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: clamp(1.5rem, 3vw, 3rem);
+            font-weight: 300;
+            max-width: 600px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            opacity: 0;
+            transform: translateY(50px);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.8);
+        }
+        
+        .manifesto-text em {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .spacer { height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="webgl"></canvas>
+    <div class="grain"></div>
+
+    <div class="meta-data">
+        <div>48.8566° N, 2.3522° E</div>
+        <div>SECTOR 7G // LIVE</div>
+    </div>
+
+    <main class="content">
+        <section class="hero">
+            <h1 class="hero-title">
+                <span class="line line-1"><span>TECTONIC</span></span>
+                <span class="line line-2"><span>ARCHIVE</span></span>
+            </h1>
+            <div class="scroll-cue">Scroll to shift topology</div>
+        </section>
+
+        <section class="manifesto">
+            <p class="manifesto-text">
+                The ground beneath is never still. We map the <em>invisible shifts</em> in data, culture, and code.
+            </p>
+        </section>
+
+        <section class="spacer"></section>
+    </main>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        import gsap from 'https://esm.sh/gsap@3.12.5';
+        import { ScrollTrigger } from 'https://esm.sh/gsap@3.12.5/ScrollTrigger';
+        import Lenis from 'https://esm.sh/lenis@1.1.0';
+
+        // ==========================================
+        // 1. ARCHITECTURE: Lenis + GSAP
+        // ==========================================
+        gsap.registerPlugin(ScrollTrigger);
+
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => lenis.raf(time * 1000));
+        gsap.ticker.lagSmoothing(0);
+
+        // UI Intro Animations
+        gsap.to('.line span', {
+            y: 0,
+            duration: 1.8,
+            ease: 'expo.out',
+            stagger: 0.15,
+            delay: 0.3
+        });
+        gsap.to('.scroll-cue', { opacity: 1, duration: 1.5, delay: 1.5 });
+        gsap.to('.meta-data', { opacity: 1, duration: 1.5, delay: 1.2 });
+
+        // ==========================================
+        // 2. WEBGL: Foundational Performance Setup
+        // ==========================================
+        const canvas = document.querySelector('#webgl');
+        const scene = new THREE.Scene();
+        
+        const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 4, 8);
+
+        const renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
+        
+        const pr = Math.min(window.devicePixelRatio, 2);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(pr);
+
+        // ==========================================
+        // 3. SHADER: GPU-Centric Topography
+        // ==========================================
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uAmplitude;
+            uniform float uFrequency;
+            uniform float uMouseX;
+            uniform float uMouseY;
+
+            varying float vElevation;
+
+            // Ashima Arts 3D Simplex Noise
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+            float snoise(vec3 v) { 
+                const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+                const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+                vec3 i  = floor(v + dot(v, C.yyy) );
+                vec3 x0 =   v - i + dot(i, C.xxx) ;
+                vec3 g = step(x0.yzx, x0.xyz);
+                vec3 l = 1.0 - g;
+                vec3 i1 = min( g.xyz, l.zxy );
+                vec3 i2 = max( g.xyz, l.zxy );
+                vec3 x1 = x0 - i1 + C.xxx;
+                vec3 x2 = x0 - i2 + C.yyy;
+                vec3 x3 = x0 - D.yyy; 
+                i = mod289(i); 
+                vec4 p = permute( permute( permute( 
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                    + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                    + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+                float n_ = 0.142857142857;
+                vec3  ns = n_ * D.wyz - D.xzx;
+                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                vec4 x_ = floor(j * ns.z);
+                vec4 y_ = floor(j - 7.0 * x_ );
+                vec4 x = x_ *ns.x + ns.yyyy;
+                vec4 y = y_ *ns.x + ns.yyyy;
+                vec4 h = 1.0 - abs(x) - abs(y);
+                vec4 b0 = vec4( x.xy, y.xy );
+                vec4 b1 = vec4( x.zw, y.zw );
+                vec4 s0 = floor(b0)*2.0 + 1.0;
+                vec4 s1 = floor(b1)*2.0 + 1.0;
+                vec4 sh = -step(h, vec4(0.0));
+                vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+                vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+                vec3 p0 = vec3(a0.xy,h.x);
+                vec3 p1 = vec3(a0.zw,h.y);
+                vec3 p2 = vec3(a1.xy,h.z);
+                vec3 p3 = vec3(a1.zw,h.w);
+                vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+                p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                m = m * m;
+                return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+            }
+
+            void main() {
+                vec3 pos = position;
+                
+                vec2 mouseOffset = vec2(uMouseX, uMouseY) * 0.8;
+                
+                float noise = snoise(vec3(pos.xz * uFrequency + mouseOffset, uTime * 0.15)) * 0.6;
+                noise += snoise(vec3(pos.xz * uFrequency * 2.0 + mouseOffset, uTime * 0.3)) * 0.3;
+                
+                float elevation = noise * uAmplitude;
+                pos.y += elevation;
+                
+                vElevation = elevation;
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            varying float vElevation;
+
+            void main() {
+                // FIX: Darkened base color to charcoal so white text pops perfectly
+                vec3 baseColor = vec3(0.15, 0.15, 0.15); 
+                vec3 peakColor = vec3(1.0, 0.35, 0.0);   
+                
+                float peakFactor = smoothstep(0.4, 1.5, vElevation);
+                
+                float alpha = smoothstep(-0.8, 0.2, vElevation);
+                alpha = max(alpha, 0.15); 
+                
+                vec3 finalColor = mix(baseColor, peakColor, peakFactor);
+                
+                gl_FragColor = vec4(finalColor, alpha);
+            }
+        `;
+
+        // ==========================================
+        // 4. SCENE OBJECTS & STATE
+        // ==========================================
+        const geometry = new THREE.PlaneGeometry(20, 20, 256, 256);
+        geometry.rotateX(-Math.PI / 2);
+        
+        const uniforms = {
+            uTime: { value: 0 },
+            uAmplitude: { value: 1.2 },
+            uFrequency: { value: 0.35 },
+            uMouseX: { value: 0 },
+            uMouseY: { value: 0 }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms,
+            wireframe: true,
+            transparent: true,
+            depthWrite: false
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // ==========================================
+        // 5. SCROLL-DRIVEN NARRATIVE & INTERACTION
+        // ==========================================
+        
+        window.addEventListener('mousemove', (e) => {
+            uniforms.uMouseX.value = (e.clientX / window.innerWidth) * 2 - 1;
+            uniforms.uMouseY.value = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        gsap.to(uniforms.uAmplitude, {
+            value: 4.5,
+            ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1 }
+        });
+
+        gsap.to(uniforms.uFrequency, {
+            value: 0.15,
+            ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1 }
+        });
+
+        gsap.to(camera.position, {
+            y: 10,
+            z: 14,
+            ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1 }
+        });
+
+        gsap.to('.manifesto-text', {
+            opacity: 1,
+            y: 0,
+            scrollTrigger: { trigger: '.manifesto', start: 'top 80%', end: 'top 20%', scrub: 1 }
+        });
+
+        // ==========================================
+        // 6. LIFECYCLE & RENDER LOOP
+        // ==========================================
+        const clock = new THREE.Clock();
+
+        const animate = () => {
+            uniforms.uTime.value = clock.getElapsedTime();
+            camera.lookAt(0, 0, 0);
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            const newPr = Math.min(window.devicePixelRatio, 2);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(newPr);
+        });
+    </script>
+</body>
+</html>

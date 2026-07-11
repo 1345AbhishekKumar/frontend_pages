@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>THRESHOLD — An Architectural Contemplation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/archivo-black@5.0.18/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/archivo@5.0.18/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.18/index.css" />
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  
+  :root {
+    --cream: #F0E8D8;
+    --cream-dark: #E6DDCA;
+    --olive: #95A83A;
+    --olive-deep: #7A8B2E;
+    --dark: #1a1a1a;
+    --dark-soft: #2a2a2a;
+    --red: #B02020;
+    --red-soft: #D84040;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  html, body {
+    width: 100%;
+    background: var(--cream);
+    color: var(--dark);
+    overflow-x: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: default;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Focus states for accessibility */
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 4px;
+  }
+
+  ::selection {
+    background: var(--olive);
+    color: var(--cream);
+  }
+
+  /* ====================================================== */
+  /*  GLOBAL — Scroll Progress Bar                          */
+  /* ====================================================== */
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(to right, var(--red) 0%, var(--olive) 100%);
+    z-index: 1000;
+    pointer-events: none;
+    transition: width 0.1s linear;
+  }
+
+  /* ====================================================== */
+  /*  GLOBAL — Floating Section Dots Navigation             */
+  /* ====================================================== */
+  .side-nav {
+    position: fixed;
+    right: 2vw;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 2.5s forwards;
+  }
+  .side-nav .dot-link {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--dark);
+    cursor: pointer;
+    transition: background 0.4s var(--ease-out), transform 0.4s var(--ease-out);
+    padding: 0;
+  }
+  .side-nav .dot-link::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dark);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease-out);
+  }
+  .side-nav .dot-link:hover::after {
+    opacity: 1;
+  }
+  .side-nav .dot-link:hover {
+    transform: scale(1.3);
+  }
+  .side-nav .dot-link.is-active {
+    background: var(--red);
+    border-color: var(--red);
+    transform: scale(1.3);
+  }
+
+  /* ====================================================== */
+  /*  HERO STAGE                                            */
+  /* ====================================================== */
+  .stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* -------- RED ARCHITECTURAL GRID -------- */
+  .red-grid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 32%;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        rgba(200, 30, 30, 0.08) 0,
+        rgba(200, 30, 30, 0.08) 1px,
+        transparent 1px,
+        transparent 80px
+      );
+    z-index: 2;
+    opacity: 0;
+    animation: fadeIn 1.2s var(--ease-out) 0.8s forwards;
+  }
+  .red-grid::after {
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:1px;
+    background: rgba(200,30,30,0.25);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: slideInX 1.5s var(--ease-out) 1s forwards;
+  }
+
+  /* -------- OLIVE GREEN STRUCTURAL FIELD -------- */
+  .green-field {
+    position: absolute;
+    top: -6vh;
+    left: -2vw;
+    width: 104vw;
+    height: 78vh;
+    z-index: 1;
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: slideDown 1.4s var(--ease-out) 0.2s forwards;
+    will-change: transform;
+  }
+  .green-field svg { width: 100%; height: 100%; display:block; }
+
+  /* -------- MASSIVE BACKGROUND GROTESQUE -------- */
+  .bg-title {
+    position: absolute;
+    top: 8vh;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    font-family: 'Archivo Black', 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: clamp(120px, 22vw, 420px);
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    color: var(--dark);
+    text-transform: uppercase;
+    pointer-events: none;
+    white-space: nowrap;
+    padding-left: 2vw;
+    opacity: 0;
+    animation: fadeUp 1.2s var(--ease-out) 0.5s forwards;
+    will-change: transform, opacity;
+  }
+  .bg-title .word2 {
+    display: block;
+    color: var(--cream);
+    padding-left: 14vw;
+    margin-top: -0.04em;
+    font-size: 0.85em;
+    letter-spacing: -0.03em;
+    opacity: 0;
+    animation: fadeUp 1.2s var(--ease-out) 0.7s forwards;
+  }
+
+  /* -------- MONOSPACE MICRO TYPOGRAPHY -------- */
+  .meta-top {
+    position: absolute;
+    top: 2.2vh;
+    left: 2vw;
+    z-index: 6;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: var(--dark);
+    text-transform: uppercase;
+    line-height: 1.5;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 1.2s forwards;
+    transition: transform 0.3s var(--ease-out);
+  }
+  .meta-top:hover {
+    transform: translateX(4px);
+  }
+  .meta-top span { display:block; }
+  .meta-top .red { color: var(--red); }
+
+  .meta-right {
+    position: absolute;
+    top: 2.2vh;
+    right: 6vw;
+    z-index: 6;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    color: var(--dark);
+    text-align: right;
+    text-transform: uppercase;
+    line-height: 1.6;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 1.2s forwards;
+    transition: transform 0.3s var(--ease-out);
+  }
+  .meta-right:hover {
+    transform: translateX(-4px);
+  }
+
+  .meta-index {
+    position: absolute;
+    top: 18vh;
+    right: 2vw;
+    z-index: 6;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--cream);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg) translateX(20px);
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 1.4s forwards, breathe 4s ease-in-out 2s infinite;
+  }
+
+  /* -------- BENCH IMAGE AT THRESHOLD -------- */
+  .bench-anchor {
+    position: absolute;
+    left: 50%;
+    top: 68vh;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 5;
+    width: clamp(360px, 46vw, 680px);
+    filter: contrast(1.02) saturate(0.92);
+    opacity: 0;
+    animation: scaleIn 1.4s var(--ease-out) 0.9s forwards;
+    transition: transform 0.6s var(--ease-out), filter 0.6s var(--ease-out);
+    will-change: transform;
+  }
+  .bench-anchor:hover {
+    transform: translate(-50%, -50%) scale(1.02);
+    filter: contrast(1.05) saturate(1);
+  }
+  .bench-anchor img {
+    width: 100%;
+    height: auto;
+    display: block;
+    mix-blend-mode: multiply;
+  }
+  .bench-caption {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    white-space: nowrap;
+    animation: fadeUp 1s var(--ease-out) 1.6s forwards;
+    transition: opacity 0.3s var(--ease-out);
+  }
+  .bench-anchor:hover .bench-caption {
+    opacity: 1;
+  }
+
+  /* -------- LOWER NEGATIVE SPACE TYPOGRAPHY -------- */
+  .lower-block {
+    position: absolute;
+    bottom: 6vh;
+    left: 2vw;
+    right: 2vw;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 3vw;
+    align-items: end;
+  }
+  .lower-block > * {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .lower-block > *:nth-child(1) {
+    animation: fadeUp 1s var(--ease-out) 1.3s forwards;
+  }
+  .lower-block > *:nth-child(2) {
+    animation: fadeUp 1s var(--ease-out) 1.5s forwards;
+  }
+  .lower-block > *:nth-child(3) {
+    animation: fadeUp 1s var(--ease-out) 1.7s forwards;
+  }
+  .lower-block h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 3.4vw, 54px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--dark);
+    transition: transform 0.4s var(--ease-out);
+  }
+  .lower-block h2:hover {
+    transform: translateX(8px);
+  }
+  .lower-block h2 em {
+    font-style: normal;
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.45em;
+    vertical-align: middle;
+    letter-spacing: 0.2em;
+    margin-left: 0.4em;
+  }
+  .lower-block p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+    color: var(--dark);
+    max-width: 32ch;
+  }
+  .lower-block .spec {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    line-height: 1.9;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dark);
+    border-top: 1px solid rgba(0,0,0,0.25);
+    padding-top: 10px;
+    transition: border-color 0.3s var(--ease-out);
+  }
+  .lower-block .spec:hover {
+    border-color: var(--red);
+  }
+  .lower-block .spec b { 
+    font-weight: 700; 
+    color: var(--red);
+    transition: letter-spacing 0.3s var(--ease-out);
+  }
+  .lower-block .spec:hover b {
+    letter-spacing: 0.25em;
+  }
+
+  /* -------- FILM GRAIN OVERLAY -------- */
+  .grain {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: multiply;
+    animation: fadeIn 2s var(--ease-out) 1.8s forwards;
+  }
+  .grain svg { width: 100%; height: 100%; }
+
+  /* -------- SUBTLE MARKER LINES -------- */
+  .coord-line {
+    position: absolute;
+    top: 56vh;
+    left: 3vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    color: var(--dark);
+    opacity: 0;
+    z-index: 4;
+    text-transform: uppercase;
+    animation: fadeIn 1s var(--ease-out) 1.1s forwards;
+    transition: opacity 0.3s var(--ease-out);
+  }
+  .coord-line:hover {
+    opacity: 1;
+  }
+  .coord-line::before {
+    content: "";
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--dark);
+    vertical-align: middle;
+    margin-right: 10px;
+    opacity: 0.6;
+    transition: width 0.4s var(--ease-out);
+  }
+  .coord-line:hover::before {
+    width: 48px;
+  }
+
+  .issue-stamp {
+    position: absolute;
+    bottom: 3vh;
+    right: 6vw;
+    z-index: 7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--dark);
+    text-align: right;
+    text-transform: uppercase;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 1.9s forwards;
+    transition: transform 0.3s var(--ease-out);
+  }
+  .issue-stamp:hover {
+    transform: translateX(-6px);
+  }
+  .issue-stamp .dot {
+    display:inline-block;
+    width:6px; height:6px;
+    background:var(--red);
+    border-radius:50%;
+    margin-right:6px;
+    vertical-align: middle;
+    animation: pulse 2s ease-in-out 2.5s infinite;
+  }
+
+  /* ========================================================== */
+  /*  SECTION TWO — PLATE II: THE GEOMETRY OF WAITING           */
+  /* ========================================================== */
+  .plate-section {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--cream);
+    padding: 8vh 2vw 6vh;
+    overflow: hidden;
+  }
+
+  .plate-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 2vw;
+    bottom: 0;
+    width: 1px;
+    background: rgba(200, 30, 30, 0.18);
+  }
+
+  .plate-band {
+    position: absolute;
+    top: 48%;
+    left: 2vw;
+    right: 2vw;
+    height: 2px;
+    background: var(--olive);
+    opacity: 0.55;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1.6s var(--ease-out);
+  }
+  .plate-section.is-visible .plate-band {
+    transform: scaleX(1);
+  }
+
+  .plate-id {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dark);
+    padding-left: 2vw;
+    padding-right: 2vw;
+    margin-bottom: 4vh;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+  .plate-id .marker {
+    color: var(--red);
+    font-weight: 700;
+  }
+  .plate-section.is-visible .plate-id {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .plate-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(56px, 13vw, 220px);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--dark);
+    padding-left: 2vw;
+    padding-right: 2vw;
+    margin-bottom: 6vh;
+  }
+  .plate-title .line {
+    display: block;
+    overflow: hidden;
+  }
+  .plate-title .line-inner {
+    display: block;
+    transform: translateY(105%);
+    transition: transform 1.2s var(--ease-out);
+  }
+  .plate-title .line-2 .line-inner {
+    transition-delay: 0.15s;
+  }
+  .plate-title .line-3 .line-inner {
+    transition-delay: 0.3s;
+    color: var(--olive);
+  }
+  .plate-section.is-visible .plate-title .line-inner {
+    transform: translateY(0);
+  }
+
+  .plates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2vw;
+    padding: 6vh 2vw 8vh;
+    margin-top: 2vh;
+  }
+  .plate-item {
+    position: relative;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  }
+  .plate-item:nth-child(2) { transition-delay: 0.15s; }
+  .plate-item:nth-child(3) { transition-delay: 0.3s; }
+  .plate-section.is-visible .plate-item {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .plate-item .fig-num {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+  }
+  .plate-item .fig-num .num {
+    color: var(--red);
+    font-weight: 700;
+  }
+  .plate-item .fig-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: #2a2a2a;
+    margin-bottom: 16px;
+  }
+  /* Image reveal mask */
+  .plate-item .fig-frame .reveal-mask {
+    position: absolute;
+    inset: 0;
+    background: var(--cream);
+    z-index: 3;
+    transform-origin: top;
+    transform: scaleY(1);
+    transition: transform 1.4s var(--ease-out);
+  }
+  .plate-section.is-visible .plate-item:nth-child(1) .reveal-mask {
+    transform: scaleY(0);
+    transition-delay: 0.2s;
+  }
+  .plate-section.is-visible .plate-item:nth-child(2) .reveal-mask {
+    transform: scaleY(0);
+    transition-delay: 0.35s;
+  }
+  .plate-section.is-visible .plate-item:nth-child(3) .reveal-mask {
+    transform: scaleY(0);
+    transition-delay: 0.5s;
+  }
+  .plate-item .fig-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    mix-blend-mode: multiply;
+    transition: transform 1.2s var(--ease-out), filter 0.8s var(--ease-out);
+  }
+  .plate-item:hover .fig-frame img {
+    transform: scale(1.04);
+    filter: grayscale(1) contrast(1.15);
+  }
+  .plate-item .fig-frame::before,
+  .plate-item .fig-frame::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--red);
+    z-index: 2;
+    opacity: 0.8;
+  }
+  .plate-item .fig-frame::before {
+    top: 8px; left: 8px;
+    border-right: none; border-bottom: none;
+  }
+  .plate-item .fig-frame::after {
+    bottom: 8px; right: 8px;
+    border-left: none; border-top: none;
+  }
+  .plate-item .fig-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .plate-item .fig-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--dark);
+    opacity: 0.85;
+    max-width: 34ch;
+  }
+  .plate-item .fig-meta {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(0,0,0,0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0.65;
+    line-height: 1.8;
+  }
+  .plate-item .fig-meta b {
+    color: var(--red);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+
+  .pull-quote {
+    position: relative;
+    padding: 10vh 2vw 8vh;
+    margin-top: 4vh;
+  }
+  .pull-quote::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 2vw;
+    right: 2vw;
+    height: 1px;
+    background: var(--dark);
+    opacity: 0.25;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.4s var(--ease-out);
+  }
+  .pull-quote::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 2vw;
+    right: 2vw;
+    height: 1px;
+    background: var(--dark);
+    opacity: 0.25;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 1.4s var(--ease-out);
+  }
+  .pull-quote.is-visible::before,
+  .pull-quote.is-visible::after {
+    transform: scaleX(1);
+  }
+  .pull-quote blockquote {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 5.5vw, 90px);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    color: var(--dark);
+    max-width: 18ch;
+    padding-left: 2vw;
+    position: relative;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
+  }
+  .pull-quote.is-visible blockquote {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.4s;
+  }
+  .pull-quote blockquote .highlight {
+    color: var(--olive);
+    font-style: normal;
+  }
+  .pull-quote blockquote .dash {
+    color: var(--red);
+  }
+  .pull-quote .quote-attr {
+    display: block;
+    margin-top: 3vh;
+    padding-left: 2vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    transition-delay: 0.7s;
+  }
+  .pull-quote.is-visible .quote-attr {
+    opacity: 0.75;
+    transform: translateY(0);
+  }
+  .pull-quote .quote-attr b {
+    color: var(--red);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  .colophon {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2vw;
+    padding: 4vh 2vw 2vh;
+    margin-top: 6vh;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dark);
+    line-height: 1.7;
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+    transition-delay: 0.6s;
+  }
+  .plate-section.is-visible .colophon {
+    opacity: 1;
+  }
+  .colophon .col-head {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .colophon .col-head::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 1px;
+    background: var(--red);
+  }
+  .colophon span { display: block; opacity: 0.8; }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    animation: fadeIn 1s var(--ease-out) 2.2s forwards;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.5s var(--ease-out);
+  }
+  .scroll-hint.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scroll-hint .chevron {
+    width: 10px;
+    height: 10px;
+    border-right: 1px solid var(--dark);
+    border-bottom: 1px solid var(--dark);
+    transform: rotate(45deg);
+    animation: chevronBounce 2.2s ease-in-out infinite;
+  }
+
+  /* ========================================================== */
+  /*  SECTION THREE — PLATE III: THE MEASURE OF DISTANCE        */
+  /* ========================================================== */
+  .section-three {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--cream);
+    padding: 8vh 0 6vh;
+    overflow: hidden;
+  }
+
+  .section-three::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 2vw;
+    bottom: 0;
+    width: 1px;
+    background: rgba(200, 30, 30, 0.18);
+  }
+
+  .s3-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: baseline;
+    gap: 2vw;
+    padding: 0 4vw;
+    margin-bottom: 6vh;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+  .s3-header .sep {
+    color: var(--red);
+    font-weight: 700;
+  }
+  .s3-header .right {
+    text-align: right;
+  }
+  .section-three.is-visible .s3-header {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .s3-title {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(64px, 16vw, 280px);
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    color: var(--dark);
+    padding: 0 4vw 2vh;
+    position: relative;
+  }
+  .s3-title .line {
+    display: block;
+    overflow: hidden;
+  }
+  .s3-title .line-inner {
+    display: block;
+    transform: translateY(105%);
+    transition: transform 1.3s var(--ease-out);
+  }
+  .s3-title .line-2 .line-inner {
+    transition-delay: 0.2s;
+    color: var(--olive);
+  }
+  .s3-title .line-3 .line-inner {
+    transition-delay: 0.4s;
+    font-size: 0.55em;
+    letter-spacing: -0.02em;
+    color: var(--dark);
+    padding-left: 14vw;
+  }
+  .section-three.is-visible .s3-title .line-inner {
+    transform: translateY(0);
+  }
+
+  .s3-kicker {
+    position: absolute;
+    right: 4vw;
+    top: 8vh;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+    transition-delay: 0.8s;
+  }
+  .section-three.is-visible .s3-kicker {
+    opacity: 0.65;
+  }
+
+  .hero-strip {
+    position: relative;
+    width: 100%;
+    height: 56vh;
+    margin: 6vh 0;
+    overflow: hidden;
+    background: #2a2a2a;
+  }
+  .hero-strip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.1);
+    mix-blend-mode: multiply;
+    transform: scale(1.15);
+    transition: transform 2s var(--ease-out), filter 1s var(--ease-out);
+    will-change: transform;
+  }
+  .hero-strip.is-visible img {
+    transform: scale(1);
+  }
+  .hero-strip:hover img {
+    transform: scale(1.02);
+  }
+  /* Vertical wipe mask */
+  .hero-strip .reveal-mask {
+    position: absolute;
+    inset: 0;
+    background: var(--cream);
+    z-index: 2;
+    transform-origin: left center;
+    transform: scaleX(1);
+    transition: transform 1.8s var(--ease-out);
+    transition-delay: 0.3s;
+  }
+  .hero-strip.is-visible .reveal-mask {
+    transform: scaleX(0);
+  }
+  .hero-strip::before,
+  .hero-strip::after {
+    content: "";
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--red);
+    z-index: 4;
+    opacity: 0.85;
+  }
+  .hero-strip::before {
+    top: 16px; left: 16px;
+    border-right: none; border-bottom: none;
+  }
+  .hero-strip::after {
+    bottom: 16px; right: 16px;
+    border-left: none; border-top: none;
+  }
+  .hero-strip .hero-caption {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cream);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+    transition-delay: 1.6s;
+  }
+  .hero-strip.is-visible .hero-caption {
+    opacity: 0.9;
+  }
+  .hero-strip .hero-caption .fig-mark {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+  }
+
+  .essay-block {
+    padding: 8vh 4vw 4vh;
+    position: relative;
+  }
+  .essay-block::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 4vw;
+    right: 4vw;
+    height: 2px;
+    background: var(--olive);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1.6s var(--ease-out);
+  }
+  .essay-block.is-visible::before {
+    transform: scaleX(1);
+  }
+  .essay-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 3vh;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.8s var(--ease-out);
+    transition-delay: 0.6s;
+  }
+  .essay-label::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--red);
+  }
+  .essay-block.is-visible .essay-label {
+    opacity: 1;
+  }
+  .essay-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--dark);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+    transition-delay: 0.7s;
+  }
+  .essay-block.is-visible .essay-columns {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .essay-columns p {
+    margin-bottom: 1.4em;
+  }
+  .essay-columns p .em {
+    font-style: italic;
+    color: var(--olive);
+  }
+  .drop-cap::first-letter {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 4.6em;
+    line-height: 0.85;
+    float: left;
+    padding: 8px 14px 0 0;
+    color: var(--olive);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+  .essay-columns .aside {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--dark);
+    opacity: 0.75;
+    border-left: 2px solid var(--red);
+    padding-left: 14px;
+    margin: 2em 0;
+    font-style: italic;
+  }
+
+  .s3-diagram {
+    padding: 6vh 4vw;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 4vw;
+    align-items: center;
+    margin-top: 2vh;
+  }
+  .s3-diagram .diagram-frame {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: #2a2a2a;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
+  }
+  .s3-diagram.is-visible .diagram-frame {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.4s;
+  }
+  .s3-diagram .diagram-frame .reveal-mask {
+    position: absolute;
+    inset: 0;
+    background: var(--cream);
+    z-index: 3;
+    transform-origin: top;
+    transform: scaleY(1);
+    transition: transform 1.4s var(--ease-out);
+    transition-delay: 0.6s;
+  }
+  .s3-diagram.is-visible .diagram-frame .reveal-mask {
+    transform: scaleY(0);
+  }
+  .s3-diagram .diagram-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: multiply;
+    transition: transform 1.6s var(--ease-out);
+  }
+  .s3-diagram .diagram-frame:hover img {
+    transform: scale(1.03);
+  }
+  .s3-diagram .diagram-frame::before,
+  .s3-diagram .diagram-frame::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--red);
+    z-index: 4;
+    opacity: 0.85;
+  }
+  .s3-diagram .diagram-frame::before {
+    top: 12px; left: 12px;
+    border-right: none; border-bottom: none;
+  }
+  .s3-diagram .diagram-frame::after {
+    bottom: 12px; right: 12px;
+    border-left: none; border-top: none;
+  }
+  .s3-diagram .diagram-caption {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cream);
+    z-index: 5;
+    opacity: 0.9;
+  }
+  .diagram-text {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+    transition-delay: 0.6s;
+  }
+  .s3-diagram.is-visible .diagram-text {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .diagram-text .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .diagram-text .label::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--red);
+  }
+  .diagram-text h3 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 3.6vw, 48px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin-bottom: 18px;
+  }
+  .diagram-text h3 em {
+    font-style: normal;
+    color: var(--olive);
+  }
+  .diagram-text p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.7;
+    color: var(--dark);
+    max-width: 42ch;
+    margin-bottom: 18px;
+  }
+  .diagram-text .readings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    line-height: 1.7;
+  }
+  .diagram-text .readings b {
+    color: var(--red);
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  .distances-strip {
+    margin: 8vh 4vw 4vh;
+    padding: 4vh 0 2vh;
+    border-top: 2px solid var(--dark);
+    border-bottom: 1px solid var(--dark);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
+  }
+  .distances-strip.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+  }
+  .distances-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3vh;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dark);
+  }
+  .distances-head .mark {
+    color: var(--red);
+    font-weight: 700;
+  }
+  .distances-list {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2vw;
+  }
+  .distance-item {
+    position: relative;
+    padding-top: 16px;
+  }
+  .distance-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--olive);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1.4s var(--ease-out);
+  }
+  .distances-strip.is-visible .distance-item::before {
+    transform: scaleX(1);
+  }
+  .distances-strip.is-visible .distance-item:nth-child(1)::before { transition-delay: 0.8s; }
+  .distances-strip.is-visible .distance-item:nth-child(2)::before { transition-delay: 0.95s; }
+  .distances-strip.is-visible .distance-item:nth-child(3)::before { transition-delay: 1.1s; }
+  .distances-strip.is-visible .distance-item:nth-child(4)::before { transition-delay: 1.25s; }
+  .distances-strip.is-visible .distance-item:nth-child(5)::before { transition-delay: 1.4s; }
+  .distance-item .num {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--dark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .distance-item .num .value {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+  }
+  .distance-item .num .unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .distance-item .name {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .distance-item .desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    line-height: 1.55;
+    color: var(--dark);
+    opacity: 0.8;
+  }
+
+  .manifesto {
+    padding: 12vh 4vw 8vh;
+    position: relative;
+  }
+  .manifesto::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 4vw;
+    right: 4vw;
+    height: 1px;
+    background: var(--dark);
+    opacity: 0.3;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 1.4s var(--ease-out);
+  }
+  .manifesto.is-visible::before {
+    transform: scaleX(1);
+  }
+  .manifesto .man-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 4vh;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.8s var(--ease-out);
+    transition-delay: 0.4s;
+  }
+  .manifesto .man-label::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--red);
+  }
+  .manifesto.is-visible .man-label {
+    opacity: 1;
+  }
+  .manifesto .man-statement {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(32px, 6.5vw, 110px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--dark);
+    max-width: 22ch;
+    margin-bottom: 4vh;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
+    transition-delay: 0.6s;
+  }
+  .manifesto.is-visible .man-statement {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .manifesto .man-statement .olive {
+    color: var(--olive);
+  }
+  .manifesto .man-statement .red {
+    color: var(--red);
+  }
+  .manifesto .man-footnote {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 4vw;
+    padding-top: 3vh;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    line-height: 1.65;
+    color: var(--dark);
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+    transition-delay: 0.9s;
+  }
+  .manifesto.is-visible .man-footnote {
+    opacity: 1;
+  }
+  .manifesto .man-footnote .cite {
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+  .manifesto .man-footnote .cite b {
+    color: var(--red);
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  .manifesto .man-footnote .text {
+    max-width: 38ch;
+  }
+
+  .plate-nav {
+    padding: 6vh 4vw 2vh;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 2vw;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dark);
+    opacity: 0;
+    transition: opacity 1s var(--ease-out);
+    transition-delay: 1s;
+  }
+  .plate-nav.is-visible {
+    opacity: 1;
+  }
+  .plate-nav .arrow-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--dark);
+    text-decoration: none;
+    padding: 10px 0;
+    border-top: 1px solid rgba(0,0,0,0.25);
+    transition: color 0.3s var(--ease-out), gap 0.4s var(--ease-out), border-color 0.3s var(--ease-out);
+    cursor: pointer;
+  }
+  .plate-nav .arrow-link:hover {
+    color: var(--olive);
+    border-color: var(--olive);
+    gap: 16px;
+  }
+  .plate-nav .arrow-link .arr {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 18px;
+    transition: transform 0.4s var(--ease-out);
+  }
+  .plate-nav .arrow-link.next:hover .arr {
+    transform: translateX(6px);
+  }
+  .plate-nav .arrow-link.prev:hover .arr {
+    transform: translateX(-6px);
+  }
+  .plate-nav .current {
+    text-align: center;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+  }
+  .plate-nav .current span {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.2em;
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  .section-three .grain {
+    opacity: 0;
+    animation: none;
+  }
+  .section-three.is-visible .grain {
+    opacity: 0.15;
+  }
+
+  /* ========================================================== */
+  /*  Section Transition Dividers                               */
+  /* ========================================================== */
+  .section-divider {
+    position: relative;
+    width: 100%;
+    height: 12vh;
+    background: var(--cream);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .section-divider .divider-line {
+    width: 100%;
+    height: 1px;
+    background: rgba(0,0,0,0.15);
+    position: relative;
+  }
+  .section-divider .divider-line::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 2s var(--ease-out);
+  }
+  .section-divider.is-visible .divider-line::after {
+    transform: scaleX(1);
+  }
+  .section-divider .divider-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: var(--cream);
+    border: 1px solid var(--red);
+    border-radius: 50%;
+    z-index: 2;
+  }
+
+  /* -------- ANIMATIONS -------- */
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+  @keyframes fadeUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes slideDown {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes scaleIn {
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  @keyframes slideInX {
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.4);
+      opacity: 0.6;
+    }
+  }
+  @keyframes chevronBounce {
+    0%, 100% {
+      transform: rotate(45deg) translateY(0);
+      opacity: 0.9;
+    }
+    50% {
+      transform: rotate(45deg) translateY(5px);
+      opacity: 0.4;
+    }
+  }
+
+  .parallax-layer {
+    transition: transform 0.8s var(--ease-out);
+  }
+
+  @media (max-width: 920px) {
+    .lower-block { grid-template-columns: 1fr; gap: 24px; }
+    .plates-grid { grid-template-columns: 1fr; gap: 32px; }
+    .colophon { grid-template-columns: 1fr 1fr; gap: 24px; }
+    .bg-title { font-size: 28vw; }
+    .meta-index { display:none; }
+    .s3-diagram { grid-template-columns: 1fr; gap: 3vh; }
+    .essay-columns { grid-template-columns: 1fr; gap: 20px; }
+    .distances-list { grid-template-columns: 1fr 1fr; gap: 20px; }
+    .manifesto .man-footnote { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .plate-nav { grid-template-columns: 1fr; gap: 12px; text-align: left; }
+    .plate-nav .current { text-align: left; }
+    .s3-header { grid-template-columns: 1fr; gap: 6px; }
+    .s3-header .right { text-align: left; }
+    .s3-title .line-3 .line-inner { padding-left: 0; }
+    .side-nav { display: none; }
+    .meta-right { top: auto; bottom: 2.2vh; right: 2vw; }
+    .issue-stamp { right: 2vw; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Global Scroll Progress Bar -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<!-- Floating Section Dots -->
+<nav class="side-nav" aria-label="Section navigation">
+  <button class="dot-link is-active" data-target="stage" data-label="I · Threshold" aria-label="Jump to section: Threshold"></button>
+  <button class="dot-link" data-target="plate-two" data-label="II · Waiting" aria-label="Jump to section: Waiting"></button>
+  <button class="dot-link" data-target="plate-three" data-label="III · Distance" aria-label="Jump to section: Distance"></button>
+</nav>
+
+<div class="stage" id="stage">
+
+  <div class="green-field parallax-layer" data-speed="0.02" data-parallax-scroll="0.15">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="oliveGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9AAE3C"/>
+          <stop offset="60%" stop-color="#95A83A"/>
+          <stop offset="100%" stop-color="#8B9A34"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,0 L1440,0 L1440,740 Q720,900 0,740 Z" fill="url(#oliveGrad)"/>
+      <line x1="0" y1="120" x2="1440" y2="120" stroke="#1a1a1a" stroke-opacity="0.08" stroke-width="1"/>
+      <line x1="0" y1="240" x2="1440" y2="240" stroke="#1a1a1a" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="360" y1="0" x2="360" y2="900" stroke="#1a1a1a" stroke-opacity="0.05" stroke-width="1"/>
+      <line x1="1080" y1="0" x2="1080" y2="900" stroke="#1a1a1a" stroke-opacity="0.05" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="red-grid"></div>
+
+  <div class="meta-top parallax-layer" data-speed="0.01" role="contentinfo" aria-label="Editorial metadata">
+    <span>N°027 — Editorial Dossier</span>
+    <span>Vol. IV / Threshold Studies</span>
+    <span class="red">— Published 27.V.2026</span>
+  </div>
+
+  <div class="meta-right parallax-layer" data-speed="0.01" role="contentinfo" aria-label="Issue information">
+    <span>Issue / Interstitial</span>
+    <span>Field Notes 04</span>
+    <span>Plate XVII of XXIV</span>
+  </div>
+
+  <div class="bg-title parallax-layer" data-speed="0.03" data-parallax-scroll="0.25" aria-hidden="true">
+    THRESHOLD
+    <span class="word2">SILENCE</span>
+  </div>
+
+  <div class="meta-index parallax-layer" data-speed="0.01" role="complementary">Architectural Review · Folio 027 · MMXXVI</div>
+
+  <div class="coord-line parallax-layer" data-speed="0.02" role="contentinfo" aria-label="Geographic coordinates">48.8566° N / 2.3522° E — The Sitting Plane</div>
+
+  <div class="bench-anchor parallax-layer" data-speed="0.05" data-parallax-scroll="-0.1" role="img" aria-label="Two figures sitting on a wooden bench at the threshold between green and cream spaces">
+    <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/105f12ce5-eb46-41b4-8289-22f32ff02ecd.png" alt="Two human figures sitting on a bench" loading="lazy" />
+    <div class="bench-caption">Fig. 01 — Two Bodies on the Threshold, Oak &amp; Steel, 180×45cm</div>
+  </div>
+
+  <div class="lower-block">
+    <h2>The weight<br/>of the<br/>unspoken.<em>§ 02</em></h2>
+    <p>
+      Between the green field and the cream plane, two figures hold a silence that architecture has been rehearsing for a century. The bench is not furniture. It is the argument: a horizontal proof that a line, however modest, can carry the mass of two bodies and the entire weight of waiting.
+    </p>
+    <div class="spec" role="list" aria-label="Technical specifications">
+      <b role="listitem">SPEC.</b> Material / European Oak, Blackened Steel<br/>
+      <b role="listitem">SPEC.</b> Dimensions / 1800 × 450 × 420 mm<br/>
+      <b role="listitem">SPEC.</b> Load / 240 kg (distributed)<br/>
+      <b role="listitem">SPEC.</b> Finish / Osmo Polyx, matte<br/>
+      <b role="listitem">SPEC.</b> Threshold / Olive #95A83A<br/>
+      <b role="listitem">SPEC.</b> Paper / Cream #F0E8D8
+    </div>
+  </div>
+
+  <div class="issue-stamp parallax-layer" data-speed="0.01" role="contentinfo" aria-label="Edition information">
+    <span class="dot" aria-hidden="true"></span>Field Edition / Limited<br/>
+    <span class="dot" aria-hidden="true"></span>Printed on uncoated stock<br/>
+    <span class="dot" aria-hidden="true"></span>Folio 027 / 001–500
+  </div>
+
+  <div class="scroll-hint" id="scrollHint" aria-hidden="true">
+    <span>Continue / Plate II</span>
+    <span class="chevron"></span>
+  </div>
+
+  <div class="grain" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <filter id="grain">
+        <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" stitchTiles="stitch"/>
+        <feColorMatrix values="0 0 0 0 0.15
+                               0 0 0 0 0.12
+                               0 0 0 0 0.08
+                               0 0 0 1 0"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#grain)"/>
+    </svg>
+  </div>
+
+</div>
+
+<!-- Section Divider -->
+<div class="section-divider" aria-hidden="true">
+  <div class="divider-line"></div>
+  <div class="divider-mark"></div>
+</div>
+
+<!-- ========================================================== -->
+<!--  SECTION TWO — PLATE II: THE GEOMETRY OF WAITING           -->
+<!-- ========================================================== -->
+<section class="plate-section" id="plate-two" aria-labelledby="plate-title">
+
+  <div class="plate-band" aria-hidden="true"></div>
+
+  <div class="plate-id">
+    <span><span class="marker">●</span> &nbsp; Plate II — Chapter 02 of 07</span>
+    <span>Studies in Stillness / MMXXVI</span>
+    <span>Figs. 02 — 04</span>
+  </div>
+
+  <h2 class="plate-title" id="plate-title">
+    <span class="line line-1"><span class="line-inner">The Geometry</span></span>
+    <span class="line line-2"><span class="line-inner">of Waiting.</span></span>
+    <span class="line line-3"><span class="line-inner">&amp; Its Rooms.</span></span>
+  </h2>
+
+  <div class="plates-grid">
+
+    <article class="plate-item">
+      <div class="fig-num">
+        <span class="num">Fig. 02</span>
+        <span>Study / Corridor</span>
+      </div>
+      <div class="fig-frame">
+        <div class="reveal-mask" aria-hidden="true"></div>
+        <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/14303c937-ba27-4191-a5e0-022d23694ecf.png" alt="A solitary figure walking through a long concrete corridor" loading="lazy" />
+      </div>
+      <h3 class="fig-title">A Figure<br/>Measuring<br/>Distance.</h3>
+      <p class="fig-desc">The corridor does not lead anywhere. It is the walk itself that constitutes the destination — a horizontal argument against arrival.</p>
+      <div class="fig-meta">
+        <b>LOC.</b> Hallway 04, West Wing<br/>
+        <b>LEN.</b> 14.20 m / concrete, 1967<br/>
+        <b>EXP.</b> 1/60s · ƒ/5.6 · 400TX
+      </div>
+    </article>
+
+    <article class="plate-item">
+      <div class="fig-num">
+        <span class="num">Fig. 03</span>
+        <span>Study / Empty Chair</span>
+      </div>
+      <div class="fig-frame">
+        <div class="reveal-mask" aria-hidden="true"></div>
+        <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/1d0f83f30-ab06-4beb-b9c0-4731dbc9c824.png" alt="A single empty wooden chair in a vast minimalist interior with windows" loading="lazy" />
+      </div>
+      <h3 class="fig-title">An Absence<br/>That Weighs<br/>More.</h3>
+      <p class="fig-desc">The chair is empty, and this emptiness is heavier than any body. Architecture is the record of what was supposed to happen here.</p>
+      <div class="fig-meta">
+        <b>LOC.</b> Reading Room, North Facade<br/>
+        <b>CHAIR.</b> Ash, 1954, reupholstered<br/>
+        <b>EXP.</b> 1/30s · ƒ/8 · 400TX
+      </div>
+    </article>
+
+    <article class="plate-item">
+      <div class="fig-num">
+        <span class="num">Fig. 04</span>
+        <span>Study / Staircase</span>
+      </div>
+      <div class="fig-frame">
+        <div class="reveal-mask" aria-hidden="true"></div>
+        <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/1157e99b7-347e-4141-b542-118f0951788b.png" alt="A concrete staircase viewed from below with a figure descending" loading="lazy" />
+      </div>
+      <h3 class="fig-title">The Vertical<br/>Argument.</h3>
+      <p class="fig-desc">A staircase is a promise, made in concrete, that the body will be lifted — or lowered — against its own will, step by step.</p>
+      <div class="fig-meta">
+        <b>LOC.</b> Service Stair, Tower B<br/>
+        <b>RISERS.</b> 23 × 180 mm / cast in-situ<br/>
+        <b>EXP.</b> 1/125s · ƒ/4 · 400TX
+      </div>
+    </article>
+
+  </div>
+
+  <div class="pull-quote">
+    <blockquote>
+      "Every room is <span class="highlight">a question</span> the architect asked <span class="dash">—</span> and refused to answer."
+    </blockquote>
+    <cite class="quote-attr">
+      <b>—</b> Field Notes, Vol. IV / Threshold Studies / Notebook 11, Pg. 204
+    </cite>
+  </div>
+
+  <div class="colophon">
+    <div>
+      <div class="col-head">Edition</div>
+      <span>Folio 027 / Plate II</span>
+      <span>Limited to 500 copies</span>
+      <span>Signed by editor</span>
+    </div>
+    <div>
+      <div class="col-head">Production</div>
+      <span>Printed on Munken Pure</span>
+      <span>170 gsm, uncoated</span>
+      <span>Offset lithography</span>
+    </div>
+    <div>
+      <div class="col-head">Typography</div>
+      <span>Archivo Black 900</span>
+      <span>JetBrains Mono 400</span>
+      <span>Set 10/16 · 9/17</span>
+    </div>
+    <div>
+      <div class="col-head">Index</div>
+      <span>← Plate I / Threshold</span>
+      <span>● Plate II / Waiting</span>
+      <span>Plate III / Distance →</span>
+    </div>
+  </div>
+
+  <div class="grain" style="opacity: 0.15; animation: none;" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <filter id="grain2">
+        <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" stitchTiles="stitch"/>
+        <feColorMatrix values="0 0 0 0 0.15
+                               0 0 0 0 0.12
+                               0 0 0 0 0.08
+                               0 0 0 1 0"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#grain2)"/>
+    </svg>
+  </div>
+
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider" aria-hidden="true">
+  <div class="divider-line"></div>
+  <div class="divider-mark"></div>
+</div>
+
+<!-- ========================================================== -->
+<!--  SECTION THREE — PLATE III: THE MEASURE OF DISTANCE        -->
+<!-- ========================================================== -->
+<section class="section-three" id="plate-three" aria-labelledby="s3-title">
+
+  <div class="s3-header">
+    <span><span class="sep">●</span> &nbsp; Plate III — Chapter 03 of 07</span>
+    <span class="sep">—</span>
+    <span class="right">Field Recording · May 27, 2026 · Figs. 05 — 06</span>
+  </div>
+
+  <div class="s3-title" id="s3-title" aria-label="The Measure of Distance">
+    <span class="line line-1"><span class="line-inner">The Measure</span></span>
+    <span class="line line-2"><span class="line-inner">of Distance.</span></span>
+    <span class="line line-3"><span class="line-inner">&amp; the Silence Between Two Walls.</span></span>
+  </div>
+
+  <div class="s3-kicker" aria-hidden="true">Plate III / Folio 027 / MMXXVI</div>
+
+  <figure class="hero-strip" role="img" aria-label="A long empty road vanishing into a hazy horizon, study in distance">
+    <div class="reveal-mask" aria-hidden="true"></div>
+    <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/1b197a006-4442-4a5a-9665-ee7d9c9d7141.png" alt="A long empty road vanishing to a vanishing point" loading="lazy" />
+    <figcaption class="hero-caption">
+      <span class="fig-mark">05</span>
+      <span>The Vanishing Line / Asphalt, 35mm, 400TX · 1/250s · ƒ/11</span>
+      <span>N 43.2965° / E 5.3698°</span>
+    </figcaption>
+  </figure>
+
+  <div class="essay-block">
+    <div class="essay-label">Essay / On Distance As Material</div>
+    <div class="essay-columns">
+      <p class="drop-cap">
+        Distance, in architecture, is not the gap between two walls — it is the weight of what is allowed to cross it. A room eight metres long is a different argument than a room four. The body knows this. The body, which has never been taught geometry, nevertheless <span class="em">measures the world in breaths and footsteps</span>, and remembers them both.
+      </p>
+      <p>
+        We began Plate III by walking. Six hours, from the southern perimeter of the site to the point at which the horizon ceased to be a line and became a question. The road we walked is drawn above, Fig. 05: thirty-one kilometres of asphalt laid in 1962, resurfaced twice, and never, in any meaningful sense, arrived at.
+      </p>
+      <div class="aside">
+        "A road is a drawing made with time instead of ink. Its only obligation is to refuse to end where you expect."
+        <br/>— Field Notes, Notebook 14, Pg. 107
+      </div>
+      <p>
+        The architect <span class="em">Leiv Eriksson</span> wrote, in 1971, that "the distance between two people who love each other is the only honest dimension left in the building arts." He was, by then, retired from practice and living on an island with three rooms. We think he meant: all other measurements are compromises with gravity.
+      </p>
+      <p>
+        What follows, in this plate, is an attempt to draw distance as it is actually felt — not in metres, but in the pauses between footsteps, in the time it takes for a word to cross a room, in the space a hand hesitates before it reaches the door.
+      </p>
+      <p>
+        These are <span class="em">the five distances</span> we recorded, and the five silences they produced.
+      </p>
+    </div>
+  </div>
+
+  <div class="s3-diagram">
+    <figure class="diagram-frame" role="img" aria-label="Architectural section drawing of a minimalist building with human figure for scale">
+      <div class="reveal-mask" aria-hidden="true"></div>
+      <img src="https://image.qwenlm.ai/public_source/d61809fc-8add-4184-ad98-946450185928/179f804e3-2c01-421c-a2d9-294961d4a49c.png" alt="Architectural section drawing" loading="lazy" />
+      <figcaption class="diagram-caption">
+        <span>Fig. 06</span>
+        <span>Section / Longitudinal / 1:100</span>
+        <span>Sheet 01 of 03</span>
+      </figcaption>
+    </figure>
+    <div class="diagram-text">
+      <div class="label">Study / Cross Section · Room 07</div>
+      <h3>The Room That<br/>Remembers<br/><em>Its Own Length.</em></h3>
+      <p>
+        Drawn here in longitudinal section, at a scale of 1:100, is the room the editor has called "the room that remembers its own length." It is 14.4 metres deep, 3.2 high, and contains exactly one figure — drawn at life size — whose body is the only proof that the space is built for human use.
+      </p>
+      <div class="readings">
+        <span><b>SPAN.</b> 14.400 m</span>
+        <span><b>CLEAR.</b> 3.200 m</span>
+        <span><b>WALLS.</b> Cast concrete, 300mm</span>
+        <span><b>FLOOR.</b> Limestone, honed</span>
+        <span><b>LIGHT.</b> Zenithal, filtered</span>
+        <span><b>SOUND.</b> 2.1s reverb, mid</span>
+        <span><b>FIGURE.</b> 1.78 m / standing</span>
+        <span><b>DRAWN.</b> 14.IV.2026 / graphite</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="distances-strip">
+    <div class="distances-head">
+      <span><span class="mark">●</span> &nbsp; The Five Distances / Recorded 11–17.V.2026</span>
+      <span>Appendix III-A / Measurements &amp; Silences</span>
+    </div>
+    <div class="distances-list">
+      <div class="distance-item">
+        <div class="num"><span class="value" data-target="0.42">0</span><span class="unit">m</span></div>
+        <div class="name">Between Hands</div>
+        <p class="desc">The distance a hand hesitates before reaching another. Measured on the bench, Plate I.</p>
+      </div>
+      <div class="distance-item">
+        <div class="num"><span class="value" data-target="3.20">0</span><span class="unit">m</span></div>
+        <div class="name">A Room's Breath</div>
+        <p class="desc">Ceiling height at which a voice begins to carry meaning rather than sound.</p>
+      </div>
+      <div class="distance-item">
+        <div class="num"><span class="value" data-target="14.4">0</span><span class="unit">m</span></div>
+        <div class="name">The Long Room</div>
+        <p class="desc">The depth of a space at which two people must raise their voices to be heard.</p>
+      </div>
+      <div class="distance-item">
+        <div class="num"><span class="value" data-target="87">0</span><span class="unit">m</span></div>
+        <div class="name">A Face, Far</div>
+        <p class="desc">The distance at which a face becomes a silhouette, and the body becomes the sign.</p>
+      </div>
+      <div class="distance-item">
+        <div class="num"><span class="value" data-target="31.4">0</span><span class="unit">km</span></div>
+        <div class="name">The Walk</div>
+        <p class="desc">The road we walked. The horizon we did not reach. The distance that became the essay.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="manifesto">
+    <div class="man-label">Closing Statement / Editor's Note</div>
+    <p class="man-statement">
+      <span class="olive">Distance</span> is not what separates us. It is what <span class="red">makes the reaching</span> possible.
+    </p>
+    <div class="man-footnote">
+      <div class="text">
+        This plate was set in a single week in late May. The editor walked the road on the 14th, drew the section on the 16th, and wrote this closing sentence on the 17th, seated in the long room whose dimensions appear above. The bench, the corridor, the empty chair, and the staircase are all, in the end, variations on a single argument: that architecture is the discipline of holding space for what has not yet arrived.
+      </div>
+      <div class="cite">
+        <b>—</b> Editorial Dossier / Folio 027<br/>
+        <b>—</b> Vol. IV / Threshold Studies<br/>
+        <b>—</b> Printed 27.V.2026
+      </div>
+    </div>
+  </div>
+
+  <nav class="plate-nav" aria-label="Plate navigation">
+    <a class="arrow-link prev" href="#plate-two" aria-label="Previous plate: The Geometry of Waiting">
+      <span class="arr">←</span>
+      <span>Plate II / The Geometry of Waiting</span>
+    </a>
+    <div class="current">
+      Plate III
+      <span>— You Are Here —</span>
+    </div>
+    <a class="arrow-link next" href="#" aria-label="Next plate: The Light That Returns">
+      <span>Plate IV / The Light That Returns</span>
+      <span class="arr">→</span>
+    </a>
+  </nav>
+
+  <div class="grain" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <filter id="grain3">
+        <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" stitchTiles="stitch"/>
+        <feColorMatrix values="0 0 0 0 0.15
+                               0 0 0 0 0.12
+                               0 0 0 0 0.08
+                               0 0 0 1 0"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#grain3)"/>
+    </svg>
+  </div>
+
+</section>
+
+<script>
+(function() {
+  'use strict';
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ============================================================
+  // 1. Scroll Progress Bar
+  // ============================================================
+  const scrollProgress = document.getElementById('scrollProgress');
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    if (scrollProgress) scrollProgress.style.width = progress + '%';
+  }
+
+  // ============================================================
+  // 2. Scroll Hint fade
+  // ============================================================
+  const scrollHint = document.getElementById('scrollHint');
+  function handleScrollHint() {
+    if (scrollHint && window.scrollY > 80) {
+      scrollHint.classList.add('is-hidden');
+    } else if (scrollHint) {
+      scrollHint.classList.remove('is-hidden');
+    }
+  }
+
+  // ============================================================
+  // 3. Side Navigation — Section Tracking
+  // ============================================================
+  const sideNav = document.querySelector('.side-nav');
+  const sideDots = document.querySelectorAll('.side-nav .dot-link');
+  const sections = ['stage', 'plate-two', 'plate-three'].map(id => document.getElementById(id)).filter(Boolean);
+
+  function updateSideNav() {
+    const scrollPos = window.scrollY + window.innerHeight * 0.4;
+    let activeIndex = 0;
+    sections.forEach((section, index) => {
+      if (section.offsetTop <= scrollPos) activeIndex = index;
+    });
+    sideDots.forEach((dot, i) => {
+      dot.classList.toggle('is-active', i === activeIndex);
+    });
+  }
+
+  sideDots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const targetId = dot.getAttribute('data-target');
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+      }
+    });
+  });
+
+  // ============================================================
+  // 4. Mouse Parallax (hero only)
+  // ============================================================
+  const parallaxLayers = document.querySelectorAll('.parallax-layer');
+  let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+
+  if (!prefersReducedMotion) {
+    document.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+  }
+
+  function animateMouseParallax() {
+    if (prefersReducedMotion) return;
+    targetX += (mouseX - targetX) * 0.05;
+    targetY += (mouseY - targetY) * 0.05;
+    parallaxLayers.forEach(layer => {
+      const speed = parseFloat(layer.dataset.speed) || 0;
+      const scrollOffset = parseFloat(layer.dataset.parallaxScroll || 0);
+      const x = targetX * speed * 100;
+      const y = targetY * speed * 100 + (window.scrollY * scrollOffset);
+      layer.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    requestAnimationFrame(animateMouseParallax);
+  }
+  animateMouseParallax();
+
+  // ============================================================
+  // 5. IntersectionObserver for Scroll Reveals
+  // ============================================================
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        // Don't unobserve — keep state
+      }
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -80px 0px'
+  });
+
+  const revealTargets = document.querySelectorAll(
+    '.plate-section, .section-three, .pull-quote, .essay-block, .s3-diagram, .distances-strip, .manifesto, .plate-nav, .hero-strip, .section-divider'
+  );
+  revealTargets.forEach(el => revealObserver.observe(el));
+
+  // ============================================================
+  // 6. Distance Number Counter Animation
+  // ============================================================
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !entry.target.dataset.counted) {
+        entry.target.dataset.counted = 'true';
+        animateCounters(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const distancesStrip = document.querySelector('.distances-strip');
+  if (distancesStrip) counterObserver.observe(distancesStrip);
+
+  function animateCounters(container) {
+    const values = container.querySelectorAll('.value');
+    values.forEach((el, index) => {
+      const target = parseFloat(el.dataset.target);
+      if (isNaN(target)) return;
+      const duration = 1800;
+      const startTime = performance.now() + (index * 150);
+      const decimals = (target.toString().split('.')[1] || '').length;
+
+      function step(now) {
+        const elapsed = now - startTime;
+        if (elapsed < 0) {
+          requestAnimationFrame(step);
+          return;
+        }
+        const progress = Math.min(elapsed / duration, 1);
+        // ease-out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = target * eased;
+        el.textContent = current.toFixed(decimals);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toFixed(decimals);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  // ============================================================
+  // 7. Consolidated Scroll Handler (RAF-throttled)
+  // ============================================================
+  let ticking = false;
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        updateProgress();
+        handleScrollHint();
+        updateSideNav();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+
+  // Initial call
+  updateProgress();
+  handleScrollHint();
+  updateSideNav();
+
+  // ============================================================
+  // 8. Hover cursor feedback
+  // ============================================================
+  document.querySelectorAll('[role="contentinfo"], [role="complementary"]').forEach(el => {
+    el.addEventListener('mouseenter', () => { el.style.cursor = 'help'; });
+  });
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEXUS LABS — Venture Studio & Blockchain Incubator</title>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#F58A1F',
+        secondary: '#FFB547',
+        bg: '#F4F4F4',
+        surface: '#FFFFFF',
+        surfaceAlt: '#ECECEC',
+        ink: '#111111',
+        ink2: '#5F5F5F',
+        muted: '#A7A7A7',
+        border: '#D8D8D8',
+        accentDark: '#232323',
+      },
+      fontFamily: {
+        display: ['Orbitron', 'Space Grotesk', 'sans-serif'],
+        grotesk: ['Space Grotesk', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      letterSpacing: {
+        ultra: '0.08em',
+        mega: '0.15em',
+      }
+    }
+  }
+}
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background:#F4F4F4; color:#111; }
+  .font-display { font-family: 'Orbitron', 'Space Grotesk', sans-serif; }
+  .font-grotesk { font-family: 'Space Grotesk', sans-serif; }
+
+  .display-hero {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 0.92;
+  }
+  .display-2 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 0.98;
+  }
+
+  /* Grid lines */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(216,216,216,0.6) 1px, transparent 1px);
+    background-size: calc(100%/12) 100%;
+  }
+
+  /* Floating animation */
+  @keyframes floaty {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(0.6deg); }
+  }
+  .floaty { animation: floaty 7s ease-in-out infinite; }
+  .floaty-slow { animation: floaty 11s ease-in-out infinite; }
+
+  @keyframes spin-slow { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+  .spin-slow { animation: spin-slow 28s linear infinite; }
+
+  /* Orange glow */
+  .orange-glow {
+    box-shadow: 0 30px 80px -20px rgba(245,138,31,0.35), 0 0 0 1px rgba(245,138,31,0.25);
+  }
+  .ambient-blur::before {
+    content:'';
+    position:absolute; inset:-10%;
+    background: radial-gradient(circle at 50% 50%, rgba(245,138,31,0.30), transparent 60%);
+    filter: blur(60px);
+    z-index:-1;
+  }
+
+  .fade-in { opacity:0; transform: translateY(20px); transition: opacity .8s ease, transform .8s ease; }
+  .fade-in.visible { opacity:1; transform: translateY(0); }
+
+  .btn-primary {
+    background:#F58A1F; color:#111; border:1px solid #F58A1F;
+    transition: all .2s ease;
+  }
+  .btn-primary:hover { background:#e07a10; }
+  .btn-secondary {
+    background:#fff; color:#111; border:1px solid #D8D8D8;
+    transition: all .2s ease;
+  }
+  .btn-secondary:hover { background:#f8f8f8; border-color:#111; }
+
+  .card-hover { transition: transform .25s ease, box-shadow .25s ease; }
+  .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+
+  .focus-ring:focus-visible { outline: 2px solid #F58A1F; outline-offset: 2px; }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(17,17,17,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .network-bg {
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(245,138,31,0.10), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(17,17,17,0.06), transparent 40%);
+  }
+
+  details > summary { list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .faq-icon { transform: rotate(45deg); }
+
+  .marquee {
+    display: flex; gap: 80px; align-items: center;
+    animation: marquee 30s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .wordmark {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.85;
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ============ NAVBAR ============ -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-border">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 focus-ring">
+        <div class="w-8 h-8 bg-ink relative">
+          <div class="absolute inset-1.5 bg-primary"></div>
+        </div>
+        <span class="font-display font-bold text-lg tracking-ultra">NEXUS<span class="text-primary">.</span>LABS</span>
+      </a>
+
+      <!-- Nav -->
+      <nav class="hidden lg:flex items-center gap-9 text-sm font-medium text-ink2">
+        <a href="#studio" class="hover:text-ink transition focus-ring">Studio</a>
+        <a href="#incubation" class="hover:text-ink transition focus-ring">Incubation</a>
+        <a href="#portfolio" class="hover:text-ink transition focus-ring">Portfolio</a>
+        <a href="#team" class="hover:text-ink transition focus-ring">Team</a>
+        <a href="#news" class="hover:text-ink transition focus-ring">News</a>
+        <a href="#faq" class="hover:text-ink transition focus-ring">FAQ</a>
+      </nav>
+
+      <!-- CTA -->
+      <div class="flex items-center gap-3">
+        <a href="#contact" class="hidden md:inline-flex btn-primary px-5 py-2.5 text-sm font-semibold rounded focus-ring">Apply Now</a>
+        <button class="lg:hidden p-2 focus-ring" id="menuBtn" aria-label="Open menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile sheet -->
+  <div id="mobileSheet" class="hidden lg:hidden border-t border-border bg-white">
+    <nav class="px-6 py-4 flex flex-col gap-1 text-sm font-medium">
+      <a href="#studio" class="py-2 border-b border-border/60">Studio</a>
+      <a href="#incubation" class="py-2 border-b border-border/60">Incubation</a>
+      <a href="#portfolio" class="py-2 border-b border-border/60">Portfolio</a>
+      <a href="#team" class="py-2 border-b border-border/60">Team</a>
+      <a href="#news" class="py-2 border-b border-border/60">News</a>
+      <a href="#faq" class="py-2">FAQ</a>
+      <a href="#contact" class="btn-primary px-5 py-2.5 text-sm font-semibold rounded text-center mt-3">Apply Now</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="relative bg-bg overflow-hidden">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 gap-0 border-x border-border">
+
+      <!-- Left column -->
+      <div class="col-span-12 lg:col-span-3 border-r border-border p-6 lg:p-8 flex flex-col justify-between min-h-[420px] lg:min-h-[640px]">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-semibold text-ink2 uppercase tracking-ultra mb-6">
+            <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+            Est. 2019 — Singapore
+          </div>
+          <p class="text-ink2 text-sm leading-relaxed">
+            We are a venture studio and blockchain incubator building the next generation of decentralized infrastructure, AI agents, and Web3-native products.
+          </p>
+        </div>
+        <div class="mt-8">
+          <a href="#contact" class="btn-primary inline-flex items-center gap-2 px-6 py-3.5 text-sm font-semibold rounded focus-ring">
+            Start Building
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </a>
+          <div class="mt-6 flex items-center gap-6 text-xs text-ink2">
+            <div>
+              <div class="font-display text-2xl font-bold text-ink">42</div>
+              <div class="uppercase tracking-ultra">Ventures</div>
+            </div>
+            <div>
+              <div class="font-display text-2xl font-bold text-ink">$340M</div>
+              <div class="uppercase tracking-ultra">Capital</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center 3D render -->
+      <div class="col-span-12 lg:col-span-6 border-r border-border relative min-h-[420px] lg:min-h-[640px] flex items-center justify-center ambient-blur overflow-hidden">
+        <!-- Orange frame -->
+        <div class="absolute inset-6 lg:inset-10 border border-primary/40"></div>
+        <div class="absolute top-6 left-6 lg:top-10 lg:left-10 w-3 h-3 bg-primary"></div>
+        <div class="absolute top-6 right-6 lg:top-10 lg:right-10 w-3 h-3 bg-primary"></div>
+        <div class="absolute bottom-6 left-6 lg:bottom-10 lg:left-10 w-3 h-3 bg-primary"></div>
+        <div class="absolute bottom-6 right-6 lg:bottom-10 lg:right-10 w-3 h-3 bg-primary"></div>
+
+        <!-- Floating robot render -->
+        <div class="relative floaty w-[78%] max-w-[440px]">
+          <img src="https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?q=80&w=1200&auto=format&fit=crop" 
+               alt="AI robot render" 
+               class="w-full h-full object-cover rounded shadow-2xl orange-glow"
+               loading="eager">
+          <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] font-semibold px-3 py-1.5 uppercase tracking-ultra rounded">
+            UNIT 09 // Genesis Series
+          </div>
+        </div>
+
+        <!-- Floating coin -->
+        <div class="absolute top-10 right-12 hidden lg:block floaty-slow">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center shadow-xl">
+            <span class="font-display font-black text-ink text-2xl">N</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="col-span-12 lg:col-span-3 p-6 lg:p-8 flex flex-col gap-5 min-h-[420px] lg:min-h-[640px]">
+        <div class="flex-1 bg-ink relative overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1635322936965-1d09ec25a76a?q=80&w=900&auto=format&fit=crop" 
+               alt="Abstract render" class="w-full h-full object-cover opacity-80 mix-blend-luminosity" loading="lazy">
+          <div class="absolute inset-0 bg-gradient-to-br from-ink/40 to-ink/80"></div>
+          <div class="absolute bottom-4 left-4 right-4">
+            <div class="text-[10px] text-primary uppercase tracking-ultra font-semibold">Featured Drop</div>
+            <div class="text-white font-display font-bold text-lg mt-1">NEURAL CORE V2</div>
+          </div>
+        </div>
+        <!-- Metadata block -->
+        <div class="border border-border bg-surface p-4">
+          <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-3 font-semibold">System Status</div>
+          <div class="space-y-2.5 text-xs">
+            <div class="flex justify-between"><span class="text-ink2">Network</span><span class="font-semibold">Mainnet</span></div>
+            <div class="flex justify-between"><span class="text-ink2">Nodes Online</span><span class="font-semibold">1,284</span></div>
+            <div class="flex justify-between"><span class="text-ink2">Uptime</span><span class="font-semibold text-primary">99.98%</span></div>
+            <div class="flex justify-between"><span class="text-ink2">Latest Cohort</span><span class="font-semibold">Q4 / 2025</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero mega headline -->
+    <div class="border-x border-b border-border bg-surface px-6 lg:px-10 py-10 lg:py-14">
+      <div class="flex items-center gap-3 text-xs font-semibold text-ink2 uppercase tracking-ultra mb-6">
+        <span class="w-6 h-px bg-primary"></span>
+        Nexus Labs — Capital · Engineering · Distribution
+      </div>
+      <h1 class="display-hero text-[14vw] sm:text-[12vw] lg:text-[8.5vw] xl:text-[120px] text-ink">
+        BUILD THE<br>
+        <span class="text-primary">FUTURE</span> OF<br>
+        DECENTRALIZED<br>
+        INTELLIGENCE.
+      </h1>
+      <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-6 border-t border-border pt-8">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-1">Focus</div>
+          <div class="text-sm font-semibold">AI · Web3 · Infra</div>
+        </div>
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-1">Stage</div>
+          <div class="text-sm font-semibold">Pre-seed → Series A</div>
+        </div>
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-1">Check Size</div>
+          <div class="text-sm font-semibold">$250K — $5M</div>
+        </div>
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-1">Cohort</div>
+          <div class="text-sm font-semibold">12 weeks / hybrid</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PARTNER LOGOS STRIP ============ -->
+<section class="border-b border-border bg-surface">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-3 md:grid-cols-6 border-x border-border">
+      <!-- Chainlink -->
+      <div class="border-r border-border h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="link" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">CHAINLINK</span>
+      </div>
+      <!-- TRON -->
+      <div class="border-r border-border h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="hexagon" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">TRON</span>
+      </div>
+      <!-- BNB -->
+      <div class="border-r border-border h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="gem" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">BNB CHAIN</span>
+      </div>
+      <!-- OKX -->
+      <div class="border-r border-border h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="circle-dot" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">OKX</span>
+      </div>
+      <!-- Polygon -->
+      <div class="border-r border-border h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="pentagon" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">POLYGON</span>
+      </div>
+      <!-- Avalanche -->
+      <div class="h-24 flex flex-col items-center justify-center gap-1.5 px-4">
+        <i data-lucide="triangle" class="w-6 h-6 text-ink"></i>
+        <span class="font-display font-bold text-sm tracking-ultra">AVALANCHE</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VENTURE STUDIO ============ -->
+<section id="studio" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <!-- Section header -->
+    <div class="border-x border-border bg-surface px-6 lg:px-10 py-10 lg:py-14 mb-0">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 01 — Venture Studio
+          </div>
+          <h2 class="display-2 text-5xl lg:text-7xl text-ink max-w-3xl">
+            We don't fund<br>startups. <span class="text-primary">We build them.</span>
+          </h2>
+        </div>
+        <p class="text-ink2 max-w-md text-sm leading-relaxed">
+          Nexus Labs operates as an in-house studio — ideating, validating, and shipping ventures with co-founders from day zero. Engineering, capital, and go-to-market under one roof.
+        </p>
+      </div>
+    </div>
+
+    <!-- 3-col grid -->
+    <div class="grid grid-cols-12 border-x border-b border-border">
+      <!-- Left: bullets -->
+      <div class="col-span-12 lg:col-span-4 border-r border-border p-6 lg:p-10 bg-surface">
+        <div class="text-xs uppercase tracking-ultra text-ink2 mb-6 font-semibold">What We Provide</div>
+        <ul class="space-y-5">
+          <li class="flex gap-3">
+            <span class="w-5 h-5 bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="check" class="w-3 h-3 text-ink" stroke-width="3"></i>
+            </span>
+            <div>
+              <div class="font-semibold text-sm">Pre-seed capital deployment</div>
+              <div class="text-xs text-ink2 mt-0.5">Up to $1M from day zero, no deck required.</div>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="w-5 h-5 bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="check" class="w-3 h-3 text-ink" stroke-width="3"></i>
+            </span>
+            <div>
+              <div class="font-semibold text-sm">Senior engineering pods</div>
+              <div class="text-xs text-ink2 mt-0.5">Dedicated teams in Solidity, Rust, ML infra.</div>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="w-5 h-5 bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="check" class="w-3 h-3 text-ink" stroke-width="3"></i>
+            </span>
+            <div>
+              <div class="font-semibold text-sm">Token design & legal framework</div>
+              <div class="text-xs text-ink2 mt-0.5">SAFT, foundation setup, jurisdiction strategy.</div>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="w-5 h-5 bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="check" class="w-3 h-3 text-ink" stroke-width="3"></i>
+            </span>
+            <div>
+              <div class="font-semibold text-sm">Liquidity & exchange listings</div>
+              <div class="text-xs text-ink2 mt-0.5">Direct pipelines to Tier-1 CEXs and market makers.</div>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="w-5 h-5 bg-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+              <i data-lucide="check" class="w-3 h-3 text-ink" stroke-width="3"></i>
+            </span>
+            <div>
+              <div class="font-semibold text-sm">Distribution & KOL network</div>
+              <div class="text-xs text-ink2 mt-0.5">Access to 80M+ onchain audiences across regions.</div>
+            </div>
+          </li>
+        </ul>
+        <a href="#contact" class="btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded mt-8 focus-ring">
+          Become a Founder
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+
+      <!-- Center: incubator render -->
+      <div class="col-span-12 lg:col-span-4 border-r border-border relative bg-surfaceAlt min-h-[440px] lg:min-h-[640px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 grid-bg opacity-60"></div>
+        <!-- Cylinder chamber -->
+        <div class="relative floaty-slow w-[80%] max-w-[320px]">
+          <div class="relative rounded-t-full rounded-b-3xl border-2 border-ink/80 bg-gradient-to-b from-surface to-surfaceAlt p-3 shadow-2xl">
+            <div class="rounded-t-full rounded-b-2xl overflow-hidden bg-ink aspect-[3/4] relative">
+              <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=900&auto=format&fit=crop" 
+                   alt="Incubator robot" class="w-full h-full object-cover opacity-90" loading="lazy">
+              <div class="absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent"></div>
+            </div>
+            <!-- Base -->
+            <div class="h-3 bg-ink rounded-b-3xl"></div>
+          </div>
+          <!-- Labels -->
+          <div class="absolute -left-4 top-1/4 text-[10px] font-semibold uppercase tracking-ultra text-ink2 rotate-[-90deg] origin-left whitespace-nowrap">CHAMBER 04</div>
+          <div class="absolute -right-4 top-1/3 text-[10px] font-semibold uppercase tracking-ultra text-primary rotate-90 origin-right whitespace-nowrap">ACTIVE</div>
+        </div>
+        <!-- Floating spec dots -->
+        <div class="absolute top-6 left-6 flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-[10px] uppercase tracking-ultra text-ink2"><span class="w-1.5 h-1.5 bg-primary rounded-full"></span>Temp 22°C</div>
+          <div class="flex items-center gap-2 text-[10px] uppercase tracking-ultra text-ink2"><span class="w-1.5 h-1.5 bg-ink rounded-full"></span>Humidity 41%</div>
+        </div>
+      </div>
+
+      <!-- Right: info cards -->
+      <div class="col-span-12 lg:col-span-4 p-6 lg:p-8 bg-surface flex flex-col gap-4">
+        <div class="text-xs uppercase tracking-ultra text-ink2 mb-2 font-semibold">Studio Metrics</div>
+
+        <div class="border border-border p-5 card-hover">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] uppercase tracking-ultra text-ink2">Ventures Launched</span>
+            <i data-lucide="rocket" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div class="font-display font-bold text-3xl text-ink">42</div>
+          <div class="text-xs text-ink2 mt-1">↑ 8 added in 2025</div>
+        </div>
+
+        <div class="border border-border p-5 card-hover">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] uppercase tracking-ultra text-ink2">Avg. Time To MVP</span>
+            <i data-lucide="timer" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div class="font-display font-bold text-3xl text-ink">71 <span class="text-base text-ink2">days</span></div>
+          <div class="text-xs text-ink2 mt-1">From kickoff to mainnet</div>
+        </div>
+
+        <div class="border border-border p-5 card-hover">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] uppercase tracking-ultra text-ink2">Follow-on Capital</span>
+            <i data-lucide="trending-up" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div class="font-display font-bold text-3xl text-ink">$340M</div>
+          <div class="text-xs text-ink2 mt-1">Raised by portfolio in 2024</div>
+        </div>
+
+        <div class="border border-border p-5 card-hover bg-ink text-white">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] uppercase tracking-ultra text-muted">Survival Rate</span>
+            <i data-lucide="shield-check" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div class="font-display font-bold text-3xl text-primary">94%</div>
+          <div class="text-xs text-muted mt-1">vs 11% industry baseline</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INCUBATION ============ -->
+<section id="incubation" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 border border-border bg-surface">
+      <!-- Left: small cards -->
+      <div class="col-span-12 lg:col-span-3 border-r border-border p-6 lg:p-8 flex flex-col gap-4">
+        <div class="text-xs uppercase tracking-ultra text-ink2 font-semibold">Cohort Tracks</div>
+        <div class="border border-border p-4 card-hover">
+          <div class="text-[10px] uppercase tracking-ultra text-primary font-semibold mb-1">Track A</div>
+          <div class="font-semibold text-sm">DeFi Infrastructure</div>
+          <div class="text-xs text-ink2 mt-1">AMMs, lending, derivatives rails.</div>
+        </div>
+        <div class="border border-border p-4 card-hover">
+          <div class="text-[10px] uppercase tracking-ultra text-primary font-semibold mb-1">Track B</div>
+          <div class="font-semibold text-sm">AI Agents & Co-pilots</div>
+          <div class="text-xs text-ink2 mt-1">Onchain autonomous agents & inference.</div>
+        </div>
+        <div class="border border-border p-4 card-hover">
+          <div class="text-[10px] uppercase tracking-ultra text-primary font-semibold mb-1">Track C</div>
+          <div class="font-semibold text-sm">Consumer Web3</div>
+          <div class="text-xs text-ink2 mt-1">Social, gaming, identity primitives.</div>
+        </div>
+        <div class="border border-border p-4 card-hover">
+          <div class="text-[10px] uppercase tracking-ultra text-primary font-semibold mb-1">Track D</div>
+          <div class="font-semibold text-sm">RWA & Payments</div>
+          <div class="text-xs text-ink2 mt-1">Tokenized assets and stablecoin rails.</div>
+        </div>
+      </div>
+
+      <!-- Center: incubator render with coin -->
+      <div class="col-span-12 lg:col-span-5 border-r border-border relative bg-surfaceAlt min-h-[460px] lg:min-h-[680px] flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 network-bg"></div>
+
+        <!-- Cylinder -->
+        <div class="relative floaty-slow">
+          <div class="relative w-56 h-80 rounded-t-full rounded-b-2xl border-2 border-ink/70 bg-gradient-to-b from-surface via-surface to-surfaceAlt shadow-2xl overflow-hidden">
+            <div class="absolute inset-2 rounded-t-full rounded-b-xl bg-ink/90 overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=900&auto=format&fit=crop" 
+                   alt="Incubation render" class="w-full h-full object-cover opacity-60" loading="lazy">
+              <!-- Holographic lines -->
+              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent"></div>
+            </div>
+            <!-- Coin floating in chamber -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 floaty">
+              <div class="w-24 h-24 rounded-full bg-gradient-to-br from-secondary via-primary to-primary shadow-2xl flex items-center justify-center border-4 border-secondary/40">
+                <div class="w-16 h-16 rounded-full border-2 border-ink/30 bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <span class="font-display font-black text-ink text-2xl">N</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="h-2 bg-ink/80 rounded-b-2xl w-full"></div>
+        </div>
+
+        <!-- Spec lines -->
+        <div class="absolute top-8 right-8 text-right">
+          <div class="text-[10px] uppercase tracking-ultra text-ink2 font-semibold">Token Symbol</div>
+          <div class="font-display font-bold text-lg text-ink">$NXS</div>
+        </div>
+        <div class="absolute bottom-8 left-8">
+          <div class="text-[10px] uppercase tracking-ultra text-ink2 font-semibold">Incubation Cycle</div>
+          <div class="font-display font-bold text-lg text-ink">12 WKS</div>
+        </div>
+      </div>
+
+      <!-- Right: title block -->
+      <div class="col-span-12 lg:col-span-4 p-6 lg:p-10 flex flex-col justify-between">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 02 — Incubation
+          </div>
+          <h2 class="display-2 text-4xl lg:text-5xl text-ink mb-6">
+            From whitepaper<br>to <span class="text-primary">mainnet</span>.
+          </h2>
+          <p class="text-ink2 text-sm leading-relaxed mb-6">
+            Our 12-week incubation program compresses 18 months of startup building into a structured cycle. Founders receive engineering, tokenomics, compliance, and distribution support from partners who have shipped at scale.
+          </p>
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-3 text-sm">
+              <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+              Cohort size: 8 — 12 teams
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+              Hybrid: Singapore + Remote
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+              Demo Day to 200+ funds
+            </li>
+            <li class="flex items-center gap-3 text-sm">
+              <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+              $500K guaranteed deployment
+            </li>
+          </ul>
+        </div>
+        <div>
+          <a href="#contact" class="btn-primary inline-flex items-center gap-2 px-6 py-3.5 text-sm font-semibold rounded focus-ring">
+            Apply to Cohort 06
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </a>
+          <div class="text-xs text-ink2 mt-4">Applications close · Jan 15, 2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PORTFOLIO ============ -->
+<section id="portfolio" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <!-- Header -->
+    <div class="border-x border-t border-border bg-surface px-6 lg:px-10 py-10 lg:py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 03 — Portfolio
+          </div>
+          <h2 class="display-2 text-5xl lg:text-7xl text-ink">
+            Ventures in <span class="text-primary">orbit.</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Previous">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Next">
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          <a href="#" class="btn-primary px-5 py-3 text-sm font-semibold rounded focus-ring hidden md:inline-flex">View All (42)</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background network + floating robots -->
+    <div class="border-x border-border bg-surface relative overflow-hidden h-48 lg:h-64">
+      <div class="absolute inset-0 network-bg"></div>
+      <!-- SVG network -->
+      <svg class="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 1200 200" preserveAspectRatio="none">
+        <g stroke="#111" stroke-width="0.5" fill="none">
+          <line x1="100" y1="100" x2="300" y2="60"/>
+          <line x1="300" y1="60" x2="500" y2="140"/>
+          <line x1="500" y1="140" x2="700" y2="80"/>
+          <line x1="700" y1="80" x2="900" y2="120"/>
+          <line x1="900" y1="120" x2="1100" y2="70"/>
+          <line x1="300" y1="60" x2="500" y2="80"/>
+          <line x1="700" y1="80" x2="900" y2="60"/>
+        </g>
+        <g fill="#F58A1F">
+          <circle cx="100" cy="100" r="4"/>
+          <circle cx="300" cy="60" r="4"/>
+          <circle cx="500" cy="140" r="4"/>
+          <circle cx="700" cy="80" r="4"/>
+          <circle cx="900" cy="120" r="4"/>
+          <circle cx="1100" cy="70" r="4"/>
+        </g>
+      </svg>
+      <!-- floating robots -->
+      <div class="absolute top-6 left-[12%] floaty w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-surface border border-border overflow-hidden shadow-lg">
+        <img src="https://images.unsplash.com/photo-1535378917042-10a22c95931a?q=80&w=300&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+      </div>
+      <div class="absolute top-10 left-[42%] floaty-slow w-16 h-16 lg:w-24 lg:h-24 rounded-full bg-surface border border-border overflow-hidden shadow-lg">
+        <img src="https://images.unsplash.com/photo-1555255707-c07966088b7b?q=80&w=300&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+      </div>
+      <div class="absolute top-4 right-[18%] floaty w-14 h-14 lg:w-20 lg:h-20 rounded-full bg-surface border border-border overflow-hidden shadow-lg">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=300&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+      </div>
+    </div>
+
+    <!-- Portfolio grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-x border-b border-border bg-surface">
+      <!-- Card 1 -->
+      <article class="border-r border-b border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-ink text-primary flex items-center justify-center font-display font-bold text-sm">HX</div>
+            <div>
+              <div class="font-display font-bold text-sm">HELIX PROTOCOL</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">DeFi · L2</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-primary/15 text-primary px-2 py-1">Live</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$480M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">TVL</div>
+            <div class="font-display font-bold text-xl">$112M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$HLX</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Ethereum</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 03</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+
+      <!-- Card 2 -->
+      <article class="border-r border-b border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-primary text-ink flex items-center justify-center font-display font-bold text-sm">NR</div>
+            <div>
+              <div class="font-display font-bold text-sm">NORA AI</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">AI · Agents</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-ink text-white px-2 py-1">Beta</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$220M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Users</div>
+            <div class="font-display font-bold text-xl">84K</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$NORA</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Solana</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 04</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+
+      <!-- Card 3 -->
+      <article class="border-b border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-accentDark text-secondary flex items-center justify-center font-display font-bold text-sm">VT</div>
+            <div>
+              <div class="font-display font-bold text-sm">VAULT/ID</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">RWA · Identity</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-primary/15 text-primary px-2 py-1">Live</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$96M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Holdings</div>
+            <div class="font-display font-bold text-xl">$38M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$VAULT</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Polygon</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 02</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+
+      <!-- Card 4 -->
+      <article class="border-r border-b lg:border-b-0 border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-ink text-secondary flex items-center justify-center font-display font-bold text-sm">OR</div>
+            <div>
+              <div class="font-display font-bold text-sm">ORBIT FI</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">DeFi · Yield</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-ink text-white px-2 py-1">Stealth</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$54M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">APY</div>
+            <div class="font-display font-bold text-xl">18.4%</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$ORB</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Arbitrum</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 05</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+
+      <!-- Card 5 -->
+      <article class="border-r border-b lg:border-b-0 border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-primary text-ink flex items-center justify-center font-display font-bold text-sm">PR</div>
+            <div>
+              <div class="font-display font-bold text-sm">PRISM SOCIAL</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">Consumer · Social</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-primary/15 text-primary px-2 py-1">Live</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$140M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">MAU</div>
+            <div class="font-display font-bold text-xl">320K</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$PRSM</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Base</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 03</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+
+      <!-- Card 6 -->
+      <article class="border-b lg:border-b-0 border-border p-6 card-hover">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-accentDark text-primary flex items-center justify-center font-display font-bold text-sm">QD</div>
+            <div>
+              <div class="font-display font-bold text-sm">QED GAMES</div>
+              <div class="text-[10px] uppercase tracking-ultra text-ink2">Gaming · Infra</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold uppercase tracking-ultra bg-ink text-white px-2 py-1">TGE Soon</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Valuation</div>
+            <div class="font-display font-bold text-xl">$78M</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">NFTs</div>
+            <div class="font-display font-bold text-xl">42K</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Token</div>
+            <div class="font-semibold text-sm">$QED</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-ink2 mb-1">Chain</div>
+            <div class="font-semibold text-sm">Avalanche</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-4 border-t border-border text-xs">
+          <span class="text-ink2">Cohort 04</span>
+          <a href="#" class="text-ink font-semibold inline-flex items-center gap-1 hover:text-primary transition">View <i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MEDIA PRESENCE ============ -->
+<section class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 border border-border bg-surface">
+      <!-- Left heading -->
+      <div class="col-span-12 lg:col-span-5 border-r border-border p-6 lg:p-10 flex flex-col justify-between min-h-[300px]">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 04 — Media Presence
+          </div>
+          <h2 class="display-2 text-5xl lg:text-6xl text-ink mb-4">
+            Covered by<br>those who <span class="text-primary">matter.</span>
+          </h2>
+          <p class="text-ink2 text-sm leading-relaxed max-w-sm">
+            Our portfolio and partners have been featured across the most respected publications in tech, finance, and crypto.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 mt-8">
+          <div class="font-display font-bold text-4xl text-ink">280+</div>
+          <div class="text-xs text-ink2 uppercase tracking-ultra">Articles<br>published</div>
+        </div>
+      </div>
+
+      <!-- Right decorative spheres -->
+      <div class="col-span-12 lg:col-span-2 border-r border-border relative min-h-[200px] lg:min-h-full bg-surfaceAlt overflow-hidden flex items-center justify-center">
+        <div class="relative w-full h-full">
+          <div class="absolute top-8 left-8 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary floaty shadow-xl"></div>
+          <div class="absolute bottom-10 right-6 w-24 h-24 rounded-full bg-ink floaty-slow shadow-xl"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full border-2 border-primary floaty"></div>
+          <div class="absolute bottom-4 left-4 w-6 h-6 rounded-full bg-secondary floaty-slow"></div>
+        </div>
+      </div>
+
+      <!-- Publication cards -->
+      <div class="col-span-12 lg:col-span-5 grid grid-cols-2">
+        <article class="border-r border-b border-border p-5 card-hover">
+          <div class="text-xs font-display font-bold tracking-ultra text-ink mb-3">COINDESK</div>
+          <p class="text-sm text-ink leading-snug mb-4">"Nexus Labs is quietly becoming the Y Combinator of Web3 — with sharper picks and shipping speed."</p>
+          <div class="text-[10px] uppercase tracking-ultra text-ink2">March 2025 · Opinion</div>
+        </article>
+        <article class="border-b border-border p-5 card-hover">
+          <div class="text-xs font-display font-bold tracking-ultra text-ink mb-3">TECHCRUNCH</div>
+          <p class="text-sm text-ink leading-snug mb-4">"The studio model finally works in crypto. Nexus proved it with 12 launches in 18 months."</p>
+          <div class="text-[10px] uppercase tracking-ultra text-ink2">Jan 2025 · Feature</div>
+        </article>
+        <article class="border-r border-border p-5 card-hover">
+          <div class="text-xs font-display font-bold tracking-ultra text-ink mb-3">THE BLOCK</div>
+          <p class="text-sm text-ink leading-snug mb-4">"Portfolio survival rate of 94% is unheard of in early-stage crypto venture."</p>
+          <div class="text-[10px] uppercase tracking-ultra text-ink2">Nov 2024 · Research</div>
+        </article>
+        <article class="p-5 card-hover">
+          <div class="text-xs font-display font-bold tracking-ultra text-ink mb-3">FORBES</div>
+          <p class="text-sm text-ink leading-snug mb-4">"Founder-first, capital-disciplined, and refreshingly anti-hype. A rare combination."</p>
+          <div class="text-[10px] uppercase tracking-ultra text-ink2">Sep 2024 · Profile</div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 border border-border bg-surface">
+      <!-- Left header -->
+      <div class="col-span-12 lg:col-span-4 border-r border-border p-6 lg:p-10 flex flex-col justify-between min-h-[300px]">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 05 — Testimonials
+          </div>
+          <h2 class="display-2 text-5xl lg:text-6xl text-ink">
+            What founders<br><span class="text-primary">say.</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-3 mt-8">
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Previous"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Next"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+          <span class="text-xs text-ink2 ml-2">01 / 04</span>
+        </div>
+      </div>
+
+      <!-- Right decorative -->
+      <div class="col-span-12 lg:col-span-1 border-r border-border relative bg-ink min-h-[120px] lg:min-h-full overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-20 h-20 border border-primary rotate-45 spin-slow"></div>
+        </div>
+        <div class="absolute top-6 left-1/2 -translate-x-1/2 text-primary font-display font-bold text-2xl">"</div>
+      </div>
+
+      <!-- Testimonial cards -->
+      <div class="col-span-12 lg:col-span-7 grid grid-cols-1 md:grid-cols-2">
+        <article class="border-r border-b md:border-b-0 border-border p-6 card-hover flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover grayscale" loading="lazy" alt="">
+            <div>
+              <div class="font-semibold text-sm">Marcus Reiner</div>
+              <div class="text-xs text-ink2">Founder · Helix Protocol</div>
+            </div>
+          </div>
+          <p class="text-sm text-ink leading-relaxed flex-1">"Nexus shipped our mainnet in 9 weeks. The engineering pod was senior, the partners were hands-on, and the capital showed up on time. I would not build another startup without them."</p>
+          <div class="flex gap-1 mt-4">
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+          </div>
+        </article>
+        <article class="border-b md:border-b-0 border-border p-6 card-hover flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover grayscale" loading="lazy" alt="">
+            <div>
+              <div class="font-semibold text-sm">Priya Anand</div>
+              <div class="text-xs text-ink2">CEO · Nora AI</div>
+            </div>
+          </div>
+          <p class="text-sm text-ink leading-relaxed flex-1">"They took our half-formed research paper and turned it into a product with 84,000 users in 4 months. The tokenomics work alone was worth the equity."</p>
+          <div class="flex gap-1 mt-4">
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+          </div>
+        </article>
+        <article class="border-r border-border p-6 card-hover flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover grayscale" loading="lazy" alt="">
+            <div>
+              <div class="font-semibold text-sm">David Okonkwo</div>
+              <div class="text-xs text-ink2">Co-founder · Vault/ID</div>
+            </div>
+          </div>
+          <p class="text-sm text-ink leading-relaxed flex-1">"Their network alone opened doors I had knocked on for two years. Exchanges, auditors, market makers — everything just unlocked."</p>
+          <div class="flex gap-1 mt-4">
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+          </div>
+        </article>
+        <article class="p-6 card-hover flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover grayscale" loading="lazy" alt="">
+            <div>
+              <div class="font-semibold text-sm">Sofia Lindqvist</div>
+              <div class="text-xs text-ink2">Founder · Prism Social</div>
+            </div>
+          </div>
+          <p class="text-sm text-ink leading-relaxed flex-1">"Cohort programming was the most intense, useful 12 weeks of my career. We pivoted twice, shipped three times, and raised before Demo Day."</p>
+          <div class="flex gap-1 mt-4">
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TEAM ============ -->
+<section id="team" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="border-x border-t border-border bg-surface px-6 lg:px-10 py-10 lg:py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 06 — Team
+          </div>
+          <h2 class="display-2 text-5xl lg:text-7xl text-ink">
+            Built by founders,<br><span class="text-primary">for founders.</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Previous"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Next"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 border-x border-b border-border bg-surface">
+      <!-- Member 1 -->
+      <article class="border-r border-border group">
+        <div class="relative aspect-[3/4] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500" loading="lazy" alt="Adrian Voss">
+          <div class="absolute top-3 left-3 text-[10px] uppercase tracking-ultra text-white bg-ink/70 px-2 py-1">Partner</div>
+        </div>
+        <div class="p-5 border-t border-border">
+          <div class="font-display font-bold text-base">ADRIAN VOSS</div>
+          <div class="text-xs text-ink2 mb-3">Managing Partner</div>
+          <div class="flex gap-2">
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="twitter" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="linkedin" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="github" class="w-3 h-3"></i></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Member 2 -->
+      <article class="border-r border-border group">
+        <div class="relative aspect-[3/4] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500" loading="lazy" alt="Mira Chen">
+          <div class="absolute top-3 left-3 text-[10px] uppercase tracking-ultra text-white bg-ink/70 px-2 py-1">Partner</div>
+        </div>
+        <div class="p-5 border-t border-border">
+          <div class="font-display font-bold text-base">MIRA CHEN</div>
+          <div class="text-xs text-ink2 mb-3">Head of Engineering</div>
+          <div class="flex gap-2">
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="twitter" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="linkedin" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="github" class="w-3 h-3"></i></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Member 3 -->
+      <article class="border-r border-border group">
+        <div class="relative aspect-[3/4] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500" loading="lazy" alt="Kai Nakamura">
+          <div class="absolute top-3 left-3 text-[10px] uppercase tracking-ultra text-white bg-ink/70 px-2 py-1">Partner</div>
+        </div>
+        <div class="p-5 border-t border-border">
+          <div class="font-display font-bold text-base">KAI NAKAMURA</div>
+          <div class="text-xs text-ink2 mb-3">Head of Capital</div>
+          <div class="flex gap-2">
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="twitter" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="linkedin" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="github" class="w-3 h-3"></i></a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Member 4 -->
+      <article class="group">
+        <div class="relative aspect-[3/4] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500" loading="lazy" alt="Elena Rossi">
+          <div class="absolute top-3 left-3 text-[10px] uppercase tracking-ultra text-white bg-ink/70 px-2 py-1">Partner</div>
+        </div>
+        <div class="p-5 border-t border-border">
+          <div class="font-display font-bold text-base">ELENA ROSSI</div>
+          <div class="text-xs text-ink2 mb-3">Head of Tokenomics</div>
+          <div class="flex gap-2">
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="twitter" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="linkedin" class="w-3 h-3"></i></a>
+            <a href="#" class="w-7 h-7 border border-border flex items-center justify-center hover:bg-ink hover:text-white transition"><i data-lucide="github" class="w-3 h-3"></i></a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 border border-border bg-surface">
+      <!-- Left title -->
+      <div class="col-span-12 lg:col-span-5 border-r border-border p-6 lg:p-10 flex flex-col justify-between min-h-[300px]">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 07 — FAQ
+          </div>
+          <h2 class="display-2 text-5xl lg:text-6xl text-ink mb-4">
+            Questions,<br><span class="text-primary">answered.</span>
+          </h2>
+          <p class="text-ink2 text-sm leading-relaxed max-w-sm">
+            Everything you need to know about applying, building, and scaling with Nexus Labs.
+          </p>
+        </div>
+        <div class="mt-8 border-t border-border pt-6">
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-2">Still curious?</div>
+          <a href="#contact" class="text-sm font-semibold inline-flex items-center gap-1 hover:text-primary transition">
+            Talk to our team <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right accordion -->
+      <div class="col-span-12 lg:col-span-7">
+        <details class="group border-b border-border" open>
+          <summary class="flex items-center justify-between p-6 cursor-pointer focus-ring">
+            <span class="font-display font-semibold text-base lg:text-lg pr-4">What stage should my startup be at to apply?</span>
+            <span class="w-6 h-6 bg-primary flex items-center justify-center flex-shrink-0 faq-icon transition-transform">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-ink" stroke-width="3"></i>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-sm text-ink2 leading-relaxed">
+            We accept founders from idea-stage through early mainnet. The most successful applicants have a working thesis, a technical co-founder, and the conviction to ship in 12 weeks. We do not require traction or prior funding.
+          </div>
+        </details>
+        <details class="group border-b border-border">
+          <summary class="flex items-center justify-between p-6 cursor-pointer focus-ring">
+            <span class="font-display font-semibold text-base lg:text-lg pr-4">What equity do you take?</span>
+            <span class="w-6 h-6 bg-primary flex items-center justify-center flex-shrink-0 faq-icon transition-transform">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-ink" stroke-width="3"></i>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-sm text-ink2 leading-relaxed">
+            Standard terms are 7% equity for $500K initial capital, with optional follow-on of up to $5M at Series A. Token side is negotiated separately with a 3-5% token allocation to the studio.
+          </div>
+        </details>
+        <details class="group border-b border-border">
+          <summary class="flex items-center justify-between p-6 cursor-pointer focus-ring">
+            <span class="font-display font-semibold text-base lg:text-lg pr-4">Do I need to be in Singapore?</span>
+            <span class="w-6 h-6 bg-primary flex items-center justify-center flex-shrink-0 faq-icon transition-transform">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-ink" stroke-width="3"></i>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-sm text-ink2 leading-relaxed">
+            No. The program is hybrid. Founders are expected to be in Singapore for two intensive weeks (kickoff and Demo Day), with the remainder remote. We provide co-working access globally through our partner network.
+          </div>
+        </details>
+        <details class="group border-b border-border">
+          <summary class="flex items-center justify-between p-6 cursor-pointer focus-ring">
+            <span class="font-display font-semibold text-base lg:text-lg pr-4">Which blockchains do you support?</span>
+            <span class="w-6 h-6 bg-primary flex items-center justify-center flex-shrink-0 faq-icon transition-transform">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-ink" stroke-width="3"></i>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-sm text-ink2 leading-relaxed">
+            Ethereum, Solana, Base, Arbitrum, Optimism, Polygon, Avalanche, BNB Chain and Sui. We also support Bitcoin L2s and app-chain deployments through our RaaS partners.
+          </div>
+        </details>
+        <details class="group">
+          <summary class="flex items-center justify-between p-6 cursor-pointer focus-ring">
+            <span class="font-display font-semibold text-base lg:text-lg pr-4">When is the next cohort?</span>
+            <span class="w-6 h-6 bg-primary flex items-center justify-center flex-shrink-0 faq-icon transition-transform">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-ink" stroke-width="3"></i>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-sm text-ink2 leading-relaxed">
+            Cohort 06 kicks off in March 2026. Applications open in November and close January 15. Rolling admissions for exceptional teams are available between cohorts.
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LATEST NEWS ============ -->
+<section id="news" class="py-20 lg:py-28 bg-bg">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="border-x border-t border-border bg-surface px-6 lg:px-10 py-10 lg:py-14">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-ink2 mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 08 — Latest News
+          </div>
+          <h2 class="display-2 text-5xl lg:text-7xl text-ink">
+            From the <span class="text-primary">lab.</span>
+          </h2>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Previous"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+          <button class="btn-secondary p-3 rounded focus-ring" aria-label="Next"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 border-x border-b border-border bg-surface">
+      <!-- Article 1 -->
+      <article class="border-r border-b md:border-b-0 border-border card-hover">
+        <div class="aspect-[16/10] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 text-[11px] uppercase tracking-ultra text-ink2 mb-3">
+            <span class="bg-primary/15 text-primary px-2 py-1 font-semibold">Research</span>
+            <span>Nov 02, 2025</span>
+            <span>· 8 min</span>
+          </div>
+          <h3 class="font-display font-bold text-lg leading-snug mb-3">The Studio Model Beats Accelerators in Web3 — Here's the Data</h3>
+          <p class="text-sm text-ink2 leading-relaxed mb-4">A 3-year analysis of 600 crypto startups shows studio-built ventures reach mainnet 2.4x faster and raise 1.7x more follow-on capital.</p>
+          <a href="#" class="text-sm font-semibold inline-flex items-center gap-1 hover:text-primary transition">Read article <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a>
+        </div>
+      </article>
+
+      <!-- Article 2 -->
+      <article class="border-r border-b md:border-b-0 border-border card-hover">
+        <div class="aspect-[16/10] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1621761191319-c6fb62004040?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 text-[11px] uppercase tracking-ultra text-ink2 mb-3">
+            <span class="bg-primary/15 text-primary px-2 py-1 font-semibold">Portfolio</span>
+            <span>Oct 24, 2025</span>
+            <span>· 5 min</span>
+          </div>
+          <h3 class="font-display font-bold text-lg leading-snug mb-3">Helix Protocol Crosses $100M TVL Six Months Post-Launch</h3>
+          <p class="text-sm text-ink2 leading-relaxed mb-4">Cohort 03 graduate Helix Protocol hits a milestone that places it among the top 20 L2-native DeFi protocols by TVL.</p>
+          <a href="#" class="text-sm font-semibold inline-flex items-center gap-1 hover:text-primary transition">Read article <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a>
+        </div>
+      </article>
+
+      <!-- Article 3 -->
+      <article class="card-hover">
+        <div class="aspect-[16/10] overflow-hidden bg-surfaceAlt">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" loading="lazy" alt="">
+        </div>
+        <div class="p-6">
+          <div class="flex items-center gap-3 text-[11px] uppercase tracking-ultra text-ink2 mb-3">
+            <span class="bg-primary/15 text-primary px-2 py-1 font-semibold">Announcement</span>
+            <span>Oct 12, 2025</span>
+            <span>· 4 min</span>
+          </div>
+          <h3 class="font-display font-bold text-lg leading-snug mb-3">Nexus Labs Opens Applications for Cohort 06 with $50M Fresh Capital</h3>
+          <p class="text-sm text-ink2 leading-relaxed mb-4">A new fund brings total deployed capital to $390M. The studio expands its AI agents track with a dedicated engineering pod.</p>
+          <a href="#" class="text-sm font-semibold inline-flex items-center gap-1 hover:text-primary transition">Read article <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT + FOOTER ============ -->
+<footer id="contact" class="bg-ink text-white">
+  <!-- Contact form block -->
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-20 lg:pt-28 pb-16">
+    <div class="grid grid-cols-12 border border-white/15">
+      <!-- Left: heading -->
+      <div class="col-span-12 lg:col-span-5 border-r border-white/15 p-6 lg:p-10 flex flex-col justify-between min-h-[320px]">
+        <div>
+          <div class="text-xs uppercase tracking-ultra text-primary mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 bg-primary"></span> 09 — Contact
+          </div>
+          <h2 class="display-2 text-4xl lg:text-5xl text-white mb-4">
+            Apply to build<br>with <span class="text-primary">Nexus.</span>
+          </h2>
+          <p class="text-muted text-sm leading-relaxed max-w-sm">
+            Tell us about your venture. We review every application personally and respond within 7 business days.
+          </p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-8">
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-muted mb-1">Email</div>
+            <div class="text-sm font-semibold">apply@nexuslabs.io</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-ultra text-muted mb-1">HQ</div>
+            <div class="text-sm font-semibold">Singapore · CWE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: form -->
+      <div class="col-span-12 lg:col-span-7 p-6 lg:p-10">
+        <form class="space-y-5" onsubmit="event.preventDefault(); alert('Application received. We will be in touch within 7 days.');">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="text-[10px] uppercase tracking-ultra text-muted block mb-2">Full Name</label>
+              <input type="text" required placeholder="Jane Founder" class="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary rounded focus-ring" />
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-ultra text-muted block mb-2">Email</label>
+              <input type="email" required placeholder="jane@startup.xyz" class="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary rounded focus-ring" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="text-[10px] uppercase tracking-ultra text-muted block mb-2">Venture Name</label>
+              <input type="text" placeholder="Acme Protocol" class="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary rounded focus-ring" />
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-ultra text-muted block mb-2">Stage</label>
+              <select class="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white focus:outline-none focus:border-primary rounded focus-ring">
+                <option class="bg-ink">Idea</option>
+                <option class="bg-ink">Prototype</option>
+                <option class="bg-ink">Testnet</option>
+                <option class="bg-ink">Mainnet</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-ultra text-muted block mb-2">Tell us about your venture</label>
+            <textarea rows="4" placeholder="What are you building and why now?" class="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-primary rounded focus-ring resize-none"></textarea>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+            <div class="text-xs text-muted">By submitting you agree to our processing policy.</div>
+            <button type="submit" class="btn-primary inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded focus-ring">
+              Submit Application
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer links -->
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pb-10">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 border-t border-white/15 pt-12">
+      <!-- Brand -->
+      <div class="col-span-2">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-8 h-8 bg-white relative">
+            <div class="absolute inset-1.5 bg-primary"></div>
+          </div>
+          <span class="font-display font-bold text-lg tracking-ultra">NEXUS<span class="text-primary">.</span>LABS</span>
+        </div>
+        <p class="text-muted text-sm leading-relaxed max-w-xs mb-6">
+          A venture studio and blockchain incubator building the next generation of decentralized intelligence.
+        </p>
+        <div class="flex gap-2">
+          <a href="#" class="w-9 h-9 border border-white/20 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-ink transition"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+          <a href="#" class="w-9 h-9 border border-white/20 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-ink transition"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
+          <a href="#" class="w-9 h-9 border border-white/20 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-ink transition"><i data-lucide="github" class="w-4 h-4"></i></a>
+          <a href="#" class="w-9 h-9 border border-white/20 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-ink transition"><i data-lucide="send" class="w-4 h-4"></i></a>
+        </div>
+      </div>
+
+      <!-- Studio -->
+      <div>
+        <div class="text-[10px] uppercase tracking-ultra text-primary mb-4 font-semibold">Studio</div>
+        <ul class="space-y-2.5 text-sm text-muted">
+          <li><a href="#" class="hover:text-white transition">Venture Studio</a></li>
+          <li><a href="#" class="hover:text-white transition">Incubation</a></li>
+          <li><a href="#" class="hover:text-white transition">Engineering</a></li>
+          <li><a href="#" class="hover:text-white transition">Tokenomics</a></li>
+        </ul>
+      </div>
+
+      <!-- Portfolio -->
+      <div>
+        <div class="text-[10px] uppercase tracking-ultra text-primary mb-4 font-semibold">Portfolio</div>
+        <ul class="space-y-2.5 text-sm text-muted">
+          <li><a href="#" class="hover:text-white transition">All Ventures</a></li>
+          <li><a href="#" class="hover:text-white transition">Live Tokens</a></li>
+          <li><a href="#" class="hover:text-white transition">Stealth Mode</a></li>
+          <li><a href="#" class="hover:text-white transition">Exited</a></li>
+        </ul>
+      </div>
+
+      <!-- Company -->
+      <div>
+        <div class="text-[10px] uppercase tracking-ultra text-primary mb-4 font-semibold">Company</div>
+        <ul class="space-y-2.5 text-sm text-muted">
+          <li><a href="#" class="hover:text-white transition">About</a></li>
+          <li><a href="#" class="hover:text-white transition">Team</a></li>
+          <li><a href="#" class="hover:text-white transition">Careers</a></li>
+          <li><a href="#" class="hover:text-white transition">Press</a></li>
+          <li><a href="#" class="hover:text-white transition">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-12 pt-6 border-t border-white/15 text-xs text-muted">
+      <div>© 2025 Nexus Labs Pte. Ltd. · All rights reserved.</div>
+      <div class="flex gap-6">
+        <a href="#" class="hover:text-white transition">Privacy</a>
+        <a href="#" class="hover:text-white transition">Terms</a>
+        <a href="#" class="hover:text-white transition">Processing</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Oversized wordmark -->
+  <div class="border-t border-white/15 overflow-hidden">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-10 py-8 lg:py-12">
+      <div class="wordmark text-[18vw] lg:text-[14vw] text-white/10 leading-none whitespace-nowrap select-none">
+        NEXUS<span class="text-primary/40">.</span>LABS
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  // Mobile menu
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileSheet = document.getElementById('mobileSheet');
+  menuBtn.addEventListener('click', () => {
+    mobileSheet.classList.toggle('hidden');
+  });
+  mobileSheet.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileSheet.classList.add('hidden')));
+
+  // Fade-in observer
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('section').forEach(s => {
+    s.classList.add('fade-in');
+    io.observe(s);
+  });
+
+  // Close other accordion items when one opens (single-open behavior)
+  const allDetails = document.querySelectorAll('#faq details');
+  allDetails.forEach((d) => {
+    d.addEventListener('toggle', () => {
+      if (d.open) {
+        allDetails.forEach(o => { if (o !== d) o.open = false; });
+      }
+    });
+  });
+</script>
+</body>
+</html>

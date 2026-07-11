@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Locomotive Scroll — Smooth scrolling with parallax effects</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/instrument-serif@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/instrument-serif@latest/latin-400-italic.css">
+<style>
+  :root{
+    --blue:#0047FF;
+    --blue-soft:#E8EEFF;
+    --ink:#0A0A0A;
+  }
+  *{ -webkit-font-smoothing:antialiased; }
+  html,body{ margin:0; padding:0; background:#fff; color:var(--ink); }
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+
+  body{
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "ss01","cv11";
+  }
+  .serif{ font-family: 'Instrument Serif', serif; font-weight:400; letter-spacing:-0.01em; }
+  .serif-i{ font-family: 'Instrument Serif', serif; font-style: italic; font-weight:400; }
+
+  /* ---------- HEADER ---------- */
+  .site-header{
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display:grid; grid-template-columns: 1fr auto 1fr; align-items:center;
+    padding: 18px 28px;
+    transition: color .4s ease, border-color .4s ease;
+    mix-blend-mode: difference;
+    color:#fff;
+  }
+  .site-header a{ color:inherit; }
+  .site-header .col-right{ justify-self:end; display:flex; gap:28px; align-items:center; }
+  .site-header .col-left{ display:flex; gap:24px; align-items:center; }
+  .site-header .underline-link{ position:relative; }
+  .site-header .underline-link::after{
+    content:""; position:absolute; left:0; right:0; bottom:-2px; height:1px;
+    background:currentColor; transform-origin:left; transform:scaleX(1);
+    transition:transform .4s cubic-bezier(.77,0,.18,1);
+  }
+  .site-header .underline-link:hover::after{ transform:scaleX(0); transform-origin:right; }
+  .ext{ font-size:.75em; margin-left:4px; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100vh; background: var(--blue); color:#fff;
+    padding: 140px 28px 80px; position:relative; overflow:hidden;
+  }
+  .hero-grid{
+    display:grid; grid-template-columns: 1.4fr 1fr; gap: 80px; align-items:end;
+    max-width: 1600px; margin: 0 auto; min-height: calc(100vh - 220px);
+  }
+  .hero h1{
+    font-family:'Instrument Serif', serif; font-weight:400;
+    font-size: clamp(4rem, 14vw, 15rem); line-height:.88; letter-spacing:-0.02em;
+    margin:0;
+  }
+  .hero h1 .line{ display:block; overflow:hidden; }
+  .hero h1 .line > span{ display:inline-block; }
+  .hero .emoji{ font-size:.7em; line-height:1; display:inline-block; transform: translateY(-.1em); }
+  .hero .reg{ font-size:.45em; vertical-align: super; font-family:'Inter',sans-serif; font-weight:500; }
+  .hero .desc{
+    max-width: 420px; font-size: 1rem; line-height:1.5; opacity:.92;
+    margin-top: 28px;
+  }
+  .hero .version-chip{
+    display:inline-flex; align-items:center; gap:10px; margin-top:28px;
+    padding: 10px 16px; border:1px solid rgba(255,255,255,.25); border-radius: 999px;
+    font-size:.875rem;
+  }
+  .hero-nav{ margin-top: 60px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn{
+    display:inline-flex; align-items:center; gap:10px;
+    padding: 14px 22px; border-radius:999px; font-weight:500; font-size:.9rem;
+    border:1px solid transparent; transition: transform .3s ease, background .3s ease;
+    position:relative; overflow:hidden;
+  }
+  .btn-primary{ background:#fff; color: var(--blue); }
+  .btn-stroke{ background:transparent; color:#fff; border-color: rgba(255,255,255,.4); }
+  .btn:hover{ transform: translateY(-2px); }
+  .btn svg{ width:18px; height:18px; }
+
+  /* Floating background emojis in hero */
+  .hero-float{
+    position:absolute; font-size: 6rem; opacity:.12; pointer-events:none; user-select:none;
+  }
+
+  /* ---------- PERKS / WHITE SECTION ---------- */
+  .section{ padding: 140px 28px; position:relative; }
+  .section.white{ background:#fff; color:var(--ink); }
+  .section.blue{ background: var(--blue); color:#fff; }
+  .section.black{ background: var(--ink); color:#fff; }
+  .wrap{ max-width:1600px; margin:0 auto; }
+
+  /* Rail marquee */
+  .rail{
+    border-top:1px solid rgba(0,0,0,.15); border-bottom:1px solid rgba(0,0,0,.15);
+    padding: 18px 0; overflow:hidden; margin-bottom: 100px;
+  }
+  .rail-track{
+    display:flex; gap: 60px; white-space:nowrap; will-change: transform;
+    font-family:'Instrument Serif', serif; font-size: 2rem;
+  }
+  .rail-track span{ display:inline-flex; align-items:center; gap: 28px; }
+
+  /* Perks list */
+  .perks{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 0; border-top: 1px solid rgba(0,0,0,.15); }
+  .perk{
+    padding: 40px 0; border-bottom: 1px solid rgba(0,0,0,.15);
+    display:grid; grid-template-columns: 1fr 1.5fr; gap: 40px; align-items:start;
+    transition: padding .4s ease;
+  }
+  .perk:hover{ padding-left: 20px; }
+  .perk h3{ font-size: 1.25rem; font-weight:500; margin:0; }
+  .perk p{ margin:0; color:#333; font-size:1rem; line-height:1.55; }
+  .perk-index{ color:#888; font-size:.8rem; margin-bottom:8px; display:block; }
+
+  .statement{
+    margin-top: 120px; max-width: 900px;
+    font-family:'Instrument Serif', serif; font-size: clamp(2rem, 4vw, 3.25rem);
+    line-height:1.1; letter-spacing:-0.01em;
+  }
+
+  /* Cascade */
+  .cascade{ margin-top: 160px; overflow:hidden; }
+  .cascade .line{
+    font-family:'Instrument Serif', serif;
+    font-size: clamp(3rem, 9vw, 8rem); line-height:.95; letter-spacing:-0.02em;
+    display:block; white-space:nowrap;
+  }
+  .cascade .line:nth-child(odd){ color:#0A0A0A; }
+  .cascade .line:nth-child(even){ color: rgba(10,10,10,.25); }
+
+  /* ---------- BLUE TOOLS ---------- */
+  .section-heading{
+    font-family:'Instrument Serif', serif; font-weight:400;
+    font-size: clamp(3rem, 8vw, 8rem); line-height:.92; letter-spacing:-0.02em;
+    margin: 0 0 120px 0;
+  }
+  .section-heading .row{ display:block; position:relative; }
+  .section-heading .label{
+    font-family:'Inter',sans-serif; font-size:.875rem; font-weight:500;
+    letter-spacing:0; vertical-align: middle; margin: 0 16px; opacity:.9;
+  }
+
+  .tool{ padding: 80px 0; border-top:1px solid rgba(255,255,255,.2); }
+  .tool-head{
+    display:grid; grid-template-columns: auto 1fr 2fr; gap: 40px; align-items:baseline;
+    margin-bottom: 60px;
+  }
+  .tool-index{
+    font-family:'Instrument Serif', serif; font-size: 1.5rem; opacity:.6;
+  }
+  .tool-label{ font-weight:500; font-size:1.1rem; }
+  .tool-title{
+    font-family:'Instrument Serif', serif; font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height:.95; letter-spacing:-0.01em; margin: 0;
+  }
+  .tool-desc{ opacity:.85; max-width: 560px; margin: 18px 0 0 0; font-size: 1rem; line-height:1.55; }
+
+  /* Tool playgrounds */
+  .playground{
+    aspect-ratio: 16/7; position:relative; overflow:hidden;
+    border-radius: 24px; background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .shape{
+    position:absolute; display:flex; align-items:center; justify-content:center;
+    font-size: clamp(2rem, 5vw, 4.5rem); user-select:none;
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,.25));
+  }
+
+  /* In-view playground */
+  .pg-inview .shape{
+    width: clamp(80px, 12vw, 140px); height: clamp(80px, 12vw, 140px);
+    border-radius: 24px; background: #fff; color: var(--blue);
+    font-family:'Instrument Serif', serif; font-size: clamp(2rem, 4vw, 3rem);
+  }
+  .pg-inview .s1{ top:10%; left:8%; background:#fff; color:var(--blue); }
+  .pg-inview .s2{ top:55%; left:22%; background:#FFD84D; color:#0A0A0A; }
+  .pg-inview .s3{ top:18%; left:42%; background:#FF6B4A; color:#fff; border-radius:50%; }
+  .pg-inview .s4{ top:60%; left:55%; background:#1F1F1F; color:#fff; }
+  .pg-inview .s5{ top:20%; left:72%; background:#7CFFB2; color:#0A0A0A; border-radius:50%; }
+  .pg-inview .s6{ top:62%; left:82%; background:#fff; color:var(--blue); }
+
+  /* Progress playground */
+  .pg-progress{ display:flex; flex-direction:column; justify-content:center; gap:14px; padding: 0 6%; }
+  .pg-progress .bar{
+    height: 10px; background: rgba(255,255,255,.15); border-radius:999px; overflow:hidden;
+    position:relative;
+  }
+  .pg-progress .fill{
+    position:absolute; left:0; top:0; bottom:0; border-radius:999px;
+    background: linear-gradient(90deg, #FFD84D, #FF6B4A, #fff);
+    transform-origin: left; transform: scaleX(var(--p, 0.2));
+  }
+  .pg-progress .bar-label{
+    display:flex; justify-content:space-between; font-size:.75rem; opacity:.7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Parallax playground */
+  .pg-parallax{ background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.1)); }
+  .pg-parallax .shape{ font-family:'Instrument Serif',serif; color:#fff; }
+  .pg-parallax .p1{ top:15%; left:10%; font-size: clamp(3rem, 7vw, 6rem); }
+  .pg-parallax .p2{ top:55%; left:25%; font-size: clamp(2rem, 5vw, 4rem); opacity:.85; }
+  .pg-parallax .p3{ top:10%; left:45%; font-size: clamp(4rem, 10vw, 9rem); }
+  .pg-parallax .p4{ top:60%; left:62%; font-size: clamp(2.5rem, 6vw, 5rem); opacity:.7; }
+  .pg-parallax .p5{ top:20%; left:80%; font-size: clamp(3rem, 8vw, 7rem); opacity:.9; }
+
+  /* ---------- FEATURES (BLACK) ---------- */
+  .features-intro{ max-width: 460px; font-size: 1.1rem; line-height:1.55; opacity:.85; margin-bottom: 80px; }
+  .features-grid{
+    display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px;
+  }
+  .fcell{
+    grid-column: span 2; aspect-ratio: 1/1;
+    border-radius: 20px; padding: 28px; display:flex; flex-direction:column; justify-content:space-between;
+    background: #141414; border:1px solid rgba(255,255,255,.08);
+    position:relative; overflow:hidden; transition: transform .4s ease;
+  }
+  .fcell:hover{ transform: translateY(-4px); }
+  .fcell.span-3{ grid-column: span 3; }
+  .fcell.span-2{ grid-column: span 2; }
+  .fcell.lenis{ background: linear-gradient(135deg, #FFE066, #FFB800); color:#111; }
+  .fcell.loco{ background: #fff; color:#0A0A0A; }
+  .fcell .idx{ font-size:.75rem; letter-spacing:.1em; opacity:.6; text-transform:uppercase; }
+  .fcell h3{ font-family:'Instrument Serif', serif; font-size: clamp(1.6rem, 2.4vw, 2.2rem); line-height:1; margin: 0 0 12px 0; font-weight:400; }
+  .fcell p{ margin:0; font-size:.92rem; line-height:1.5; opacity:.75; }
+  .fcell .corner-arrow{
+    position:absolute; top:24px; right:24px; width:38px; height:38px;
+    border-radius:50%; background: #0A0A0A; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    transform: rotate(-45deg); transition: transform .4s ease;
+  }
+  .fcell:hover .corner-arrow{ transform: rotate(0deg); }
+  .fcell.loco .corner-arrow{ background: var(--blue); }
+  .fcell .big-logo{
+    font-family:'Instrument Serif', serif; font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height:.9; letter-spacing:-0.02em;
+  }
+
+  .dir-arrows{ font-size: 2rem; display:inline-flex; gap:4px; margin-left:12px; vertical-align: middle; }
+
+  /* ---------- SHOWCASE ---------- */
+  .showcase-list{ border-top:1px solid rgba(0,0,0,.15); }
+  .showcase-row{
+    display:grid; grid-template-columns: 1fr 2fr auto; gap: 20px; align-items:center;
+    padding: 28px 0; border-bottom: 1px solid rgba(0,0,0,.15);
+    color: var(--ink); text-decoration:none;
+    transition: padding .4s cubic-bezier(.77,0,.18,1), background .4s ease;
+    position:relative;
+  }
+  .showcase-row:hover{ padding-left: 20px; padding-right: 0; }
+  .showcase-row .name{ font-family:'Instrument Serif', serif; font-size: clamp(1.5rem, 2.6vw, 2.2rem); line-height:1; }
+  .showcase-row .url{ font-size:.9rem; color:#666; }
+  .showcase-row .arrow{ font-size:1.25rem; transition: transform .4s ease; }
+  .showcase-row:hover .arrow{ transform: translate(4px,-4px); }
+
+  /* ---------- FOOTER ---------- */
+  .footer{ background: var(--blue); color:#fff; padding: 100px 28px 40px; position:relative; overflow:hidden; }
+  .npm-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    border-top:1px solid rgba(255,255,255,.2); border-bottom:1px solid rgba(255,255,255,.2);
+    padding: 30px 0; margin-bottom: 80px;
+  }
+  .npm-col{ display:flex; flex-direction:column; gap: 4px; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size:.8rem; }
+  .npm-col span{ opacity:.4; }
+  .npm-col span:nth-child(2){ opacity:.6; }
+  .npm-col span:nth-child(3){ opacity:.85; }
+  .npm-col span:nth-child(4){ opacity:1; font-weight:600; }
+  .npm-col span:nth-child(5){ opacity:.6; }
+
+  .footer-thanks{
+    font-family:'Instrument Serif', serif;
+    font-size: clamp(3rem, 9vw, 9rem); line-height:.92; letter-spacing:-0.02em;
+    margin: 40px 0 80px 0;
+  }
+  .footer-brand{
+    display:grid; grid-template-columns: 1fr auto; gap: 40px; align-items:end;
+    padding-bottom: 40px; border-bottom:1px solid rgba(255,255,255,.2);
+  }
+  .footer-brand h2{
+    font-family:'Instrument Serif', serif; font-weight:400;
+    font-size: clamp(4rem, 12vw, 12rem); line-height:.88; letter-spacing:-0.02em;
+    margin:0;
+  }
+  .footer-brand .made-by{ margin-top: 20px; opacity:.8; font-size:.9rem; }
+  .footer-brand .made-by a{ color:#fff; text-decoration: underline; text-underline-offset: 3px; }
+
+  .footer-bottom{
+    display:flex; justify-content:space-between; align-items:center;
+    padding-top: 24px; font-size:.8rem; opacity:.7;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; gap:40px; }
+    .perks{ grid-template-columns: 1fr; }
+    .perk{ grid-template-columns: 1fr; gap: 12px; }
+    .tool-head{ grid-template-columns: 1fr; gap: 12px; }
+    .features-grid{ grid-template-columns: repeat(2, 1fr); }
+    .fcell{ grid-column: span 2 !important; }
+    .npm-grid{ grid-template-columns: repeat(2, 1fr); }
+    .footer-brand{ grid-template-columns: 1fr; }
+    .showcase-row{ grid-template-columns: 1fr auto; }
+    .showcase-row .url{ grid-column: 1 / -1; }
+    .site-header{ grid-template-columns: 1fr auto; }
+    .site-header .col-left span:nth-child(2){ display:none; }
+  }
+
+  /* Reveal utility */
+  .reveal{ opacity:0; transform: translateY(24px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in{ opacity:1; transform: none; }
+  .char-wrap{ display:inline-block; overflow:hidden; }
+  .char-wrap > span{ display:inline-block; }
+</style>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header">
+  <div class="col-left">
+    <span>Locomotive Scroll</span>
+    <span>Version 5.0</span>
+  </div>
+  <div></div>
+  <div class="col-right">
+    <a class="underline-link" href="https://github.com/locomotivemtl/locomotive-scroll" target="_blank" rel="noopener">Github <span class="ext">↗</span></a>
+    <a class="underline-link" href="https://scroll.locomotive.ca/docs" target="_blank" rel="noopener">Documentation <span class="ext">↗</span></a>
+    <span>©2026</span>
+  </div>
+</header>
+
+<!-- ================= HERO (BLUE) ================= -->
+<section class="hero" id="top">
+  <div class="hero-float" style="top:15%; left:6%;">🟦</div>
+  <div class="hero-float" style="top:70%; right:10%; font-size:4rem;">🔁</div>
+  <div class="hero-float" style="top:40%; right:30%; font-size:3rem;">⛵</div>
+
+  <div class="hero-grid">
+    <div>
+      <h1 aria-label="Locomotive Scroll">
+        <span class="line"><span class="emoji">🟦🔁</span></span>
+        <span class="line"><span>Locomotive<span class="reg">®</span></span></span>
+        <span class="line"><span>Scroll</span></span>
+      </h1>
+    </div>
+    <div>
+      <p class="desc">
+        A lightweight scroll library for modern web experiences. Detection, animation, and smooth scrolling — all in 9.4kB. Built on top of Lenis.
+      </p>
+      <div class="version-chip"><span>🔻</span> Version 5.0</div>
+
+      <nav class="hero-nav">
+        <a class="btn btn-primary" href="https://github.com/locomotivemtl/locomotive-scroll" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.01 3.24 9.25 7.74 10.75.57.1.78-.25.78-.55 0-.27-.01-1.17-.02-2.12-3.15.69-3.82-1.34-3.82-1.34-.52-1.31-1.26-1.66-1.26-1.66-1.03-.7.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.01 1.74 2.66 1.24 3.31.95.1-.74.4-1.24.72-1.53-2.51-.29-5.15-1.26-5.15-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3.02 0 0 .95-.3 3.11 1.16a10.8 10.8 0 0 1 5.66 0c2.16-1.46 3.11-1.16 3.11-1.16.62 1.57.23 2.73.11 3.02.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.3-5.17 5.58.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.12 0 .3.21.66.79.55 4.5-1.5 7.73-5.74 7.73-10.75C23.33 5.56 18.27.5 12 .5z"/></svg>
+          View on Github
+        </a>
+        <a class="btn btn-stroke" href="https://scroll.locomotive.ca/docs" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h10l6 6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 4v6h6"/></svg>
+          Read documentation
+        </a>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHITE SECTION (PERKS) ================= -->
+<section class="section white">
+  <div class="wrap">
+
+    <!-- Rail marquee -->
+    <div class="rail" aria-hidden="true">
+      <div class="rail-track" id="railTrack">
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+        <span>Version (5.0) 🏢</span>
+      </div>
+    </div>
+
+    <!-- Perks -->
+    <div class="perks" id="perks">
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">01</span>
+          <h3>Built on top of Lenis</h3>
+        </div>
+        <p>Latest stable release with improved touch handling and performance fixes. No more greedy CSS transforms!</p>
+      </div>
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">02</span>
+          <h3>TypeScript First</h3>
+        </div>
+        <p>Fully typed. Better autocomplete, fewer bugs, happier developers.</p>
+      </div>
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">03</span>
+          <h3>Dual Intersection Observers</h3>
+        </div>
+        <p>Separate observers for simple triggers vs. continuous animations. No wasted RAF cycles.</p>
+      </div>
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">04</span>
+          <h3>Smart Touch Detection</h3>
+        </div>
+        <p>Parallax auto-disabled on mobile. Opt-in with one attribute.</p>
+      </div>
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">05</span>
+          <h3>Production Ready</h3>
+        </div>
+        <p>Accessible by default. Native scrollbar, keyboard nav, and proper cleanup for SPAs.</p>
+      </div>
+      <div class="perk reveal">
+        <div>
+          <span class="perk-index">06</span>
+          <h3>Lightweight</h3>
+        </div>
+        <p>Only 9.4kB gzipped.</p>
+      </div>
+    </div>
+
+    <p class="statement reveal">
+      Version 5 is a complete rewrite. Designed for modern workflows, built on top of <span class="serif-i">Lenis</span>, and optimized for production.
+    </p>
+
+    <!-- Cascade -->
+    <div class="cascade" id="cascade" aria-hidden="true">
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+      <span class="line">Locomotive<span class="reg">®</span> Scroll</span>
+    </div>
+
+    <div style="text-align:center; font-size: 3rem; margin-top: 60px;">👀</div>
+  </div>
+</section>
+
+<!-- ================= BLUE TOOLS ================= -->
+<section class="section blue">
+  <div class="wrap">
+    <h2 class="section-heading">
+      <span class="row">Built-in</span>
+      <span class="row">
+        Tools
+        <span class="label">🔴 Work faster</span>
+        <span class="label">Work smarter 🔴</span>
+      </span>
+    </h2>
+
+    <!-- TOOL 01 -->
+    <article class="tool">
+      <div class="tool-head">
+        <span class="tool-index">01</span>
+        <span class="tool-label">In-view detection</span>
+        <div>
+          <h3 class="tool-title">In-view detection</h3>
+          <p class="tool-desc">Add classes, trigger callbacks, or fire custom events when elements enter the viewport. Built on Intersection Observer for native performance.</p>
+        </div>
+      </div>
+      <div class="playground pg-inview" id="pgInview">
+        <div class="shape s1">Aa</div>
+        <div class="shape s2">✦</div>
+        <div class="shape s3">◯</div>
+        <div class="shape s4">✱</div>
+        <div class="shape s5">◐</div>
+        <div class="shape s6">Zz</div>
+      </div>
+    </article>
+
+    <!-- TOOL 02 -->
+    <article class="tool">
+      <div class="tool-head">
+        <span class="tool-index">02</span>
+        <span class="tool-label">Progress tracking</span>
+        <div>
+          <h3 class="tool-title">Progress tracking</h3>
+          <p class="tool-desc">Get real-time scroll progress (0-1) as CSS variables or JavaScript events. Perfect for progress bars, scroll-driven animations, or custom interactions.</p>
+        </div>
+      </div>
+      <div class="playground pg-progress" id="pgProgress">
+        <div>
+          <div class="bar-label"><span>section.progress</span><span id="pval1">0.20</span></div>
+          <div class="bar"><div class="fill" style="--p:.20"></div></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>section.progress</span><span id="pval2">0.45</span></div>
+          <div class="bar"><div class="fill" style="--p:.45"></div></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>section.progress</span><span id="pval3">0.68</span></div>
+          <div class="bar"><div class="fill" style="--p:.68"></div></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>section.progress</span><span id="pval4">0.85</span></div>
+          <div class="bar"><div class="fill" style="--p:.85"></div></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>section.progress</span><span id="pval5">1.00</span></div>
+          <div class="bar"><div class="fill" style="--p:1"></div></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- TOOL 03 -->
+    <article class="tool">
+      <div class="tool-head">
+        <span class="tool-index">03</span>
+        <span class="tool-label">Parallax effects</span>
+        <div>
+          <h3 class="tool-title">Parallax effects</h3>
+          <p class="tool-desc">Create smooth parallax effects instantly with a single data-scroll-speed attribute. No complex setup, no math — just add a number and it works.</p>
+        </div>
+      </div>
+      <div class="playground pg-parallax" id="pgParallax">
+        <div class="shape p1">A</div>
+        <div class="shape p2">✦</div>
+        <div class="shape p3">B</div>
+        <div class="shape p4">◯</div>
+        <div class="shape p5">C</div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ================= BLACK FEATURES ================= -->
+<section class="section black">
+  <div class="wrap">
+    <p class="features-intro reveal">
+      ⛵ Locomotive Scroll is a thin, opinionated wrapper around Lenis. You get all of Lenis's power plus our detection and animation layer.
+    </p>
+
+    <h2 class="section-heading" style="color:#fff;">Features</h2>
+
+    <div class="features-grid">
+      <a href="https://lenis.darkroom.engineering/" target="_blank" rel="noopener" class="fcell lenis span-3">
+        <div class="corner-arrow">↗</div>
+        <div>
+          <div class="idx">Powered by</div>
+          <div class="big-logo">Lenis</div>
+        </div>
+        <div style="font-size:.9rem; opacity:.8;">How smooth scroll should be.</div>
+      </a>
+      <a href="https://locomotive.ca/" target="_blank" rel="noopener" class="fcell loco span-3">
+        <div class="corner-arrow">↗</div>
+        <div>
+          <div class="idx">Made by</div>
+          <div class="big-logo">Locomotive<span class="reg" style="color:var(--blue)">®</span></div>
+        </div>
+        <div style="font-size:.9rem; opacity:.8;">Digital-first agency based in Montreal.</div>
+      </a>
+
+      <div class="fcell">
+        <div class="idx">01</div>
+        <h3>Native scrollbar</h3>
+        <p>Real browser scrollbar. No fake alternatives. Accessible, performant, familiar.</p>
+      </div>
+      <div class="fcell">
+        <div class="idx">02</div>
+        <h3>Smooth easing</h3>
+        <p>Configurable lerp, duration, and custom easing functions via Lenis.</p>
+      </div>
+      <div class="fcell">
+        <div class="idx">03</div>
+        <h3>CSS sticky</h3>
+        <p>Works perfectly with position: sticky. No conflicts, no workarounds.</p>
+      </div>
+
+      <div class="fcell span-3">
+        <div class="idx">04</div>
+        <h3>Intersection Observer API</h3>
+        <p>Browser-native detection. No polling, no performance hits — just efficient viewport tracking.</p>
+      </div>
+
+      <div class="fcell span-2">
+        <div class="idx">05</div>
+        <h3>Scroll to</h3>
+        <p>Programmatic scrolling to any element, selector, or pixel value via Lenis. Supports offset, duration, and custom easing.</p>
+      </div>
+      <div class="fcell">
+        <div class="idx">06</div>
+        <h3>Scroll direction<span class="dir-arrows">↓↑</span></h3>
+        <p>Track direction changes in real-time. Perfect for hiding/showing headers.</p>
+      </div>
+
+      <div class="fcell span-3">
+        <div class="idx">07</div>
+        <h3>No layout shifts</h3>
+        <p>Plays nice with position: sticky, fixed headers, and existing CSS. No more greedy transforms.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SHOWCASE ================= -->
+<section class="section white">
+  <div class="wrap">
+    <p class="reveal" style="max-width:420px; color:#333; margin-bottom: 80px;">
+      ⛵ Real projects built with Locomotive Scroll by leading studios and developers.
+    </p>
+    <h2 class="section-heading">Showcase</h2>
+
+    <div class="showcase-list" id="showcase">
+      <a class="showcase-row" href="https://locomotive.ca" target="_blank" rel="noopener">
+        <span class="name">Locomotive</span>
+        <span class="url">https://locomotive.ca</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://2024.destigmatize.ca/" target="_blank" rel="noopener">
+        <span class="name">Destigmatize</span>
+        <span class="url">https://2024.destigmatize.ca/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://scoutmotors.com/" target="_blank" rel="noopener">
+        <span class="name">Scout Motors</span>
+        <span class="url">https://scoutmotors.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://lightshiprv.com/" target="_blank" rel="noopener">
+        <span class="name">Lightship</span>
+        <span class="url">https://lightshiprv.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://vooban.com/" target="_blank" rel="noopener">
+        <span class="name">Vooban</span>
+        <span class="url">https://vooban.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://constructiondesourdy.com/" target="_blank" rel="noopener">
+        <span class="name">Construction Desourdy</span>
+        <span class="url">https://constructiondesourdy.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://gkc.ca/" target="_blank" rel="noopener">
+        <span class="name">GKC</span>
+        <span class="url">https://gkc.ca/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://www.troa.fr/" target="_blank" rel="noopener">
+        <span class="name">Troa</span>
+        <span class="url">https://www.troa.fr/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://vazzi.fun/" target="_blank" rel="noopener">
+        <span class="name">Vazzi</span>
+        <span class="url">https://vazzi.fun/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://21tsi.com/" target="_blank" rel="noopener">
+        <span class="name">21TSI</span>
+        <span class="url">https://21tsi.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://www.eduardbodak.com/" target="_blank" rel="noopener">
+        <span class="name">Eduard Bodak</span>
+        <span class="url">https://www.eduardbodak.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+      <a class="showcase-row" href="https://mindmarket.com/" target="_blank" rel="noopener">
+        <span class="name">Mindmarket</span>
+        <span class="url">https://mindmarket.com/</span>
+        <span class="arrow">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="npm-grid" aria-hidden="true">
+      <div class="npm-col">
+        <span>npm</span><span>npm install</span><span>npm install locomotive-scroll</span><span>npm install</span><span>npm</span>
+      </div>
+      <div class="npm-col">
+        <span>locomotive</span><span>locomotive-scroll</span><span>locomotive-scroll v5.x</span><span>locomotive-scroll v5.x</span><span>locomotive-scroll</span><span>locomotive</span>
+      </div>
+      <div class="npm-col">
+        <span>data</span><span>data-scroll</span><span>data-scroll-speed</span><span>data-scroll-class</span><span>data-scroll-repeat</span>
+      </div>
+      <div class="npm-col">
+        <span>data</span><span>data-scroll</span><span>data-scroll-position</span><span>data-scroll-call</span><span>data-scroll-event-progress</span>
+      </div>
+    </div>
+
+    <h2 class="footer-thanks">We hope that you enjoy our library.</h2>
+
+    <div class="footer-brand">
+      <div>
+        <div style="font-size: 3rem; margin-bottom: 20px;">🟦🔁</div>
+        <h2>
+          <span style="display:block;">Locomotive<span class="reg">®</span></span>
+          <span style="display:block;">Scroll</span>
+        </h2>
+        <p class="made-by">Made by <a href="https://locomotive.ca" target="_blank" rel="noopener">Locomotive</a></p>
+      </div>
+      <nav style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a class="btn btn-primary" href="https://github.com/locomotivemtl/locomotive-scroll" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.67 5.56.67 11.83c0 5.01 3.24 9.25 7.74 10.75.57.1.78-.25.78-.55 0-.27-.01-1.17-.02-2.12-3.15.69-3.82-1.34-3.82-1.34-.52-1.31-1.26-1.66-1.26-1.66-1.03-.7.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.01 1.74 2.66 1.24 3.31.95.1-.74.4-1.24.72-1.53-2.51-.29-5.15-1.26-5.15-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3.02 0 0 .95-.3 3.11 1.16a10.8 10.8 0 0 1 5.66 0c2.16-1.46 3.11-1.16 3.11-1.16.62 1.57.23 2.73.11 3.02.73.79 1.17 1.8 1.17 3.04 0 4.35-2.65 5.3-5.17 5.58.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.12 0 .3.21.66.79.55 4.5-1.5 7.73-5.74 7.73-10.75C23.33 5.56 18.27.5 12 .5z"/></svg>
+          View on Github
+        </a>
+        <a class="btn btn-stroke" href="https://scroll.locomotive.ca/docs" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h10l6 6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 4v6h6"/></svg>
+          Read documentation
+        </a>
+      </nav>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Locomotive</span>
+      <span>Montreal, Canada</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ============ LENIS SMOOTH SCROLL ============
+  const lenis = new Lenis({
+    duration: 1.1,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    wheelMultiplier: 1,
+    touchMultiplier: 1.5,
+  });
+  function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+  requestAnimationFrame(raf);
+
+  gsap.registerPlugin(ScrollTrigger);
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((time)=>{ lenis.raf(time * 1000); });
+  gsap.ticker.lagSmoothing(0);
+
+  // ============ REVEAL ON SCROLL ============
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ============ HERO LINE REVEAL ============
+  gsap.from('.hero h1 .line > span', {
+    yPercent: 110, duration: 1.1, stagger: 0.12, ease: 'expo.out', delay: 0.1
+  });
+  gsap.from('.hero .desc, .hero .version-chip, .hero-nav', {
+    opacity: 0, y: 20, duration: .9, stagger: 0.12, ease: 'power3.out', delay: 0.9
+  });
+  gsap.from('.hero-float', { opacity: 0, scale: 0.6, duration: 1.2, stagger: 0.15, ease: 'back.out(1.6)', delay: 0.6 });
+
+  // Hero parallax floaters
+  gsap.to('.hero-float', {
+    yPercent: -40,
+    ease: 'none',
+    scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }
+  });
+
+  // ============ RAIL MARQUEE ============
+  const rail = document.getElementById('railTrack');
+  let railX = 0;
+  function tickRail(){
+    railX -= 1.2;
+    const w = rail.scrollWidth / 2;
+    if (Math.abs(railX) >= w) railX += w;
+    rail.style.transform = `translateX(${railX}px)`;
+    requestAnimationFrame(tickRail);
+  }
+  tickRail();
+
+  // ============ PERKS stagger reveal ============
+  gsap.utils.toArray('.perk').forEach((p, i)=>{
+    gsap.from(p, {
+      y: 40, opacity: 0, duration: .9, ease: 'power3.out',
+      scrollTrigger: { trigger: p, start: 'top 85%' },
+      delay: (i % 2) * 0.08
+    });
+  });
+
+  // ============ STATEMENT ============
+  gsap.from('.statement', {
+    y: 60, opacity: 0, duration: 1.1, ease: 'power3.out',
+    scrollTrigger: { trigger: '.statement', start: 'top 80%' }
+  });
+
+  // ============ CASCADE parallax skew ============
+  gsap.utils.toArray('.cascade .line').forEach((line, i)=>{
+    const dir = i % 2 === 0 ? 1 : -1;
+    gsap.fromTo(line,
+      { xPercent: dir * 20 },
+      {
+        xPercent: dir * -20,
+        ease: 'none',
+        scrollTrigger: { trigger: line, start: 'top bottom', end: 'bottom top', scrub: 0.8 }
+      }
+    );
+    gsap.from(line, {
+      opacity: 0, y: 30, duration: 1, ease: 'power3.out',
+      scrollTrigger: { trigger: line, start: 'top 85%' },
+      delay: i * 0.04
+    });
+  });
+
+  // ============ SECTION HEADINGS ============
+  gsap.utils.toArray('.section-heading').forEach(h=>{
+    gsap.from(h.querySelectorAll('.row'), {
+      yPercent: 80, opacity: 0, duration: 1, stagger: 0.12, ease: 'expo.out',
+      scrollTrigger: { trigger: h, start: 'top 85%' }
+    });
+  });
+
+  // ============ TOOLS reveal ============
+  gsap.utils.toArray('.tool').forEach(tool=>{
+    gsap.from(tool.querySelector('.tool-head').children, {
+      y: 30, opacity: 0, duration: .9, stagger: 0.08, ease: 'power3.out',
+      scrollTrigger: { trigger: tool, start: 'top 75%' }
+    });
+    gsap.from(tool.querySelector('.playground'), {
+      y: 60, opacity: 0, duration: 1.1, ease: 'power3.out',
+      scrollTrigger: { trigger: tool, start: 'top 70%' }
+    });
+  });
+
+  // ============ IN-VIEW PLAYGROUND — shapes drift with scroll ============
+  const inview = document.getElementById('pgInview');
+  if (inview){
+    const shapes = inview.querySelectorAll('.shape');
+    shapes.forEach((s, i)=>{
+      gsap.fromTo(s,
+        { y: (i % 2 === 0 ? 80 : -60), rotate: (i % 2 === 0 ? -12 : 12) },
+        {
+          y: (i % 2 === 0 ? -80 : 60), rotate: (i % 2 === 0 ? 12 : -12),
+          ease: 'none',
+          scrollTrigger: { trigger: inview, start: 'top bottom', end: 'bottom top', scrub: 0.8 }
+        }
+      );
+    });
+  }
+
+  // ============ PROGRESS PLAYGROUND — bars tied to section progress ============
+  const pgProgress = document.getElementById('pgProgress');
+  if (pgProgress){
+    const fills = pgProgress.querySelectorAll('.fill');
+    const labels = [document.getElementById('pval1'),document.getElementById('pval2'),document.getElementById('pval3'),document.getElementById('pval4'),document.getElementById('pval5')];
+    ScrollTrigger.create({
+      trigger: pgProgress,
+      start: 'top 80%',
+      end: 'bottom 40%',
+      scrub: true,
+      onUpdate: (self) => {
+        const p = self.progress;
+        fills.forEach((f, i)=>{
+          const v = Math.min(1, p * (1 + i*0.15));
+          f.style.setProperty('--p', v.toFixed(3));
+          if (labels[i]) labels[i].textContent = v.toFixed(2);
+        });
+      }
+    });
+  }
+
+  // ============ PARALLAX PLAYGROUND — shapes move at different speeds ============
+  const pgPar = document.getElementById('pgParallax');
+  if (pgPar){
+    const speeds = [-0.5, 0.3, -0.8, 0.5, -0.2];
+    pgPar.querySelectorAll('.shape').forEach((s, i)=>{
+      gsap.to(s, {
+        yPercent: speeds[i] * 80,
+        ease: 'none',
+        scrollTrigger: { trigger: pgPar, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
+      });
+    });
+  }
+
+  // ============ FEATURES GRID ============
+  gsap.utils.toArray('.fcell').forEach((c, i)=>{
+    gsap.from(c, {
+      y: 50, opacity: 0, duration: .9, ease: 'power3.out',
+      scrollTrigger: { trigger: c, start: 'top 90%' },
+      delay: (i % 3) * 0.08
+    });
+  });
+
+  // ============ SHOWCASE ROWS ============
+  gsap.utils.toArray('.showcase-row').forEach((r, i)=>{
+    gsap.from(r, {
+      y: 30, opacity: 0, duration: .7, ease: 'power3.out',
+      scrollTrigger: { trigger: r, start: 'top 92%' },
+      delay: (i % 4) * 0.05
+    });
+  });
+
+  // ============ FOOTER THANKS split ============
+  const thanks = document.querySelector('.footer-thanks');
+  if (thanks){
+    const text = thanks.textContent.trim();
+    thanks.innerHTML = '';
+    text.split(' ').forEach((word, wi)=>{
+      const span = document.createElement('span');
+      span.style.display = 'inline-block';
+      span.style.marginRight = '0.25em';
+      span.style.overflow = 'hidden';
+      span.style.verticalAlign = 'top';
+      const inner = document.createElement('span');
+      inner.style.display = 'inline-block';
+      inner.textContent = word;
+      span.appendChild(inner);
+      thanks.appendChild(span);
+      gsap.from(inner, {
+        yPercent: 110, duration: 1.1, ease: 'expo.out',
+        scrollTrigger: { trigger: thanks, start: 'top 85%' },
+        delay: wi * 0.05
+      });
+    });
+  }
+
+  // ============ FOOTER BRAND ============
+  gsap.from('.footer-brand h2 span', {
+    yPercent: 110, duration: 1.2, stagger: 0.1, ease: 'expo.out',
+    scrollTrigger: { trigger: '.footer-brand', start: 'top 90%' }
+  });
+  gsap.from('.footer .npm-col', {
+    y: 20, opacity: 0, duration: .8, stagger: 0.08, ease: 'power3.out',
+    scrollTrigger: { trigger: '.npm-grid', start: 'top 90%' }
+  });
+
+  // ============ Anchor smooth scroll ============
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const id = a.getAttribute('href');
+      if (id.length > 1){
+        const el = document.querySelector(id);
+        if (el){ e.preventDefault(); lenis.scrollTo(el, { offset: -60 }); }
+      }
+    });
+  });
+</script>
+</body>
+</html>

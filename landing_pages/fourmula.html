@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourmula.ai — Creative Mode</title>
+    <meta content="Generate professional product shots, lifestyle images, and videos instantly with AI." name="description" />
+    
+    <!-- Fonts: Using a distinctive display serif (Instrument) + workhorse sans (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        :root {
+            --bg: #050505;
+            --bg-alt: #0E0E0E;
+            --fg: #FFFFFF;
+            --muted: rgba(255, 255, 255, 0.6);
+            --accent: #F94A00;
+            --accent-glow: rgba(249, 74, 0, 0.2);
+            --border: rgba(255, 255, 255, 0.08);
+            --card: #111111;
+            --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+            --ease-brutal: cubic-bezier(0.87, 0, 0.13, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            cursor: none;
+        }
+
+        /* Background Grain & Noise - Tactile texture */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 9998;
+            mix-blend-mode: overlay;
+        }
+
+        /* Custom Cursor - Scales on interactive elements */
+        .cursor {
+            position: fixed; top: 0; left: 0;
+            width: 12px; height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            mix-blend-mode: difference;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+        .cursor.hover { width: 40px; height: 40px; background: var(--fg); }
+
+        ::selection { background: var(--accent); color: var(--fg); }
+
+        /* Typography System */
+        .micro-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        h1 { font-size: clamp(3rem, 8vw, 7.5rem); font-weight: 200; line-height: 0.95; letter-spacing: -0.05em; margin-bottom: 2rem; }
+        h2 { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 200; line-height: 1.05; letter-spacing: -0.04em; }
+        h3 { font-size: 1.5rem; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 1rem; }
+        p { color: var(--muted); font-size: 1.125rem; line-height: 1.6; max-width: 50ch; font-weight: 300; }
+        .accent { color: var(--accent); }
+        .light { color: var(--muted); font-weight: 200; }
+        .serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+
+        .container { max-width: 1500px; margin: 0 auto; padding: 0 4rem; }
+        @media (max-width: 768px) {
+            .container { padding: 0 1.5rem; }
+            body { cursor: auto; }
+            .cursor { display: none; }
+        }
+
+        section { padding: 12rem 0; position: relative; }
+
+        /* Preloader */
+        .preloader { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .preloader-num { font-size: 8rem; font-weight: 100; color: var(--accent); }
+
+        /* Header */
+        header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; padding: 2rem 0; backdrop-filter: blur(12px); background: rgba(5, 5, 5, 0.4); border-bottom: 1px solid var(--border); transform: translateY(-100%); }
+        .header-inner { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 500; font-size: 1.25rem; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+        nav ul { list-style: none; display: flex; gap: 2.5rem; }
+        nav a { color: var(--muted); text-decoration: none; font-size: 0.875rem; transition: color 0.3s var(--ease); }
+        nav a:hover { color: var(--fg); }
+
+        /* CTA Button */
+        .btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem 2rem; background: var(--accent); color: var(--fg); border-radius: 100px; text-decoration: none; font-weight: 500; font-size: 0.9rem; border: 1px solid transparent; transition: background 0.2s var(--ease), box-shadow 0.3s var(--ease); box-shadow: 0 0 0 0 var(--accent-glow); animation: pulse 3s infinite ease-in-out; overflow: hidden; cursor: none; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(249, 74, 0, 0.2); } 50% { box-shadow: 0 0 0 12px rgba(249, 74, 0, 0); } }
+        .btn:hover { background: #ff5711; }
+        .btn .arrow { transition: transform 0.25s var(--ease) 0.05s; }
+        .btn:hover .arrow { transform: translateX(4px) rotate(-45deg); }
+        .btn .hint { position: absolute; right: 1.25rem; opacity: 0; transform: translateY(10px); transition: opacity 0.3s, transform 0.3s; font-size: 0.7rem; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; }
+        .btn:hover .hint { opacity: 1; transform: translateY(0); }
+
+        /* Hero (Preserved) */
+        #hero { min-height: 100vh; display: flex; align-items: center; padding-top: 10rem; overflow: hidden; }
+        .hero-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 4rem; align-items: center; width: 100%; position: relative; }
+        @media (max-width: 1024px) { .hero-grid { grid-template-columns: 1fr; gap: 6rem; } #hero { padding-top: 12rem; } }
+        .hero-text { position: relative; z-index: 2; }
+        .cta-wrap { margin-top: 3.5rem; display: flex; gap: 2rem; align-items: center; }
+        .cta-secondary { color: var(--muted); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; border-bottom: 1px solid transparent; padding-bottom: 2px; }
+        .cta-secondary:hover { color: var(--fg); border-bottom-color: var(--fg); }
+        .carousel-stage { position: relative; width: 100%; height: 600px; perspective: 1400px; display: flex; justify-content: center; align-items: center; }
+        .ambient-glow { position: absolute; width: 500px; height: 500px; background: radial-gradient(circle, rgba(249, 74, 0, 0.15) 0%, transparent 70%); filter: blur(60px); z-index: 0; animation: drift 8s infinite alternate ease-in-out; }
+        @keyframes drift { from { transform: translate(-20px, 20px); } to { transform: translate(20px, -20px); } }
+        .carousel-3d-wrapper { position: relative; width: 240px; height: 320px; transform-style: preserve-3d; }
+        .carousel-3d { position: absolute; width: 100%; height: 100%; transform-style: preserve-3d; animation: rotate3d 40s infinite linear; }
+        @keyframes rotate3d { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+        .carousel-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); background: var(--card); backface-visibility: hidden; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) saturate(1.1); }
+        .dropzone { position: absolute; z-index: 10; right: -40px; bottom: -40px; width: 140px; height: 140px; background: rgba(14, 14, 14, 0.9); backdrop-filter: blur(16px); border: 1px dashed rgba(255,255,255,0.2); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1rem; cursor: pointer; transition: all 0.3s var(--ease); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .dropzone:hover { border-color: var(--accent); background: rgba(249, 74, 0, 0.1); transform: scale(1.05); }
+        .dropzone i { color: var(--accent); margin-bottom: 0.5rem; }
+        .dropzone p { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; font-weight: 500; }
+
+        /* Marquee (Preserved) */
+        .marquee { overflow: hidden; padding: 2rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .marquee-track { display: inline-flex; animation: marquee 30s linear infinite; gap: 4rem; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .marquee-item { font-size: 2rem; font-weight: 200; color: var(--muted); display: inline-flex; align-items: center; gap: 4rem; }
+        .marquee-item::after { content: '✶'; color: var(--accent); font-size: 1.5rem; }
+
+        /* =========================================
+           NEW: FEATURE EXPOSURE STRIP 
+           Concept: Editorial layout. Hovering text 
+           exposes the image beneath it.
+           ========================================= */
+        #features { padding: 8rem 0; overflow: hidden; }
+        .feature-header { padding: 0 4rem; margin-bottom: 6rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .feature-list { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+        .feature-item { border-bottom: 1px solid var(--border); position: relative; padding: 2rem 4rem; display: flex; justify-content: space-between; align-items: center; cursor: none; transition: padding 0.4s var(--ease-brutal); overflow: hidden; }
+        .feature-item h3 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 300; letter-spacing: -0.04em; margin: 0; transition: color 0.3s, transform 0.4s var(--ease-brutal); position: relative; z-index: 2; mix-blend-mode: difference; }
+        .feature-item:hover h3 { color: var(--accent); transform: translateX(20px); }
+        .feature-item p { font-size: 1rem; opacity: 0; transform: translateX(-20px); transition: all 0.4s var(--ease-brutal); position: relative; z-index: 2; mix-blend-mode: difference; max-width: 300px; text-align: right; }
+        .feature-item:hover p { opacity: 1; transform: translateX(0); }
+        .feature-img-wrap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); width: 400px; height: 250px; border-radius: 4px; overflow: hidden; opacity: 0; transition: opacity 0.3s, transform 0.5s var(--ease-brutal); z-index: 1; pointer-events: none; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .feature-item:hover .feature-img-wrap { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .feature-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* =========================================
+           NEW: CINEMATIC PROCESS 
+           Concept: Pinned section, massive type 
+           collisions, parallax ghost numbers.
+           ========================================= */
+        #process { height: 300vh; position: relative; padding: 0; }
+        .process-sticky { position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; }
+        .process-bg-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40vw; font-weight: 200; color: rgba(255,255,255,0.02); line-height: 0.8; pointer-events: none; z-index: 0; letter-spacing: -0.05em; white-space: nowrap; }
+        .process-content { position: relative; z-index: 2; width: 100%; padding: 0 4rem; display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 4rem; align-items: center; }
+        .process-step-num { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 10rem; line-height: 1; color: var(--accent); opacity: 0.8; }
+        .process-step-title h2 { font-size: clamp(3rem, 6vw, 5rem); }
+        .process-step-desc p { font-size: 1.2rem; max-width: 250px; margin-left: auto; text-align: right; }
+        .process-indicator { position: absolute; bottom: 4rem; left: 4rem; display: flex; gap: 1rem; z-index: 3; }
+        .indicator-dot { width: 40px; height: 2px; background: rgba(255,255,255,0.2); transition: background 0.3s; }
+        .indicator-dot.active { background: var(--accent); }
+
+        /* =========================================
+           NEW: BRUTALIST FAQ 
+           Concept: Questions physically expand, 
+           crushing the layout scale.
+           ========================================= */
+        #faq { padding: 12rem 0; }
+        .faq-header { text-align: center; margin-bottom: 6rem; padding: 0 4rem; }
+        .faq-container { max-width: 1200px; margin: 0 auto; padding: 0 4rem; display: flex; flex-direction: column; gap: 0; }
+        .faq-item { border-bottom: 1px solid var(--border); padding: 1.5rem 0; overflow: hidden; cursor: none; transition: padding 0.4s var(--ease-brutal); }
+        .faq-item:first-child { border-top: 1px solid var(--border); }
+        .faq-q { display: flex; justify-content: space-between; align-items: center; gap: 2rem; transition: all 0.4s var(--ease-brutal); }
+        .faq-item.active { padding: 3rem 0; }
+        .faq-item.active .faq-q { padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .faq-text { font-size: 1.5rem; font-weight: 300; transition: font-size 0.4s var(--ease-brutal), color 0.3s; color: var(--fg); }
+        .faq-item.active .faq-text { font-size: 3rem; color: var(--accent); letter-spacing: -0.03em; }
+        .faq-icon { flex-shrink: 0; width: 32px; height: 32px; border: 1px solid var(--muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .faq-item:hover .faq-icon { border-color: var(--accent); color: var(--accent); }
+        .faq-item.active .faq-icon { background: var(--accent); border-color: var(--accent); transform: rotate(45deg); }
+        .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.5s var(--ease-brutal); }
+        .faq-item.active .faq-a { max-height: 200px; }
+        .faq-a p { padding-top: 2rem; font-size: 1.2rem; max-width: 800px; }
+
+        /* Footer (Preserved) */
+        footer { padding: 8rem 0 4rem; border-top: 1px solid var(--border); position: relative; overflow: hidden; background: var(--bg-alt); }
+        .dots-field { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(auto-fill, 20px); grid-auto-rows: 20px; pointer-events: none; z-index: 0; opacity: 0.5; }
+        .dot { width: 2px; height: 2px; background: var(--muted); border-radius: 50%; justify-self: center; align-self: center; transition: transform 0.2s, background 0.2s; }
+        .footer-content { position: relative; z-index: 2; text-align: center; }
+        .footer-logo { font-size: clamp(4rem, 15vw, 12rem); font-weight: 100; letter-spacing: -0.05em; line-height: 0.8; margin-bottom: 2rem; background: linear-gradient(to bottom, var(--fg), var(--muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .reveal { opacity: 0; transform: translateY(20px); }
+    </style>
+</head>
+<body>
+
+    <div class="cursor" id="cursor"></div>
+
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-num" id="preloaderNum">0</div>
+    </div>
+
+    <!-- Header -->
+    <header id="header">
+        <div class="container header-inner">
+            <a href="#" class="logo">FOURMULA<span style="color:var(--accent)">.</span></a>
+            <nav>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#process">Process</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+            </nav>
+            <a href="#" class="btn">Start building <i data-lucide="arrow-right" class="arrow" style="width:16px; height:16px;"></i><span class="hint">⌘K</span></a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero -->
+        <section id="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <div class="hero-text">
+                        <span class="micro-label reveal">AI Product Generation</span>
+                        <h1 class="reveal">Your catalog,<br><span class="light">instantly</span> <span class="accent">re-shot.</span></h1>
+                        <p class="reveal">Generate professional product shots, lifestyle images, and videos instantly with AI. Transform your catalog with on-brand visual assets in seconds.</p>
+                        <div class="cta-wrap reveal">
+                            <a href="#" class="btn">
+                                Upload asset <i data-lucide="arrow-up-right" class="arrow" style="width:16px; height:16px;"></i>
+                                <span class="hint">⌘U</span>
+                            </a>
+                            <a href="#features" class="cta-secondary">Explore features <i data-lucide="chevron-down" style="width:14px; height:14px;"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="hero-visual reveal">
+                        <div class="carousel-stage" id="carouselStage">
+                            <div class="ambient-glow"></div>
+                            <div class="carousel-3d-wrapper" id="carouselWrapper">
+                                <div class="carousel-3d" id="carousel">
+                                    <!-- Items injected via JS -->
+                                </div>
+                            </div>
+                            <div class="dropzone" id="dropzone">
+                                <i data-lucide="upload-cloud" style="width:24px; height:24px;"></i>
+                                <p>Drop image</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marquee -->
+        <div class="marquee">
+            <div class="marquee-track">
+                <span class="marquee-item">PDPs</span>
+                <span class="marquee-item">UGC</span>
+                <span class="marquee-item">Lifestyle shots</span>
+                <span class="marquee-item">Ads</span>
+                <span class="marquee-item">Stories</span>
+                <span class="marquee-item">Street style</span>
+                <span class="marquee-item">PDPs</span>
+                <span class="marquee-item">UGC</span>
+                <span class="marquee-item">Lifestyle shots</span>
+                <span class="marquee-item">Ads</span>
+                <span class="marquee-item">Stories</span>
+                <span class="marquee-item">Street style</span>
+            </div>
+        </div>
+
+        <!-- =========================================
+             FEATURE EXPOSURE STRIP
+             ========================================= -->
+        <section id="features">
+            <div class="feature-header">
+                <div>
+                    <span class="micro-label reveal">What you can do</span>
+                    <h2 class="reveal" style="margin-top: 1rem;">On-brand visuals.<br><span class="light">Made by AI.</span></h2>
+                </div>
+                <p class="reveal" style="max-width: 300px; text-align: right;">Hover to expose the capability.</p>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h3>AI Fashion Photoshoot</h3>
+                    <div class="feature-img-wrap">
+                        <img src="https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c4a9e3e28661c0ceb_38a07b3bf64cc9acf342df9a33b937e4_hero-load-03.avif" alt="Fashion">
+                    </div>
+                    <p>Studio-quality, without the studio.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>AI Product Shots</h3>
+                    <div class="feature-img-wrap">
+                        <img src="https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c4fc089b2812b9d5c_62ddd7be268edacfe9c9dc778fecafe6_hero-load-05.avif" alt="Product">
+                    </div>
+                    <p>New scenes on demand.</p>
+                </div>
+                <div class="feature-item">
+                    <h3>AI Video Production</h3>
+                    <div class="feature-img-wrap">
+                        <img src="https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c04412d3f16007b22_f28274dae9c94f66d31e483913bb79d4_hero-load-07.avif" alt="Video">
+                    </div>
+                    <p>Campaign-ready in minutes.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+             CINEMATIC PROCESS 
+             ========================================= -->
+        <section id="process">
+            <div class="process-sticky">
+                <div class="process-bg-text" id="bgText">01</div>
+                
+                <div class="process-content">
+                    <div class="process-step-num" id="stepNum">01</div>
+                    <div class="process-step-title">
+                        <h2 id="stepTitle">Add products<br>and brand.</h2>
+                    </div>
+                    <div class="process-step-desc">
+                        <p id="stepDesc">Store your products, shots and brand look in one place. We learn from your existing images to keep colors, lighting and style consistent.</p>
+                    </div>
+                </div>
+
+                <div class="process-indicator">
+                    <div class="indicator-dot active"></div>
+                    <div class="indicator-dot"></div>
+                    <div class="indicator-dot"></div>
+                    <div class="indicator-dot"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+             BRUTALIST FAQ 
+             ========================================= -->
+        <section id="faq">
+            <div class="faq-header">
+                <span class="micro-label reveal">Frequently Asked</span>
+                <h2 class="reveal" style="margin-top: 1rem;">Not AI-gen answers.<br><span class="light serif">Real ones here.</span></h2>
+            </div>
+
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-q">
+                        <span class="faq-text">What can AI FOURMULA create for my brand?</span>
+                        <div class="faq-icon"><i data-lucide="plus" style="width:16px; height:16px;"></i></div>
+                    </div>
+                    <div class="faq-a">
+                        <p>Product images, fashion shots, lifestyle scenes and short videos for PDPs, social, ads and email.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">
+                        <span class="faq-text">What do I need to start?</span>
+                        <div class="faq-icon"><i data-lucide="plus" style="width:16px; height:16px;"></i></div>
+                    </div>
+                    <div class="faq-a">
+                        <p>Just a store link or a product photo. We use it to generate on-brand visuals automatically.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">
+                        <span class="faq-text">Will the visuals match our brand look?</span>
+                        <div class="faq-icon"><i data-lucide="plus" style="width:16px; height:16px;"></i></div>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. We learn from your existing images and keep colours, lighting and style consistent.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">
+                        <span class="faq-text">Do I own the assets you generate?</span>
+                        <div class="faq-icon"><i data-lucide="plus" style="width:16px; height:16px;"></i></div>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. All approved outputs are yours to use across any channel.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="dots-field" id="dotsField"></div>
+        <div class="container footer-content">
+            <div class="footer-logo">FOURMULA<span style="color:var(--accent)">.</span></div>
+            <p style="margin: 0 auto; position: relative; z-index: 2;">© 2024 Fourmula ltd. UK, London. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Custom Cursor
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.2, ease: "power2.out" });
+        });
+
+        document.querySelectorAll('a, button, .dropzone, .faq-item, .feature-item').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Preloader
+        const preloader = document.getElementById('preloader');
+        const preloaderNum = document.getElementById('preloaderNum');
+        
+        const tl = gsap.timeline();
+        tl.to(preloaderNum, {
+            textContent: 100,
+            duration: 2,
+            snap: { textContent: 1 },
+            ease: "power2.inOut"
+        })
+        .to(preloader, { y: "-100%", duration: 0.8, ease: "power3.inOut" })
+        .to('header', { y: 0, duration: 0.6, ease: "power3.out" }, "-=0.4")
+        .to('.hero-text .reveal', { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power3.out" }, "-=0.4")
+        .to('.hero-visual', { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, "-=0.8");
+
+        // 3D Carousel Setup (Preserved)
+        const images = [
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23cab969012e24ba09f_c04b802c31239400042e400a54d04909_hero-load-01.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23cf317e2c1522cced9_8641f04d89cd55c8eebf8497f27a1aa3_hero-load-02.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c4a9e3e28661c0ceb_38a07b3bf64cc9acf342df9a33b937e4_hero-load-03.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c6723eadc91210ade_6d965782e0ccedbe7d7bd322d202488d_hero-load-04.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c4fc089b2812b9d5c_62ddd7be268edacfe9c9dc778fecafe6_hero-load-05.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23cc0f89e21b0fe7c98_795e9025f45162bfde189191421814cf_hero-load-06.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c04412d3f16007b22_f28274dae9c94f66d31e483913bb79d4_hero-load-07.avif",
+            "https://cdn.prod.website-files.com/6936c73d0da5b3bc5bb89ca4/6939a23c78d0b447681dd9f5_hero-load-08.avif"
+        ];
+        const carousel = document.getElementById('carousel');
+        const angleStep = 360 / images.length;
+        const radius = 450;
+        images.forEach((src, i) => {
+            const item = document.createElement('div');
+            item.className = 'carousel-item';
+            item.style.transform = `rotateY(${i * angleStep}deg) translateZ(${radius}px)`;
+            item.innerHTML = `<img src="${src}" alt="Product ${i+1}">`;
+            carousel.appendChild(item);
+        });
+
+        // Cursor Parallax on Carousel (Preserved)
+        const stage = document.getElementById('carouselStage');
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        let mouseX = 0, mouseY = 0, currentX = 0, currentY = 0;
+        stage.addEventListener('mousemove', (e) => {
+            const rect = stage.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+            mouseY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+        });
+        stage.addEventListener('mouseleave', () => { mouseX = 0; mouseY = 0; });
+        function animateParallax() {
+            currentX += (mouseX - currentX) * 0.05;
+            currentY += (mouseY - currentY) * 0.05;
+            carouselWrapper.style.transform = `rotateY(${currentX * 20}deg) rotateX(${-currentY * 12}deg)`;
+            requestAnimationFrame(animateParallax);
+        }
+        animateParallax();
+
+        // GSAP Scroll Reveals
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.utils.toArray('section:not(#hero) .reveal').forEach(el => {
+            gsap.to(el, {
+                opacity: 1, y: 0, duration: 0.8, ease: "power3.out",
+                scrollTrigger: { trigger: el, start: "top 85%" }
+            });
+        });
+
+        // =========================================
+        // CINEMATIC PROCESS LOGIC
+        // =========================================
+        const processSteps = [
+            { num: "01", title: "Add products<br>and brand.", desc: "Store your products, shots and brand look in one place. We learn from your existing images to keep colors, lighting and style consistent." },
+            { num: "02", title: "AI generates<br>options.", desc: "Use AI to create new concepts, scenes and ideas. Multiple visual directions generated in seconds or minutes." },
+            { num: "03", title: "Choose<br>the best.", desc: "Pick the versions you like from the generations. Easy side-by-side comparison and review tools built-in." },
+            { num: "04", title: "Ready-made<br>export.", desc: "Export ready-made files optimized for PDP & ads to your store, ads and social channels with one click." }
+        ];
+
+        const bgText = document.getElementById('bgText');
+        const stepNum = document.getElementById('stepNum');
+        const stepTitle = document.getElementById('stepTitle');
+        const stepDesc = document.getElementById('stepDesc');
+        const indicators = document.querySelectorAll('.indicator-dot');
+
+        ScrollTrigger.create({
+            trigger: "#process",
+            start: "top top",
+            end: "bottom bottom",
+            onUpdate: (self) => {
+                const progress = self.progress;
+                const stepIndex = Math.min(Math.floor(progress * processSteps.length), processSteps.length - 1);
+                const step = processSteps[stepIndex];
+
+                if (stepNum.textContent !== step.num) {
+                    stepNum.textContent = step.num;
+                    stepTitle.innerHTML = step.title;
+                    stepDesc.textContent = step.desc;
+                    bgText.textContent = step.num;
+
+                    indicators.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === stepIndex);
+                    });
+
+                    // Glitch animation on text change
+                    gsap.fromTo([stepNum, stepTitle], 
+                        { x: -20, opacity: 0 }, 
+                        { x: 0, opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.05 }
+                    );
+                }
+            }
+        });
+
+        // Parallax for massive background number
+        gsap.to(bgText, {
+            xPercent: -10,
+            ease: "none",
+            scrollTrigger: {
+                trigger: "#process",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: true
+            }
+        });
+
+        // =========================================
+        // BRUTALIST FAQ LOGIC
+        // =========================================
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                // Close all
+                faqItems.forEach(i => i.classList.remove('active'));
+                // Open clicked (if it wasn't open)
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+                // Force ScrollTrigger to recalculate heights in case layout shifted
+                setTimeout(() => ScrollTrigger.refresh(), 500);
+            });
+        });
+
+        // =========================================
+        // FOOTER DOT MATRIX (Preserved)
+        // =========================================
+        const dotsField = document.getElementById('dotsField');
+        const dotSize = 20;
+        let cols = Math.floor(window.innerWidth / dotSize);
+        let rows = Math.floor(window.innerHeight / dotSize);
+        function buildDots() {
+            dotsField.innerHTML = '';
+            for(let i = 0; i < cols * rows; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dotsField.appendChild(dot);
+            }
+        }
+        buildDots();
+        window.addEventListener('resize', () => {
+            cols = Math.floor(window.innerWidth / dotSize);
+            rows = Math.floor(window.innerHeight / dotSize);
+            buildDots();
+        });
+        document.addEventListener('mousemove', (e) => {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach(dot => {
+                const rect = dot.getBoundingClientRect();
+                const dx = e.clientX - (rect.left + rect.width/2);
+                const dy = e.clientY - (rect.top + rect.height/2);
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const maxDist = 150;
+                if (dist < maxDist) {
+                    const scale = 1 + (1 - dist / maxDist) * 4;
+                    gsap.to(dot, { scale: scale, backgroundColor: '#F94A00', duration: 0.3 });
+                } else {
+                    gsap.to(dot, { scale: 1, backgroundColor: 'rgba(255,255,255,0.6)', duration: 0.3 });
+                }
+            });
+        });
+
+        // Dropzone visual interaction
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--accent)';
+            dropzone.style.background = 'rgba(249, 74, 0, 0.15)';
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.style.borderColor = 'rgba(255,255,255,0.2)';
+            dropzone.style.background = 'rgba(14, 14, 14, 0.9)';
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.innerHTML = '<i data-lucide="loader" style="width:24px; height:24px; animation: spin 1s linear infinite;"></i><p>Processing...</p>';
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2472 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  motion, 
+  useScroll, 
+  useTransform, 
+  AnimatePresence, 
+  useSpring, 
+  useMotionValue, 
+  useMotionTemplate,
+  useInView,
+  useAnimationFrame,
+  useMotionValueEvent,
+  useVelocity
+} from 'framer-motion';
+import { 
+  MapPin, 
+  Compass, 
+  ArrowRight, 
+  ChevronDown, 
+  Menu,
+  Wind,
+  Zap, 
+  ShieldCheck, 
+  Target, 
+  Landmark, 
+  Building2, 
+  Briefcase, 
+  ArrowUpRight,
+  Globe,
+  Radio,
+  BarChart3,
+  Cpu,
+  TerminalSquare,
+  Play
+} from 'lucide-react';
+
+// --- Fallback Image Utility ---
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600";
+const handleImageError = (e) => { e.target.src = FALLBACK_IMG; };
+
+// --- Global Context ---
+const NavbarContext = React.createContext({ isNavHidden: false, setNavHidden: () => {}, isNavOpen: false, setNavOpen: () => {} });
+
+// --- Assets & Definitions ---
+const AMENITIES = [
+  {
+    id: 'coffee',
+    name: 'Artisan Cafe',
+    title: 'Premium on-site dining for tenants and guests.',
+    desc: 'Start your day right with artisan coffee and fresh, locally sourced catering prepared daily. Designed for quick grab-and-go or casual morning client meetings.',
+    img: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32', '#F59E0B', '#EF4444']
+  },
+  {
+    id: 'lobby',
+    name: 'Executive Lobby',
+    title: 'A grand entrance that sets the tone for your business.',
+    desc: 'We strive to build a strong sense of community for our prestigious corporate tenants. The lobby creates opportunities for networking and a highly professional first impression.',
+    img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32']
+  },
+  {
+    id: 'boardroom',
+    name: 'Conference Center',
+    title: 'High-tech spaces designed for critical decisions.',
+    desc: 'Fully equipped meeting environments available to all tenants, featuring adaptive lighting, seamless video conferencing tech, and acoustic privacy.',
+    img: 'https://images.unsplash.com/photo-1600607687960-4a5963731956?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32']
+  },
+  {
+    id: 'gym',
+    name: 'Wellness Facility',
+    title: 'State-of-the-art corporate fitness center.',
+    desc: 'An exclusive, premium fitness facility designed to support work-life balance. Equipped with advanced cardiovascular machines, free weights, and dedicated recovery zones.',
+    img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32']
+  },
+  {
+    id: 'parking',
+    name: 'Private Parking',
+    title: 'Secure, climate-controlled subterranean vehicle storage.',
+    desc: 'Effortless arrival and departure with EV charging stations, robust 24/7 security monitoring, and direct, private elevator access to all executive floors.',
+    img: 'https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32', '#F59E0B', '#EF4444']
+  },
+  {
+    id: 'views',
+    name: 'Skyline Views',
+    title: 'Panoramic cityscapes and sweeping waterfront vistas.',
+    desc: 'Floor-to-ceiling ultra-clear glazing provides an uninterrupted connection to the city. An ever-changing backdrop that elevates the daily experience.',
+    img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32', '#F59E0B', '#EF4444']
+  },
+  {
+    id: 'creative',
+    name: 'Co-Working Zones',
+    title: 'Open collaboration areas designed to inspire.',
+    desc: 'Fluid, adaptable spaces that break down traditional office barriers. Whether for a quick brainstorm or deep focus, the environment adapts to tenant workflows.',
+    img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32', '#F59E0B']
+  },
+  {
+    id: 'shops',
+    name: 'Retail Plaza',
+    title: 'Curated ground-floor retail and daily conveniences.',
+    desc: 'A vibrant ecosystem of premium retail, dining, and essential services located right at your doorstep, seamlessly increasing the value of your commercial footprint.',
+    img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1600',
+    dots: ['#2E7D32', '#F59E0B', '#EF4444']
+  }
+];
+
+const FUTURE_FEATURES = [
+  {
+    id: 'futureproof',
+    title: 'Futureproof',
+    desc: 'Dominion spaces are fully agile. With durable components and smart modular systems, environments can be expanded, divided and reshaped countless times.',
+    img: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=80',
+    bg: '#F3E6E3', 
+    text: '#111111',
+    layout: 'col-span-1 md:col-span-6',
+    type: 'top-text'
+  },
+  {
+    id: 'cost-effective',
+    title: 'Cost-effective',
+    desc: 'Save with intelligent architecture. More economical and sustainable from day one than traditional constructions. The longer you use it, the more you save.',
+    img: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80', 
+    bg: '#1A1A1A',
+    text: '#FFFFFF',
+    layout: 'col-span-1 md:col-span-6',
+    type: 'overlay'
+  },
+  {
+    id: 'ready',
+    title: 'Ready to adapt\nand rebuild',
+    desc: 'Take your infrastructure with you in case of relocation. Modular structures and lightweight components make interior transformation effortless.',
+    img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80', 
+    bg: '#EAEBEA',
+    text: '#111111',
+    layout: 'col-span-1 md:col-span-12',
+    type: 'split'
+  },
+  {
+    id: 'time',
+    title: 'Time-saving',
+    desc: 'Build your unique office interior in hours, not in weeks. Assembly takes minimal time with our patented modular click-in structural systems.',
+    img: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?auto=format&fit=crop&w=800&q=80', 
+    bg: '#F4F4F4',
+    text: '#111111',
+    layout: 'col-span-1 md:col-span-5',
+    type: 'top-text'
+  },
+  {
+    id: 'plug',
+    title: 'Plug & Play',
+    desc: 'Even the largest corporate floors are ready to use on day one. Ventilation, ambient lighting, and power infrastructure are completely integrated.',
+    img: 'https://images.unsplash.com/photo-1600607687960-4a5963731956?auto=format&fit=crop&w=1000&q=80', 
+    bg: '#E6E8EA',
+    text: '#111111',
+    layout: 'col-span-1 md:col-span-7',
+    type: 'top-text'
+  }
+];
+
+const WORKSPACE_PANELS = [
+  {
+    id: 'ws-1',
+    title1: "Dominion is compatible",
+    title2: "with",
+    italic: "corporate",
+    title3: "workspaces",
+    leftTitle: "WE HAVE INDIVIDUAL LEASING\nCONDITIONS FOR LARGE\nCORPORATE TENANTS.",
+    rightTitle: "PLEASE FILL A SHORT REQUEST SO\nOUR BROKER CAN CONTACT YOU\nASAP.",
+    img: "https://images.unsplash.com/photo-1497366754045-f40b692ab627?auto=format&fit=crop&w=1600&q=80",
+    color: "#111111"
+  },
+  {
+    id: 'ws-2',
+    title1: "Designed to elevate",
+    title2: "your",
+    italic: "team's",
+    title3: "productivity",
+    leftTitle: "SCALABLE SOLUTIONS DESIGNED\nFOR MODERN WORKFORCES.",
+    rightTitle: "INTEGRATED TECHNOLOGY FOR\nSEAMLESS COLLABORATION.",
+    img: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80",
+    color: "#FFFFFF"
+  },
+  {
+    id: 'ws-3',
+    title1: "Acoustically engineered",
+    title2: "for",
+    italic: "deep",
+    title3: "focus",
+    leftTitle: "SOUNDPROOF ENVIRONMENTS\nFOR INDIVIDUAL EXCELLENCE.",
+    rightTitle: "ZERO DISTRACTIONS.\nMAXIMUM OUTPUT.",
+    img: "https://images.unsplash.com/photo-1556800558-137ea5e78c8d?auto=format&fit=crop&w=1600&q=80",
+    color: "#111111"
+  },
+  {
+    id: 'ws-4',
+    title1: "Scalable infrastructure",
+    title2: "for",
+    italic: "agile",
+    title3: "growth",
+    leftTitle: "EXPAND YOUR CAPACITY IN\nHOURS, NOT MONTHS.",
+    rightTitle: "NO CONSTRUCTION DELAYS.\nNO HIDDEN UPFIT COSTS.",
+    img: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1600&q=80",
+    color: "#FFFFFF"
+  }
+];
+
+const STORY_SLIDES = [
+  {
+    id: "slide1",
+    img: "https://images.unsplash.com/photo-1600585154340-be6199fbfd00?auto=format&fit=crop&w=1200&q=80",
+    layout: "right"
+  },
+  {
+    id: "slide2",
+    img: "https://images.unsplash.com/photo-1518531933037-91b2f5f228f0?auto=format&fit=crop&w=1200&q=80",
+    layout: "left"
+  },
+  {
+    id: "slide3",
+    img: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80",
+    layout: "right-tall"
+  }
+];
+
+// --- Completely rebuilt into the dynamic overlapping collage ---
+const ECOSYSTEM_DATA = [
+  {
+    id: "01",
+    title: "Mortgage Strategy",
+    subtitle: "Smart financing.",
+    desc: "We dive deep into your financial goals and market data to secure optimal rates.",
+    img: "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?auto=format&fit=crop&q=80&w=800",
+    rot: -5, y: 10, scale: 0.95,
+    tag: "smart financing", tagColor: "bg-[#FFD1E3] text-[#A62A5C]", tagPos: "top-4 right-[-10%]"
+  },
+  {
+    id: "02",
+    title: "Property Management",
+    subtitle: "Seamless oversight.",
+    desc: "Complete autonomous oversight, tenant management, and dynamic asset scaling.",
+    img: "https://images.unsplash.com/photo-1554469384-e58fac16e23a?auto=format&fit=crop&q=80&w=800",
+    rot: 3, y: 40, scale: 1.05,
+    tag: "asset oversight", tagColor: "bg-[#FFD0A1] text-[#9A4B00]", tagPos: "bottom-10 left-[-15%]"
+  },
+  {
+    id: "03",
+    title: "Global Development",
+    subtitle: "Flawless execution.",
+    desc: "Elite architectural insight combined with structural engineering for lasting legacy.",
+    img: "https://images.unsplash.com/photo-1503387762-592dea58ef23?auto=format&fit=crop&q=80&w=800",
+    rot: -3, y: 20, scale: 1,
+    tag: "architectural legacy", tagColor: "bg-[#A7E6C9] text-[#1B613D]", tagPos: "top-1/2 right-[-20%]"
+  },
+  {
+    id: "04",
+    title: "Exit Strategy",
+    subtitle: "Maximize returns.",
+    desc: "Strategic off-market placements and high-net-worth introductions for maximum ROI.",
+    img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+    rot: 6, y: 50, scale: 0.9,
+    tag: "maximum returns", tagColor: "bg-[#E6F096] text-[#697510]", tagPos: "top-8 left-[-10%]"
+  }
+];
+
+// --- Utilities & Reusable Components ---
+const Magnetic = ({ children }) => {
+  const ref = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouse = (e) => {
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    setPosition({ x: middleX * 0.3, y: middleY * 0.3 });
+  };
+
+  const reset = () => setPosition({ x: 0, y: 0 });
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouse}
+      onMouseLeave={reset}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+      className="relative z-50 inline-block"
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const LensCursor = ({ globalX, globalY }) => {
+  const springX = useSpring(globalX, { damping: 30, stiffness: 250 });
+  const springY = useSpring(globalY, { damping: 30, stiffness: 250 });
+  
+  const ghostSpringX = useSpring(globalX, { damping: 40, stiffness: 100 });
+  const ghostSpringY = useSpring(globalY, { damping: 40, stiffness: 100 });
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+
+  useEffect(() => globalX.onChange(x => setCoords(prev => ({ ...prev, x: Math.round(x) }))), [globalX]);
+  useEffect(() => globalY.onChange(y => setCoords(prev => ({ ...prev, y: Math.round(y) }))), [globalY]);
+
+  return (
+    <>
+      <motion.div 
+        className="fixed top-0 left-0 z-[9999] pointer-events-none hidden lg:flex items-center justify-center mix-blend-difference"
+        style={{ x: ghostSpringX, y: ghostSpringY }}
+      >
+        <div className="w-2 h-2 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-[1px]" />
+      </motion.div>
+
+      <motion.div 
+        className="fixed top-0 left-0 z-[9999] pointer-events-none hidden lg:flex items-start gap-4 mix-blend-difference"
+        style={{ x: springX, y: springY }}
+      >
+        <div className="w-12 h-12 border border-white rounded-full flex items-center justify-center -translate-x-1/2 -translate-y-1/2">
+          <div className="w-1 h-1 bg-white rounded-full" />
+        </div>
+        <div className="text-[8px] font-mono text-white/50 uppercase tracking-widest pt-1">
+          X: {coords.x} <br />
+          Y: {coords.y}
+        </div>
+      </motion.div>
+    </>
+  );
+};
+
+const EnvironmentalGrid = ({ globalX, globalY }) => {
+  const winWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+  const winHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
+  
+  const xOffset = useTransform(globalX, [0, winWidth], [20, -20]);
+  const yOffset = useTransform(globalY, [0, winHeight], [20, -20]);
+
+  return (
+    <motion.div 
+      style={{ 
+        x: xOffset, 
+        y: yOffset,
+        backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', 
+        backgroundSize: '60px 60px' 
+      }}
+      animate={{ opacity: [0.02, 0.05, 0.02] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      className="fixed inset-[-50px] z-0 pointer-events-none mix-blend-multiply"
+    />
+  );
+};
+
+const Altimeter = () => {
+  const { scrollYProgress } = useScroll();
+  const [heightStr, setHeightStr] = useState("0M");
+  
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    setHeightStr(`${(v * 8848).toFixed(0)}M`);
+  });
+  
+  const scaleY = useSpring(scrollYProgress, { stiffness: 100, damping: 20 });
+
+  return (
+    <div className="fixed right-4 md:right-6 top-1/2 -translate-y-1/2 h-[30vh] w-4 flex flex-col items-center z-[90] pointer-events-none mix-blend-difference text-white hidden lg:flex">
+      <motion.div className="text-[8px] font-mono tracking-widest rotate-90 origin-bottom mb-12 whitespace-nowrap">
+        {heightStr}
+      </motion.div>
+      <div className="w-[1px] h-full bg-white/20 relative origin-top">
+        <motion.div 
+          style={{ scaleY }} 
+          className="absolute top-0 left-0 w-full h-full bg-white origin-top" 
+        />
+      </div>
+    </div>
+  );
+};
+
+const Counter = ({ value }) => {
+  const ref = useRef(null);
+  const motionValue = useMotionValue(0);
+  const springValue = useSpring(motionValue, { damping: 30, stiffness: 100 });
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (isInView) {
+      motionValue.set(value);
+    }
+  }, [isInView, motionValue, value]);
+
+  const [display, setDisplay] = useState("0");
+
+  useMotionValueEvent(springValue, "change", (latest) => {
+    if (value % 1 !== 0) {
+      setDisplay(latest.toFixed(1));
+    } else {
+      setDisplay(Math.round(latest).toString());
+    }
+  });
+
+  return <span ref={ref}>{display}</span>;
+};
+
+const CipherText = ({ text, isHovered }) => {
+  const [displayText, setDisplayText] = useState(text);
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+
+  useEffect(() => {
+    if (!isHovered) {
+      setDisplayText(text);
+      return;
+    }
+    let iteration = 0;
+    const interval = setInterval(() => {
+      setDisplayText((prev) => 
+        text.split("").map((letter, index) => {
+          if (index < iteration) return text[index];
+          return letters[Math.floor(Math.random() * letters.length)];
+        }).join("")
+      );
+      if (iteration >= text.length) clearInterval(interval);
+      iteration += 1 / 2;
+    }, 30);
+    return () => clearInterval(interval);
+  }, [isHovered, text]);
+
+  return <span>{displayText}</span>;
+};
+
+// --- Custom Experimental Cinematic Text Animations ---
+const CinematicCharReveal = ({ text, className, delay = 0, play = true }) => {
+  return (
+    <h1 className={`flex flex-wrap ${className}`}>
+      {text.split("").map((char, index) => (
+        <span key={index} className="overflow-hidden inline-block py-2 -my-2 md:py-4 md:-my-4">
+          <motion.span
+            initial={{ y: "110%", rotateZ: 10 }}
+            animate={play ? { y: "0%", rotateZ: 0 } : { y: "110%", rotateZ: 10 }}
+            transition={{ 
+              duration: 1.2, 
+              delay: play ? delay + (index * 0.04) : 0, 
+              ease: [0.77, 0, 0.175, 1] 
+            }}
+            className="inline-block origin-bottom-left"
+          >
+            {char === " " ? "\u00A0" : char}
+          </motion.span>
+        </span>
+      ))}
+    </h1>
+  );
+};
+
+const CinematicWordReveal = ({ text, className, delay = 0, play = true }) => {
+  const words = text.split(" ");
+  
+  return (
+    <motion.div 
+      initial="hidden"
+      whileInView={play ? "visible" : "hidden"}
+      viewport={{ once: true, margin: "-5%" }}
+      variants={{
+        visible: { transition: { staggerChildren: 0.015, delayChildren: delay } },
+        hidden: {}
+      }}
+      className={`flex flex-wrap ${className}`}
+    >
+      {words.map((word, index) => (
+        <span key={index} className="overflow-hidden inline-block mr-[0.25em] py-2 -my-2">
+          <motion.span
+            variants={{
+              visible: { y: "0%", opacity: 1, rotateZ: 0, filter: "blur(0px)" },
+              hidden: { y: "120%", opacity: 0, rotateZ: 5, filter: "blur(4px)" }
+            }}
+            transition={{ duration: 0.8, ease: [0.77, 0, 0.175, 1] }}
+            className="inline-block origin-top-left"
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </motion.div>
+  );
+};
+
+const CinematicRotatingText = ({ words, className, delay = 0, play = true }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (!play) return;
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [play, words.length]);
+
+  return (
+    <div className={`flex flex-wrap ${className}`}>
+      <AnimatePresence mode="wait">
+        <motion.div key={index} className="flex whitespace-nowrap">
+          {words[index].split("").map((char, i) => (
+            <span key={i} className="overflow-hidden inline-block py-2 -my-2 md:py-4 md:-my-4">
+              <motion.span
+                initial={{ y: "110%", rotateZ: 10, filter: "blur(8px)", opacity: 0 }}
+                animate={play ? { 
+                  y: "0%", 
+                  rotateZ: 0, 
+                  filter: "blur(0px)", 
+                  opacity: 1,
+                  transition: { 
+                    duration: 1.2, 
+                    delay: (index === 0 ? delay : 0) + (i * 0.04), 
+                    ease: [0.77, 0, 0.175, 1] 
+                  }
+                } : { y: "110%", rotateZ: 10, filter: "blur(8px)", opacity: 0 }}
+                exit={{ 
+                  y: "-110%", 
+                  rotateZ: -10, 
+                  filter: "blur(8px)", 
+                  opacity: 0,
+                  transition: { 
+                    duration: 0.6, 
+                    delay: i * 0.02, 
+                    ease: [0.77, 0, 0.175, 1] 
+                  }
+                }}
+                className="inline-block origin-bottom-left"
+              >
+                {char === " " ? "\u00A0" : char}
+              </motion.span>
+            </span>
+          ))}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- HERO SEQUENCE ---
+// ----------------------------------------------------------------------
+const FINDHero = ({ isLoaded }) => {
+  const { setNavOpen } = React.useContext(NavbarContext);
+
+  return (
+    <section className="relative min-h-[100vh] bg-[#EBEAE4] pt-20 lg:pt-24 pb-16 px-6 lg:px-12 flex flex-col justify-between overflow-hidden pointer-events-auto">
+       
+       {/* Custom Hero Header elements */}
+       <div className="absolute top-8 left-6 lg:left-12 z-40 text-[#111111] pointer-events-auto cursor-pointer">
+         <motion.svg 
+            initial={{ opacity: 0 }}
+            animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 975 280" className="h-4 sm:h-5 md:h-6 lg:h-7 hover:scale-105 transition-transform duration-300 origin-left text-[#111111]"
+          >
+            <path fill="currentColor" d="M836.06 1.01c77.3 0 139.94 62.69 139.94 140C976 218.33 913.35 281 836.06 281H702.61V1.01zm-52.82 80.17v119.44h44.58a59.5 59.5 0 0 0 42.21-17.5 59.7 59.7 0 0 0-42.2-101.94z"></path>
+            <path fill="currentColor" d="M595.45 183.2V1h80.14v279.99H556.68l-73.33-152.93V281H403.2V1h110.33z"></path>
+            <path fill="currentColor" d="M376.19 280.99h-141l61.26-140.29L235.2 1h141v279.99Z"></path>
+            <path fill="currentColor" d="M244.55 81.28H81.14v59.42h101.02v80.17H81.14v60.12H1V1h207.91z"></path>
+          </motion.svg>
+       </div>
+       <div className="absolute top-8 right-6 lg:right-12 z-40 pointer-events-auto">
+         <Magnetic>
+           <motion.button 
+             initial={{ opacity: 0, scale: 0.8 }}
+             animate={isLoaded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+             transition={{ duration: 0.8, delay: 0.2 }}
+             onClick={() => setNavOpen(true)}
+             className="w-10 h-10 rounded-full border border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-white transition-colors cursor-pointer shadow-sm"
+           >
+             <Menu size={16} />
+           </motion.button>
+         </Magnetic>
+       </div>
+
+       {/* Top/Right Stacked Oversized Text */}
+       <div className="flex justify-end w-full mt-6 md:mt-8 relative z-20 text-right">
+         <h2 className="text-[16vw] md:text-[11vw] font-medium leading-[0.85] tracking-tighter text-[#111111] flex flex-col items-end">
+           <div className="overflow-hidden pb-1 md:pb-3">
+             <motion.div
+               initial={{ y: "110%", rotateZ: 5 }}
+               animate={isLoaded ? { y: "0%", rotateZ: 0 } : { y: "110%", rotateZ: 5 }}
+               transition={{ duration: 1.2, ease: [0.77, 0, 0.175, 1], delay: 0.1 }}
+               className="origin-top-left flex items-start"
+             >
+               For the one<span className="text-[0.4em] align-super relative -top-[0.2em] ml-1">&deg;</span>
+             </motion.div>
+           </div>
+           <div className="overflow-hidden pb-1 md:pb-3 -mt-2 md:-mt-6">
+             <motion.div
+               initial={{ y: "110%", rotateZ: 5 }}
+               animate={isLoaded ? { y: "0%", rotateZ: 0 } : { y: "110%", rotateZ: 5 }}
+               transition={{ duration: 1.2, ease: [0.77, 0, 0.175, 1], delay: 0.2 }}
+               className="origin-top-left"
+             >
+               who is
+             </motion.div>
+           </div>
+         </h2>
+       </div>
+       
+       {/* Bottom/Left Massive Rotating Text & CTA */}
+       <div className="flex flex-col md:flex-row justify-between items-start md:items-end w-full mt-auto relative z-20 gap-10 lg:gap-12">
+         
+         <CinematicRotatingText 
+           words={["Sustainable", "Commercial", "Estates", "Investments", "Properties"]}
+           delay={0.3}
+           play={isLoaded}
+           className="text-[#111111] text-[17vw] md:text-[13vw] lg:text-[14vw] font-medium leading-[0.8] tracking-tighter -ml-1 md:-ml-2 transform-gpu" 
+         />
+
+         {/* Floating CTA details */}
+         <motion.div 
+           initial={{ opacity: 0 }}
+           animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
+           transition={{ duration: 1, delay: 0.8 }}
+           className="max-w-[280px] md:max-w-xs text-left md:text-right flex flex-col md:items-end items-start pointer-events-auto pb-2 md:pb-6 ml-auto"
+         >
+           <h4 className="text-xs font-bold text-[#111111] mb-2 uppercase tracking-wide">
+             Premium Real Estate Portfolio
+           </h4>
+           <div className="mb-5 text-left md:text-right">
+             <CinematicWordReveal 
+               text="Discover exclusive residential and commercial properties curated for the most discerning buyers." 
+               delay={0.9}
+               play={isLoaded}
+               className="text-[11px] md:text-xs text-[#6B6B6B] leading-relaxed font-medium justify-start md:justify-end" 
+             />
+           </div>
+           <div className="flex items-center justify-start md:justify-end gap-3">
+             <span className="text-[10px] md:text-[11px] text-[#111111] font-bold">Ready to invest?</span>
+             <Magnetic>
+               <button className="bg-[#111111] text-white text-[10px] px-5 py-2.5 rounded-full hover:bg-[#333] transition-all font-semibold cursor-pointer shadow-sm hover:shadow-md active:scale-95">
+                 View Portfolio
+               </button>
+             </Magnetic>
+           </div>
+         </motion.div>
+         
+       </div>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- COLOR CARDS GRID (Aperture Cards below Hero) ---
+// ----------------------------------------------------------------------
+const ShowcaseApertureCard = ({ card, index }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+       onMouseEnter={() => setIsHovered(true)}
+       onMouseLeave={() => setIsHovered(false)}
+       initial={{ opacity: 0, y: 50 }}
+       whileInView={{ opacity: 1, y: 0 }}
+       viewport={{ once: true, margin: "-50px" }}
+       transition={{ duration: 0.8, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
+       className="relative w-full aspect-[3/4] sm:aspect-[4/5] rounded-t-full rounded-b-2xl shadow-sm cursor-pointer overflow-hidden group border border-[#E5E5E5]/50 pointer-events-auto"
+    >
+      {/* Solid Color Base Layer */}
+      <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center transition-colors duration-500" style={{ backgroundColor: card.color }}>
+         
+         {/* Tightly Packed Typography: Massive Number + Small Title directly below */}
+         <div className="flex flex-col items-center justify-center -mt-10">
+            <span className="text-white/40 text-[7rem] lg:text-[8rem] font-black tracking-tighter leading-[0.8] mix-blend-overlay">0{index + 1}</span>
+            <span className="text-white font-bold tracking-[0.2em] uppercase text-xs lg:text-sm mt-2 shadow-sm drop-shadow-md">
+              {card.name}
+            </span>
+         </div>
+         
+      </div>
+
+      {/* Aperture Ring (Visible when not hovered, highlights the cutout) */}
+      <motion.div
+        animate={{ opacity: isHovered ? 0 : 1, scale: isHovered ? 1.5 : 1 }}
+        transition={{ duration: 0.4 }}
+        className="absolute z-20 border-[2px] border-white/50 rounded-full pointer-events-none"
+        style={{
+           width: "60px", height: "60px",
+           left: "calc(50% - 30px)", bottom: "10%"
+        }}
+      />
+
+      {/* Expanding Image Layer via Circular ClipPath */}
+      <motion.div
+         initial={false}
+         animate={{
+            clipPath: isHovered ? "circle(150% at 50% 85%)" : "circle(30px at 50% 85%)"
+         }}
+         transition={{ duration: 0.7, ease: [0.77, 0, 0.175, 1] }}
+         className="absolute inset-0 z-30"
+      >
+         <motion.img
+           initial={false}
+           animate={{ scale: isHovered ? 1 : 1.2 }}
+           transition={{ duration: 0.7, ease: [0.77, 0, 0.175, 1] }}
+           src={card.img}
+           onError={handleImageError}
+           className="w-full h-full object-cover"
+         />
+         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      </motion.div>
+
+      {/* Reveal Content over Image (Only visible on hover) */}
+      <motion.div
+         initial={false}
+         animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
+         transition={{ duration: 0.4, delay: isHovered ? 0.2 : 0 }}
+         className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-end z-40 pointer-events-none px-4 text-center"
+      >
+         <p className="text-white/90 text-[10px] uppercase tracking-wider mt-1 font-bold">{card.avail}</p>
+         <div className="mt-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+            <ArrowUpRight size={14} className="text-white" />
+         </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+const ColorCardsGrid = () => {
+  const buildings = [
+    { name: "The Green", color: "#1F7A4D", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600", avail: "Available from 4,500 sq.ft." },
+    { name: "The Pink", color: "#E8A1C4", img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=600", avail: "Not Available" },
+    { name: "The Yellow", color: "#F4B63D", img: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=600", avail: "Available from 2,100 sq.ft." },
+    { name: "The Red", color: "#E5483B", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600", avail: "Not Available" },
+  ];
+
+  return (
+    <section className="bg-[#EBEAE4] px-6 lg:px-12 pb-16 pt-8 z-20 relative pointer-events-auto">
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 w-full max-w-[1400px] mx-auto mt-12">
+         {buildings.map((b, i) => (
+            <ShowcaseApertureCard key={i} card={b} index={i} />
+         ))}
+       </div>
+    </section>
+  )
+}
+
+// ----------------------------------------------------------------------
+// --- BUILDING DESCRIPTION ("One of a kind") ---
+// ----------------------------------------------------------------------
+const BuildingDescription = () => {
+  return (
+    <section className="bg-[#EBEAE4] pt-8 pb-24 px-6 lg:px-12 pointer-events-auto overflow-hidden">
+       {/* Animated Separator Divider */}
+       <motion.div 
+         initial={{ scaleX: 0 }}
+         whileInView={{ scaleX: 1 }}
+         viewport={{ once: true }}
+         transition={{ duration: 1.5, ease: "easeInOut" }}
+         className="w-full max-w-[1400px] mx-auto h-[1px] bg-[#D4D3CE] mb-12 lg:mb-16 origin-left" 
+       />
+
+       {/* Structured Description Section */}
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start w-full max-w-[1400px] mx-auto">
+         <div className="lg:col-span-2">
+           <motion.span 
+             initial={{ letterSpacing: "0.5em", opacity: 0, x: -20 }}
+             whileInView={{ letterSpacing: "0.1em", opacity: 1, x: 0 }}
+             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+             viewport={{ once: true, margin: "-10%" }}
+             className="text-[11px] lg:text-xs font-bold text-[#6B6B6B] tracking-wider uppercase inline-block"
+           >
+             One of a kind
+           </motion.span>
+         </div>
+         
+         <div className="lg:col-span-10 flex flex-col gap-12 lg:gap-20">
+           
+           <motion.h2 
+             variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
+             initial="hidden"
+             whileInView="visible"
+             viewport={{ once: true, margin: "-10%" }}
+             className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.1] font-medium tracking-tight text-[#111111] max-w-4xl flex flex-wrap items-center"
+           >
+             {/* Text and Badge mapping with variants */}
+             {["The"].map((word, i) => (
+               <div key={`w1-${i}`} className="overflow-hidden inline-block mr-[0.25em] py-2 -my-2">
+                 <motion.span 
+                   variants={{ hidden: { y: "110%", rotateZ: 5 }, visible: { y: "0%", rotateZ: 0, transition: { duration: 0.8, ease: [0.77, 0, 0.175, 1] } } }}
+                   className="inline-block origin-bottom-left"
+                 >{word}</motion.span>
+               </div>
+             ))}
+             
+             {/* 3D Spring Animated Badge */}
+             <motion.span 
+               variants={{ 
+                 hidden: { scale: 0, rotateZ: -45, opacity: 0 }, 
+                 visible: { scale: 1, rotateZ: 0, opacity: 1, transition: { duration: 0.8, type: "spring", stiffness: 200, damping: 12 } } 
+               }}
+               className="inline-flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 bg-[#111111] text-white rounded-full text-xl sm:text-2xl lg:text-3xl font-bold mx-1 align-middle pb-0.5 shadow-sm hover:scale-110 transition-transform cursor-crosshair mr-[0.25em]"
+             >
+               1
+             </motion.span>
+
+             {["is", "a", "multi-tenant", "310,000", "sq.ft.", "office", "building", "located", "at", "the", "NDSM", "in", "Amsterdam", "Noord"].map((word, i) => (
+               <div key={`w2-${i}`} className="overflow-hidden inline-block mr-[0.25em] py-2 -my-2">
+                 <motion.span 
+                   variants={{ hidden: { y: "110%", rotateZ: 5 }, visible: { y: "0%", rotateZ: 0, transition: { duration: 0.8, ease: [0.77, 0, 0.175, 1] } } }}
+                   className="inline-block origin-bottom-left"
+                 >
+                   {word}
+                 </motion.span>
+               </div>
+             ))}
+           </motion.h2>
+           
+           <div className="flex flex-col md:flex-row justify-end items-start md:items-end w-full">
+             <div className="max-w-xl flex flex-col gap-6">
+               <CinematicWordReveal 
+                 text="The One that is multi-tenant. A 310,000 sq.ft. commercial office building located at the prestigious NDSM wharf in Amsterdam North. The One that stands out with its robust, modern design, complementing the architectural lines of the adjacent skyline and the upscale character of the district. The One at Amsterdam's most diverse corporate hub, already housing iconic international brands and elite firms. We offer attractive, exclusive, and sustainable workspaces designed for market leaders."
+                 delay={0.4}
+                 className="text-[13px] lg:text-sm text-[#4A4A4A] leading-[1.6] font-medium justify-start"
+               />
+               
+               <motion.div 
+                 initial={{ opacity: 0, y: 20 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+                 viewport={{ once: true, margin: "-10%" }}
+                 className="flex items-center gap-4 mt-2"
+               >
+                 <span className="text-[11px] lg:text-xs font-bold text-[#111111]">Looking to lease?</span>
+                 <Magnetic>
+                   <button className="border border-[#E5E5E5] text-[#111111] text-[11px] lg:text-xs px-5 py-2.5 rounded-full hover:bg-[#111111] hover:text-white hover:border-[#111111] transition-all duration-300 font-bold tracking-wide cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-95">
+                     Speak to an Agent
+                   </button>
+                 </Magnetic>
+               </motion.div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+    </section>
+  );
+};
+
+
+// ----------------------------------------------------------------------
+// --- CINEMATIC ZOOM STORY ---
+// ----------------------------------------------------------------------
+const CinematicZoomStory = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  
+  // EXPERIMENTAL: Wrap the raw scroll progress in a finely-tuned spring. 
+  // This decouples the animation from chunky mouse wheel events, guaranteeing buttery smooth interpolation.
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20, mass: 0.2 });
+
+  return (
+     <section ref={containerRef} className="relative h-[400vh] bg-[#FAF9F6]">
+        <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#FAF9F6] pointer-events-auto">
+           {STORY_SLIDES.map((slide, i) => (
+              <ZoomLayer key={slide.id} index={i} scrollYProgress={smoothProgress} data={slide} total={STORY_SLIDES.length} />
+           ))}
+        </div>
+     </section>
+  )
+}
+
+const ZoomLayer = ({ index, scrollYProgress, data, total }) => {
+  const step = 1 / total; 
+  const s = index * step;
+  
+  // Widened the expansion window for a more prolonged, cinematic transition
+  const expandStart = s + 0.05;
+  const expandEnd = s + 0.28;
+
+  // Background Opacity mapping to fade in layers over the expanded image of the previous slide
+  const bgFadeInStart = s > 0 ? s - 0.03 : 0;
+  const bgFadeInEnd = s > 0 ? s + 0.03 : 0.05;
+  const bgOpacity = useTransform(scrollYProgress, [bgFadeInStart, bgFadeInEnd], [0, 1]);
+  const actualBgOpacity = index === 0 ? 1 : bgOpacity;
+
+  // Text fade out smoothly slightly before expansion finishes
+  const textFadeInStart = s;
+  const textFadeInEnd = s + 0.05;
+  const textFadeOutStart = s + 0.15;
+  const textFadeOutEnd = s + 0.25;
+  const textOpacity = useTransform(scrollYProgress,
+      [textFadeInStart, textFadeInEnd, textFadeOutStart, textFadeOutEnd],
+      [0, 1, 1, 0]
+  );
+
+  // EXPERIMENTAL: Instead of animating width/height/top/left which causes heavy layout thrashing,
+  // we animate 'clip-path'. This moves the animation entirely to the GPU compositor for perfectly smooth 60fps.
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  const insetsDesktop = [
+    "inset(25vh 5vw 20vh 55vw round 24px)",
+    "inset(10vh 55vw 10vh 5vw round 24px)",
+    "inset(10vh 5vw 10vh 55vw round 24px)"
+  ];
+  
+  const insetsMobile = [
+    "inset(40vh 5vw 10vh 5vw round 24px)",
+    "inset(10vh 5vw 40vh 5vw round 24px)",
+    "inset(40vh 5vw 10vh 5vw round 24px)"
+  ];
+  
+  const initialInset = isMobile ? insetsMobile[index] : insetsDesktop[index];
+
+  const clipPath = useTransform(scrollYProgress, [expandStart, expandEnd], [initialInset, "inset(0vh 0vw 0vh 0vw round 0px)"]);
+
+  // Internal Image Parallax for depth
+  const innerScale = useTransform(scrollYProgress, [expandStart, expandEnd], [1, 1.15]);
+
+  return (
+    <motion.div className="absolute inset-0 w-full h-full bg-[#FAF9F6]" style={{ opacity: actualBgOpacity, zIndex: index }}>
+       
+       <motion.div style={{ opacity: textOpacity }} className="absolute inset-0 pointer-events-none z-20">
+          {index === 0 && <Slide1Text />}
+          {index === 1 && <Slide2Text />}
+          {index === 2 && <Slide3Text />}
+       </motion.div>
+
+       {/* Drop shadow applied to parent since clipPath cuts off internal shadows */}
+       <div className="absolute inset-0 w-full h-full" style={{ filter: "drop-shadow(0px 20px 40px rgba(0,0,0,0.15))" }}>
+           <motion.div
+             style={{ clipPath }}
+             className="absolute inset-0 w-full h-full z-10 transform-gpu bg-[#EBEAE4]"
+           >
+              <motion.img style={{ scale: innerScale }} src={data.img} onError={handleImageError} className="w-full h-full object-cover transform-gpu origin-center" />
+           </motion.div>
+       </div>
+    </motion.div>
+  )
+}
+
+const Slide1Text = () => (
+  <div className="w-full h-full flex flex-col px-6 lg:px-12 py-12 pointer-events-none">
+    <h2 className="text-center text-[8vw] lg:text-[6vw] font-black uppercase tracking-tighter leading-[0.9] mt-4 text-[#111]">
+      BUILD GOOD® <br/> SUSTAINABLE ASSETS
+    </h2>
+    <div className="absolute left-[5vw] lg:left-[10vw] top-[40vh]">
+      <h3 className="font-serif text-5xl lg:text-7xl leading-[1.1] tracking-tight text-[#111]">Mind Your<br/>Space</h3>
+    </div>
+    <div className="absolute left-6 lg:left-12 bottom-32 max-w-sm pointer-events-auto">
+      <p className="text-xs font-bold leading-relaxed mb-4 text-[#111]">The future of premium architecture starts here: one that puts people and the planet first, and leaves the nasty stuff in the dust.</p>
+      <div className="inline-flex items-center gap-2 border border-[#111] rounded-full px-4 py-1.5 text-[9px] font-bold uppercase tracking-wider bg-[#FAF9F6] cursor-pointer hover:bg-[#111] hover:text-white transition-colors shadow-sm">
+         MEET THE FOUNDATION 1.0 <ArrowRight size={10} />
+      </div>
+    </div>
+    <div className="absolute bottom-8 left-6 lg:left-12 w-[45vw] justify-between hidden md:flex">
+       {[
+         { icon: <Wind size={20} className="text-[#E8A1C4] mb-2"/>, t1: "MADE WITH NEXT-GEN", t2: "NATURAL MATERIALS" },
+         { icon: <Zap size={20} className="text-[#F4B63D] mb-2"/>, t1: "LESS WASTE", t2: "ALL TASTE" },
+         { icon: <ShieldCheck size={20} className="text-[#A2C2E1] mb-2"/>, t1: "DESIGNED FOR", t2: "ALL DAY COMFORT" },
+         { icon: <Globe size={20} className="text-[#1F7A4D] mb-2"/>, t1: "FREE SHIPPING + RETURNS", t2: "GLOBAL + US" }
+       ].map((f, i) => (
+         <div key={i} className="flex flex-col items-center text-center">
+            {f.icon}
+            <div className="text-[7px] lg:text-[8px] font-black uppercase tracking-widest text-[#111] leading-tight">
+              {f.t1}<br/>{f.t2}
+            </div>
+         </div>
+       ))}
+    </div>
+  </div>
+);
+
+const Slide2Text = () => (
+  <div className="w-full h-full pointer-events-none relative">
+     <div className="absolute right-[5vw] lg:right-[10vw] top-[35vh]">
+        <h3 className="font-serif text-5xl lg:text-[6vw] leading-[1.1] tracking-tight text-center md:text-left text-[#111]">Be the<br/>Re(generation)</h3>
+     </div>
+     <div className="absolute right-6 lg:right-[10vw] bottom-24 max-w-md text-right md:text-left pointer-events-auto">
+        <p className="text-xs font-bold leading-relaxed mb-4 text-[#111]">We're growing for a future-forward ecosystem of good people doing good things. Radical optimists. Risk takers. Grounded in nature, with big ideas for what happens next.</p>
+        <div className="inline-flex items-center gap-2 border border-[#111] rounded-full px-4 py-1.5 text-[9px] font-bold uppercase tracking-wider bg-[#FAF9F6] cursor-pointer hover:bg-[#111] hover:text-white transition-colors shadow-sm">
+           WALK WITH US <ArrowRight size={10} />
+        </div>
+     </div>
+  </div>
+);
+
+const Slide3Text = () => (
+  <div className="w-full h-full pointer-events-none relative">
+     <div className="absolute left-[5vw] lg:left-[10vw] top-[35vh]">
+        <h3 className="font-serif text-5xl lg:text-[6vw] leading-[1.1] tracking-tight text-center md:text-left text-[#111]">On a Journey<br/>to Build Good</h3>
+     </div>
+     <div className="absolute left-6 lg:left-[10vw] bottom-24 max-w-md text-left pointer-events-auto">
+        <p className="text-xs font-bold leading-relaxed mb-4 text-[#111]">We believe the world is better in beta. We're taking risks to reshape the industry from the soil up. We've made mistakes and discoveries along the way. From trial to testing, to making it for you. The future is looking good.</p>
+        <div className="inline-flex items-center gap-2 border border-[#111] rounded-full px-4 py-1.5 text-[9px] font-bold uppercase tracking-wider bg-[#FAF9F6] cursor-pointer hover:bg-[#111] hover:text-white transition-colors shadow-sm">
+           OUR STORY <ArrowRight size={10} />
+        </div>
+     </div>
+  </div>
+);
+
+// ----------------------------------------------------------------------
+// --- FUTURE OF WORK (BENTO MATRIX) ---
+// ----------------------------------------------------------------------
+const FutureCard = ({ card, index, hoveredId, setHoveredId }) => {
+  const isHovered = hoveredId === card.id;
+  const isDimmed = hoveredId !== null && hoveredId !== card.id;
+
+  const slideUp = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: index * 0.1, ease: [0.77, 0, 0.175, 1] } }
+  };
+
+  return (
+    <motion.div
+      variants={slideUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-10%" }}
+      onMouseEnter={() => setHoveredId(card.id)}
+      onMouseLeave={() => setHoveredId(null)}
+      animate={{
+        scale: isHovered ? 1.02 : 1,
+        opacity: isDimmed ? 0.4 : 1,
+        filter: isDimmed ? "blur(2px)" : "blur(0px)",
+      }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className={`${card.layout} relative rounded-md overflow-hidden flex flex-col cursor-pointer transform-gpu shadow-sm hover:shadow-2xl z-10 hover:z-20 min-h-[400px] md:min-h-[450px]`}
+      style={{ backgroundColor: card.bg }}
+    >
+      {card.type === 'top-text' && (
+         <>
+           <div className="p-8 md:p-10 flex flex-col z-10 relative pointer-events-none">
+             <h3 className="text-3xl md:text-4xl font-medium tracking-tight mb-4" style={{ color: card.text }}>{card.title}</h3>
+             <p className="text-xs md:text-sm font-medium leading-relaxed max-w-sm opacity-80" style={{ color: card.text }}>{card.desc}</p>
+           </div>
+           <div className="absolute bottom-0 left-0 w-full h-[55%] overflow-hidden pointer-events-none">
+             <motion.img animate={{ scale: isHovered ? 1.05 : 1 }} transition={{ duration: 0.6, ease: "easeOut" }} src={card.img} onError={handleImageError} className="w-full h-full object-cover object-bottom" />
+           </div>
+         </>
+      )}
+
+      {card.type === 'overlay' && (
+         <>
+           <motion.img animate={{ scale: isHovered ? 1.05 : 1 }} transition={{ duration: 0.6, ease: "easeOut" }} src={card.img} onError={handleImageError} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors pointer-events-none" />
+           <div className="p-8 md:p-10 flex flex-col z-10 relative h-full pointer-events-none">
+             <h3 className="text-3xl md:text-4xl font-medium tracking-tight mb-4" style={{ color: card.text }}>{card.title}</h3>
+             <p className="text-xs md:text-sm font-medium leading-relaxed max-w-sm opacity-90" style={{ color: card.text }}>{card.desc}</p>
+           </div>
+         </>
+      )}
+
+      {card.type === 'split' && (
+         <div className="flex flex-col md:flex-row w-full h-full">
+           <div className="p-8 md:p-10 flex flex-col justify-center md:w-1/2 z-10 relative pointer-events-none">
+             <h3 className="text-3xl md:text-5xl font-medium tracking-tight mb-4 md:mb-6 whitespace-pre-line leading-[1.1]" style={{ color: card.text }}>{card.title}</h3>
+             <p className="text-xs md:text-sm font-medium leading-relaxed max-w-md opacity-80" style={{ color: card.text }}>{card.desc}</p>
+           </div>
+           <div className="relative w-full md:w-1/2 h-[300px] md:h-full overflow-hidden pointer-events-none">
+             <motion.img animate={{ scale: isHovered ? 1.05 : 1 }} transition={{ duration: 0.6, ease: "easeOut" }} src={card.img} onError={handleImageError} className="absolute inset-0 w-full h-full object-cover" />
+           </div>
+         </div>
+      )}
+    </motion.div>
+  );
+};
+
+const FutureOfWork = () => {
+  const containerRef = useRef(null);
+  const [hoveredId, setHoveredId] = useState(null);
+
+  return (
+    <section ref={containerRef} className="bg-[#FAF9F6] py-24 lg:py-32 px-6 lg:px-12 border-t border-[#E5E5E5] pointer-events-auto overflow-hidden">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Header */}
+        <div className="mb-16 lg:mb-24 max-w-2xl">
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-10%" }}
+            transition={{ duration: 0.8, ease: [0.77, 0, 0.175, 1] }}
+            className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-[#111111] leading-[1.1]"
+          >
+            Why invest in<br />the future of work?
+          </motion.h2>
+        </div>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-6">
+          {FUTURE_FEATURES.map((feature, i) => (
+            <FutureCard 
+              key={feature.id} 
+              card={feature} 
+              index={i} 
+              hoveredId={hoveredId} 
+              setHoveredId={setHoveredId} 
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ----------------------------------------------------------------------
+// --- BUSINESS WORKSPACES (SCROLL-DRIVEN PANEL TAKEOVER) ---
+// ----------------------------------------------------------------------
+const BusinessWorkspacesTakeover = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  return (
+    <section ref={containerRef} className="relative h-[400vh] bg-[#EBEAE4] pointer-events-auto">
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#EBEAE4]">
+        {WORKSPACE_PANELS.map((panel, index) => (
+          <TakeoverPanel key={panel.id} panel={panel} index={index} total={WORKSPACE_PANELS.length} scrollYProgress={scrollYProgress} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const TakeoverPanel = ({ panel, index, total, scrollYProgress }) => {
+  const start = index === 0 ? 0 : (index - 1) / (total - 1);
+  const end = index === 0 ? 0 : index / (total - 1);
+
+  // The panel smoothly slides up from 100% to 0% to perfectly cover the previous one.
+  const y = useTransform(scrollYProgress, [start, end], ["100%", "0%"]);
+  const transformY = index === 0 ? "0%" : y;
+
+  return (
+    <motion.div
+      style={{ y: transformY, zIndex: index }}
+      className="absolute inset-0 w-full h-full shadow-[0_-30px_60px_rgba(0,0,0,0.3)] bg-[#EBEAE4] overflow-hidden origin-bottom pointer-events-auto"
+    >
+      {/* Background Layer */}
+      <img src={panel.img} onError={handleImageError} alt={panel.title1} className="absolute inset-0 w-full h-full object-cover" />
+      {/* Optional Contrast Overlay for White Text Panels */}
+      {panel.color === "#FFFFFF" && <div className="absolute inset-0 bg-black/20 pointer-events-none" />}
+      
+      {/* Content Layer */}
+      <div className="relative z-10 w-full h-full flex flex-col items-center pt-[12vh] md:pt-[15vh]">
+        <div className="flex flex-col w-fit">
+          
+          <h2 className="text-center text-4xl md:text-6xl lg:text-[7vw] font-medium leading-[0.95] tracking-tighter" style={{ color: panel.color }}>
+             {panel.title1} <br/>
+             {panel.title2} <span className="font-serif italic font-light tracking-normal pr-2">{panel.italic}</span>{panel.title3}
+          </h2>
+
+          <div className="w-full flex flex-col md:flex-row justify-between mt-12 md:mt-16 px-4 md:px-12 gap-8 md:gap-0">
+             <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] whitespace-pre-line leading-[1.8] max-w-[200px] text-left" style={{ color: panel.color }}>
+               {panel.leftTitle}
+             </p>
+             <p className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] whitespace-pre-line leading-[1.8] max-w-[200px] text-left md:text-right" style={{ color: panel.color }}>
+               {panel.rightTitle}
+             </p>
+          </div>
+          
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
+// ----------------------------------------------------------------------
+// --- SERVICES ---
+// ----------------------------------------------------------------------
+const FINDServices = () => {
+  const [hoveredService, setHoveredService] = useState(null);
+
+  const services = [
+    { title: "Buy", desc: "Acquire exclusive properties backed by market intelligence, legal experts, and seasoned brokers dialed in to secure you the best deal.", img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" },
+    { title: "Sell", desc: "Sell fast, sell high. Your listing receives premium staging, strategic valuation, and dedicated agents who never stop networking.", img: "https://images.unsplash.com/photo-1600585154340-be6199fbfd00?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" },
+    { title: "Lease", desc: "Access hidden commercial and luxury rentals before they hit the market through agents who maintain deep ties with property owners.", img: "https://images.unsplash.com/photo-1600607687960-4a5963731956?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" }
+  ];
+
+  return (
+    <section className="py-20 lg:py-32 bg-[#FAF9F6] relative overflow-hidden border-t border-[#E5E5E5]">
+      <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
+        <div className="mb-16 lg:mb-20">
+          <p className="text-[10px] font-black tracking-[0.5em] text-slate-400 uppercase mb-4">Brokerage Services</p>
+          <h2 className="text-4xl md:text-7xl font-bold tracking-tighter text-slate-900 leading-none">
+            How DOMINION <br/><span className="text-slate-400 italic font-light">Elevates Your Portfolio</span>
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+           {services.map((service, i) => (
+             <motion.div 
+               key={i} 
+               initial={{ opacity: 0, y: 50 }} 
+               whileInView={{ opacity: 1, y: 0 }} 
+               viewport={{ once: true }} 
+               transition={{ delay: i * 0.15, duration: 0.8, ease: "easeOut" }} 
+               onMouseEnter={() => setHoveredService(i)}
+               onMouseLeave={() => setHoveredService(null)}
+               className="group relative h-[45vh] lg:h-[60vh] rounded-xl overflow-hidden cursor-pointer pointer-events-auto"
+             >
+                <img src={service.img} alt={service.title} onError={handleImageError} className="absolute inset-0 w-full h-full object-cover filter grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-500" />
+                
+                <div className="absolute inset-4 border border-white/0 group-hover:border-white/20 transition-all duration-700 rounded-lg pointer-events-none scale-95 group-hover:scale-100" />
+
+                <div className="absolute inset-0 p-6 lg:p-8 flex flex-col justify-end text-white">
+                   <div className="overflow-hidden mb-3 lg:mb-4">
+                     <h3 className="text-3xl lg:text-4xl font-bold tracking-tight transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500">
+                        <CipherText text={service.title} isHovered={hoveredService === i} />
+                     </h3>
+                   </div>
+                   <p className="text-xs lg:text-sm font-light opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 delay-100 border-l border-blue-500 pl-4">{service.desc}</p>
+                   <div className="absolute top-6 right-6 lg:top-8 lg:right-8 w-10 h-10 lg:w-12 lg:h-12 rounded-full border border-white/30 flex items-center justify-center opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 bg-white/10 backdrop-blur-md">
+                     <ArrowUpRight size={20} className="group-hover:rotate-45 transition-transform duration-300" />
+                   </div>
+                </div>
+             </motion.div>
+           ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- FEATURED LISTINGS (IMMERSIVE LAYERED STACK) ---
+// ----------------------------------------------------------------------
+const FeaturedListings = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const listings = [
+    { id: '1', title: "The Red", subtitle: "Available from 400 sq.m.", color: "#FF5141", text: "With mighty office floors nearing 2,465 sq.m, we create an attractive office for both creative and corporate tenants. Excellent underground parking included.", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
+    { id: '2', title: "The Yellow", subtitle: "Available from 207 sq.m.", color: "#FFC629", text: "Panoramic views and open plan layouts designed to foster collaboration and innovation across all your teams. Premium facilities throughout.", img: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=800" },
+    { id: '3', title: "The Green", subtitle: "Available from 4,500 sq.ft.", color: "#009B5A", text: "Sustainable materials and natural light flood the interior, providing a truly organic working environment. LEED Platinum certified.", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800" },
+    { id: '4', title: "The Pink", subtitle: "Not Available", color: "#FFA8D5", text: "The pinnacle of our architectural portfolio. Exclusive access, premium amenities, and uncompromised luxury right at the NDSM wharf.", img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800" },
+  ];
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    let newIndex = 0;
+    if (latest > 0.25 && latest <= 0.5) newIndex = 1;
+    if (latest > 0.5 && latest <= 0.75) newIndex = 2;
+    if (latest > 0.75) newIndex = 3;
+    if (newIndex !== activeIndex) setActiveIndex(newIndex);
+  });
+
+  return (
+    <section id="properties" ref={containerRef} className="relative h-[400vh] bg-[#111111]">
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#111111]">
+        
+        {/* Kinetic Watermark Background */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center z-0 pointer-events-none flex flex-col items-center justify-center overflow-hidden">
+           <AnimatePresence mode="wait">
+             <motion.h2
+                key={activeIndex}
+                initial={{ y: 150, opacity: 0 }}
+                animate={{ y: 0, opacity: 0.15 }}
+                exit={{ y: -150, opacity: 0 }}
+                transition={{ duration: 1.2, ease: [0.77, 0, 0.175, 1] }}
+                className="text-[20vw] font-black whitespace-nowrap tracking-tighter uppercase"
+                style={{ WebkitTextStroke: "2px rgba(255,255,255,1)", color: "transparent" }}
+             >
+                {listings[activeIndex].title}
+             </motion.h2>
+           </AnimatePresence>
+        </div>
+
+        {listings.map((listing, index) => (
+          <ListingStackPanel key={listing.id} listing={listing} index={index} total={listings.length} scrollYProgress={scrollYProgress} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const ListingStackPanel = ({ listing, index, total, scrollYProgress }) => {
+  const start = index === 0 ? 0 : (index - 1) * (1 / (total - 1));
+  const end = index === 0 ? 0 : index * (1 / (total - 1));
+
+  // Offset ensures previous panel's color strip is visible
+  const finalX = `${index * 10}vw`;
+
+  const x = useTransform(scrollYProgress, [start, end], ["100vw", finalX]);
+  const transformX = index === 0 ? "0vw" : x;
+  
+  // Parallax for the image panning during the slide
+  const imageX = useTransform(scrollYProgress, [start, end], ["20%", "0%"]);
+  // Parallax for the white card sliding up slightly
+  const cardY = useTransform(scrollYProgress, [start, end], [50, 0]);
+
+  return (
+    <motion.div
+      style={{ x: transformX, zIndex: index, backgroundColor: listing.color }}
+      className="absolute top-0 left-0 w-full h-full shadow-[-20px_0_50px_rgba(0,0,0,0.3)] flex overflow-hidden origin-right"
+    >
+      {/* Left Edge Indicator Strip */}
+      <div className="absolute top-0 left-0 h-full flex flex-col justify-between py-12 items-center z-20 border-r border-[#111111]/10 w-[10vw]">
+         <span className="text-[#111111]/40 font-black text-2xl md:text-4xl tracking-tighter -rotate-90 select-none">
+           0{listing.id}
+         </span>
+         <span className="text-[#111111]/30 font-bold tracking-widest text-[10px] -rotate-90 whitespace-nowrap select-none">
+           DOMINION
+         </span>
+      </div>
+
+      {/* Main Content Wrapper (Intersection Layout) */}
+      <div className="relative w-full h-full flex items-center justify-center p-6 md:p-12 lg:pr-24 pl-[15vw] pointer-events-none">
+        
+        {/* Large Image Background */}
+        <div className="relative w-full md:w-[60vw] lg:w-[45vw] h-[50vh] md:h-[65vh] overflow-hidden rounded-2xl shadow-2xl pointer-events-auto bg-[#111111]">
+           <motion.img 
+             style={{ x: imageX, width: "120%", left: "-10%" }}
+             src={listing.img} 
+             onError={handleImageError}
+             alt={listing.title} 
+             className="absolute top-0 h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700" 
+           />
+        </div>
+        
+        {/* Overlapping "Polaroid" Info Card */}
+        <motion.div 
+          style={{ y: cardY }}
+          className="absolute bottom-[10%] md:bottom-[15%] left-[5%] md:left-[10vw] lg:left-[15vw] w-[85vw] md:w-[45vw] lg:w-[35vw] flex flex-col bg-white p-8 md:p-10 lg:p-12 shadow-[0_40px_80px_rgba(0,0,0,0.4)] pointer-events-auto z-20 border border-white/50"
+        >
+           {/* Tightly Locked Typography Lockup */}
+           <div className="flex items-end gap-4 mb-6 border-b border-[#E2E2E2] pb-6 w-full">
+             <span className="text-[#111111] font-black text-[5rem] md:text-[6rem] lg:text-[7rem] leading-[0.75] tracking-tighter select-none">
+               0{listing.id}
+             </span>
+             <div className="w-[2px] h-12 md:h-16 bg-[#111111]/20 rotate-[15deg] origin-bottom mb-1" />
+             <div className="flex flex-col pb-1 md:pb-2">
+               <h3 className="text-[#111111] font-bold text-2xl md:text-3xl lg:text-4xl tracking-tight leading-none uppercase mb-1">
+                 {listing.title}
+               </h3>
+               <span className="text-[#6B6B6B] text-[9px] lg:text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
+                 {listing.subtitle}
+               </span>
+             </div>
+           </div>
+           
+           <div className="flex flex-col gap-6">
+             <p className="text-[#4A4A4A] text-[12px] lg:text-sm font-medium leading-relaxed">
+               {listing.text}
+             </p>
+             <button className="flex items-center gap-3 w-fit group cursor-pointer mt-2 shrink-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#111111] group-hover:text-blue-600 transition-colors">Explore Property</span>
+                <div className="w-10 h-10 rounded-full bg-[#111111] text-white flex items-center justify-center group-hover:bg-blue-600 transition-colors shadow-lg">
+                   <ArrowUpRight size={16} />
+                </div>
+             </button>
+           </div>
+        </motion.div>
+
+      </div>
+    </motion.div>
+  );
+};
+
+
+// ----------------------------------------------------------------------
+// --- ECOSYSTEM COLLAGE (NEW DESIGN) ---
+// ----------------------------------------------------------------------
+const EcosystemCollage = () => {
+  const containerRef = useRef(null);
+
+  return (
+    <section id="ecosystem" ref={containerRef} className="relative min-h-[120vh] bg-[#FAF9F6] pt-32 pb-48 overflow-hidden z-10 pointer-events-auto border-t border-[#E5E5E5]">
+      
+      {/* Bold Header & Stylish Serif */}
+      <div className="text-center relative z-20 px-4">
+        <motion.h2 
+           initial={{ opacity: 0, y: 30 }}
+           whileInView={{ opacity: 1, y: 0 }}
+           viewport={{ once: true, margin: "-10%" }}
+           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+           className="text-[10vw] md:text-[7vw] font-black tracking-tighter leading-[0.9] text-[#111] uppercase"
+        >
+          A NETWORK BUILT<br />FOR THE FUTURE.
+        </motion.h2>
+        
+        <div className="relative inline-block mt-4 md:mt-6">
+          <motion.h3 
+             initial={{ opacity: 0, scale: 0.9 }}
+             whileInView={{ opacity: 1, scale: 1 }}
+             viewport={{ once: true }}
+             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+             className="font-serif text-4xl md:text-6xl lg:text-7xl italic text-[#111] tracking-tight"
+          >
+            from acquisition to legacy.
+          </motion.h3>
+          
+          {/* Subtle Scribble SVG */}
+          <motion.svg 
+             initial={{ pathLength: 0 }}
+             whileInView={{ pathLength: 1 }}
+             viewport={{ once: true }}
+             transition={{ duration: 1.5, delay: 0.6, ease: "easeInOut" }}
+             className="absolute -bottom-6 md:-bottom-8 left-1/2 -translate-x-1/2 w-[90%] md:w-[110%] h-auto text-[#111]" 
+             viewBox="0 0 300 30" 
+             fill="none" 
+             stroke="currentColor" 
+             strokeWidth="1.5" 
+             strokeLinecap="round"
+          >
+             <path d="M10,20 Q 80,5 150,15 T 290,10" />
+          </motion.svg>
+        </div>
+      </div>
+
+      {/* Decorative Doodles & Abstract Background Blobs */}
+      <div className="absolute left-[-15%] bottom-[5%] w-[400px] h-[400px] md:w-[600px] md:h-[600px] text-[#60A5FA] opacity-60 -z-10 pointer-events-none">
+         <motion.svg 
+            animate={{ rotate: 360, scale: [1, 1.05, 1] }} 
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            viewBox="0 0 200 200" fill="currentColor"
+         >
+            <path d="M45.7,-76.3C58.9,-69.3,69.1,-55.3,77.5,-40.8C85.9,-26.3,92.5,-11.3,92.5,3.7C92.5,18.7,85.9,33.7,77.5,48.2C69.1,62.7,58.9,76.7,45.7,83.7C32.5,90.7,16.3,90.7,0.8,89.4C-14.7,88.1,-29.4,85.5,-42.6,78.5C-55.8,71.5,-67.5,60.1,-75.3,46.2C-83.1,32.3,-87,16.2,-86.6,0.3C-86.2,-15.6,-81.5,-31.2,-73.7,-45.1C-65.9,-59,-55,-71.2,-41.8,-78.2C-28.6,-85.2,-14.3,-87,1.1,-88.8C16.5,-90.6,33,-90.6,45.7,-76.3Z" transform="translate(100 100)" />
+         </motion.svg>
+      </div>
+
+      <div className="absolute right-[5%] md:right-[15%] top-[15%] md:top-[10%] w-24 h-24 md:w-32 md:h-32 text-[#1F7A4D] z-10 rotate-12 opacity-80 pointer-events-none">
+         <motion.svg 
+            initial={{ scale: 0, rotate: -20 }}
+            whileInView={{ scale: 1, rotate: 12 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", bounce: 0.5, delay: 0.4 }}
+            viewBox="0 0 200 200" 
+            fill="currentColor"
+         >
+           <path d="M100,50 C120,20 180,20 180,80 C180,130 100,180 100,180 C100,180 20,130 20,80 C20,20 80,20 100,50 Z" />
+           <path d="M100,80 C110,70 130,70 130,90 C130,110 100,130 100,130 C100,130 70,110 70,90 C70,70 90,70 100,80 Z" fill="#FAF9F6"/>
+         </motion.svg>
+      </div>
+
+      {/* Small lines detail */}
+      <div className="absolute left-[10%] md:left-[5%] bottom-[10%] md:bottom-[20%] w-12 h-12 text-[#111] -z-10 pointer-events-none opacity-40">
+         <svg viewBox="0 0 100 100" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round">
+           <line x1="20" y1="50" x2="80" y2="50" />
+           <line x1="50" y1="20" x2="50" y2="80" />
+           <line x1="25" y1="25" x2="75" y2="75" />
+           <line x1="25" y1="75" x2="75" y2="25" />
+         </svg>
+      </div>
+
+      {/* Dynamic Overlapping Image Cards */}
+      <div className="flex flex-wrap md:flex-nowrap justify-center items-center max-w-[1200px] mx-auto mt-24 md:mt-32 px-4 gap-8 md:gap-0">
+         {ECOSYSTEM_DATA.map((item, i) => (
+             <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 100, rotate: item.rot - 10 }}
+                whileInView={{ opacity: 1, y: item.y, rotate: item.rot }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ type: "spring", bounce: 0.3, duration: 1.2, delay: i * 0.15 }}
+                whileHover={{ scale: 1.05, rotate: 0, y: 0, zIndex: 50, transition: { duration: 0.4, ease: "easeOut" } }}
+                className="relative w-[85vw] sm:w-[280px] md:w-[260px] lg:w-[300px] aspect-[4/5] rounded-[2rem] shadow-[0_20px_40px_rgba(0,0,0,0.1)] cursor-pointer group"
+                style={{
+                  zIndex: 10 + i,
+                  marginLeft: typeof window !== 'undefined' && window.innerWidth >= 768 && i !== 0 ? '-6%' : '0' 
+                }}
+             >
+                {/* Image & Gradient Overlay */}
+                <div className="absolute inset-0 rounded-[2rem] overflow-hidden border-[6px] border-white bg-black">
+                   <img 
+                     src={item.img} 
+                     onError={handleImageError}
+                     alt={item.title}
+                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-40" 
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-[#111]/90 via-[#111]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                   
+                   {/* Text Reveal on Hover */}
+                   <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                      <h4 className="text-white text-2xl lg:text-3xl font-bold mb-2 leading-tight tracking-tight">{item.subtitle}</h4>
+                      <p className="text-white/80 text-xs lg:text-sm font-medium leading-relaxed">{item.desc}</p>
+                   </div>
+                </div>
+
+                {/* Floating Tag Label (Disappears on hover to let the text shine) */}
+                <div className={`absolute ${item.tagPos} ${item.tagColor} px-3 py-1.5 rounded-md text-[9px] lg:text-[10px] font-black uppercase tracking-widest shadow-md transition-opacity duration-300 group-hover:opacity-0 whitespace-nowrap z-20 pointer-events-none`}>
+                   {item.tag}
+                </div>
+
+             </motion.div>
+         ))}
+      </div>
+
+    </section>
+  );
+};
+
+
+// ----------------------------------------------------------------------
+// --- THE CRAFT / BUILDING SPECS ---
+// ----------------------------------------------------------------------
+const SpecBlock = ({ spec, i, scrollYProgress }) => {
+  const targetY = i * (1 / 3);
+  const scrollDistance = 1 / 3;
+  const blockOpacity = useTransform(scrollYProgress, [targetY - 0.1, targetY + (scrollDistance/2), targetY + scrollDistance + 0.1], [0, 1, 0]);
+  const blockY = useTransform(scrollYProgress, [targetY - 0.2, targetY + (scrollDistance/2), targetY + scrollDistance + 0.2], [50, 0, -50]);
+  
+  return (
+    <motion.div style={{ opacity: blockOpacity, y: blockY }} className="absolute top-0 left-0 w-full h-full flex flex-col justify-center p-6 lg:p-24 pointer-events-none">
+      <div className="max-w-md pointer-events-auto">
+        <div className="flex items-center gap-4 lg:gap-6 mb-6 lg:mb-8 text-slate-900">
+          <div className="p-3 lg:p-4 border border-slate-200 rounded-full"><spec.icon size={20} className="lg:w-6 lg:h-6" /></div>
+          <span className="text-3xl lg:text-6xl font-black tracking-tighter opacity-10">{spec.id}</span>
+        </div>
+        <h4 className="text-2xl lg:text-5xl font-bold uppercase tracking-tight text-slate-900 mb-4 lg:mb-6 leading-none">{spec.title}</h4>
+        <p className="text-xs lg:text-sm text-slate-500 leading-relaxed font-light mb-8 lg:mb-10 border-l border-slate-300 pl-4 lg:pl-6">{spec.desc}</p>
+        <div className="flex gap-6 lg:gap-8 border-t border-slate-200 pt-6 lg:pt-8">
+          {spec.metrics.map((metric, idx) => (
+            <div key={idx}>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">Feature_0{idx+1}</p>
+              <p className="text-base lg:text-lg font-bold tracking-tight text-slate-900">{metric}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const TheCraft = () => {
+  const containerRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (latest < 0.33) setActiveIndex(0);
+    else if (latest >= 0.33 && latest < 0.66) setActiveIndex(1);
+    else setActiveIndex(2);
+  });
+
+  const specs = [
+    { id: "01", title: "Smart Home Integration", icon: Zap, desc: "Automated climate control, advanced security, and seamless lighting systems integrated into the foundation of the property.", metrics: ["CRESTRON OS", "FIBER OPTIC"] },
+    { id: "02", title: "Sustainable Architecture", icon: Wind, desc: "LEED-certified building materials and energy-efficient designs that lower operational costs while maximizing tenant comfort.", metrics: ["LEED PLATINUM", "NET ZERO"] },
+    { id: "03", title: "Premium Amenities", icon: ShieldCheck, desc: "Unrivaled on-site facilities including wellness centers, rooftop terraces, and 24/7 bespoke concierge services.", metrics: ["24/7 CONCIERGE", "WELLNESS SPA"] }
+  ];
+
+  return (
+    <section id="craft" ref={containerRef} className="relative h-[300vh] bg-[#FAF9F6] border-t border-slate-200">
+      <div className="sticky top-0 h-screen w-full flex flex-col lg:flex-row overflow-hidden">
+        {/* Left/Top Diagram Side */}
+        <div className="w-full lg:w-1/2 h-1/2 lg:h-full border-b lg:border-b-0 lg:border-r border-slate-200 relative flex flex-col p-6 lg:p-16 justify-between bg-white z-20 overflow-hidden">
+           {/* Experimental Laser Scan Animation */}
+           <motion.div 
+             animate={{ top: ["-10%", "110%", "-10%"] }} 
+             transition={{ duration: 4, ease: "easeInOut", repeat: Infinity }} 
+             className="absolute left-0 w-full h-[2px] bg-blue-400/50 shadow-[0_0_20px_#60a5fa] z-50 pointer-events-none mix-blend-overlay" 
+           />
+
+           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+           <div className="relative z-10">
+             <p className="text-[9px] lg:text-[10px] uppercase tracking-[0.6em] font-black text-slate-400 mb-3 lg:mb-4">Development Specs // 04</p>
+             <h3 className="text-4xl lg:text-7xl font-bold tracking-tighter text-slate-900 leading-none">BUILDING<br/>SPECS.</h3>
+           </div>
+           <div className="relative w-full aspect-square max-w-[200px] lg:max-w-sm mx-auto my-auto z-10 mix-blend-multiply">
+             <AnimatePresence mode="wait">
+               <motion.div key={activeIndex} initial={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 1.1, filter: "blur(5px)" }} transition={{ duration: 0.5 }} className="absolute inset-0 flex items-center justify-center">
+                 <CraftDiagram type={activeIndex} />
+               </motion.div>
+             </AnimatePresence>
+           </div>
+           <div className="relative z-10 text-[8px] lg:text-[9px] font-mono tracking-widest uppercase opacity-40 flex justify-between">
+             <span>ARCHITECTURAL_ANALYSIS</span>
+             <span className="flex gap-2">{[0,1,2].map(i => (<span key={i} className={`transition-opacity duration-300 ${activeIndex === i ? 'opacity-100' : 'opacity-20'}`}>[{i+1}]</span>))}</span>
+           </div>
+        </div>
+        {/* Right/Bottom Content Side */}
+        <div className="w-full lg:w-1/2 h-1/2 lg:h-full absolute right-0 top-1/2 lg:top-0">
+          {specs.map((spec, i) => (
+            <SpecBlock key={spec.id} spec={spec} i={i} scrollYProgress={scrollYProgress} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CraftDiagram = ({ type }) => {
+  if (type === 0) return (
+    <motion.svg viewBox="0 0 200 200" className="w-full h-full stroke-slate-900" fill="none" strokeWidth="0.5">
+      <motion.rect x="90" y="20" width="20" height="160" strokeDasharray="2 2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} />
+      {[1,2,3,4].map(i => (
+        <motion.path key={`w-${i}`} d={`M${10 + i*15} 40 Q ${30 + i*15} 100 ${10 + i*15} 160`} initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: [0, 1, 0.2] }} transition={{ duration: 2, delay: i*0.2, repeat: Infinity, repeatType: "reverse" }} />
+      ))}
+      <motion.circle cx="100" cy="100" r="4" fill="currentColor" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1 }} />
+    </motion.svg>
+  );
+  if (type === 1) return (
+    <motion.svg viewBox="0 0 200 200" className="w-full h-full stroke-slate-900" fill="none" strokeWidth="0.5">
+      <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+        <motion.path d="M100 20 L180 60 L100 100 L20 60 Z" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5 }} />
+        <motion.path d="M20 60 L20 140 L100 180 L180 140 L180 60" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, delay: 0.5 }} />
+      </motion.g>
+    </motion.svg>
+  );
+  return (
+    <motion.svg viewBox="0 0 200 200" className="w-full h-full stroke-slate-900" fill="none" strokeWidth="0.5">
+      <motion.circle cx="100" cy="100" r="80" strokeDasharray="1 4" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 30, ease: "linear" }} style={{ originX: '100px', originY: '100px' }} />
+      <motion.circle cx="100" cy="100" r="40" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 2 }} />
+      {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => (
+        <motion.line key={deg} x1="100" y1="20" x2="100" y2="60" style={{ originX: '100px', originY: '100px', rotate: deg }} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1, delay: deg/360 }} />
+      ))}
+      <motion.circle cx="100" cy="100" r="2" fill="currentColor" animate={{ scale: [1, 3, 1] }} transition={{ repeat: Infinity, duration: 2 }} />
+    </motion.svg>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- SPATIAL CARTOGRAPHY (Property Amenities Tour) ---
+// ----------------------------------------------------------------------
+const SpatialCartography = () => {
+  const containerRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const { setNavHidden } = React.useContext(NavbarContext);
+  
+  const { scrollYProgress } = useScroll({ 
+    target: containerRef, 
+    offset: ["start start", "end end"] 
+  });
+  
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const index = Math.min(Math.floor(latest * AMENITIES.length), AMENITIES.length - 1);
+    if(index !== activeIndex) setActiveIndex(index);
+  });
+
+  const isInView = useInView(containerRef, { margin: "-10% 0px -10% 0px" });
+
+  useEffect(() => {
+    setNavHidden(isInView);
+    return () => setNavHidden(false);
+  }, [isInView, setNavHidden]);
+
+  const indicatorTop = (activeIndex / (AMENITIES.length - 1)) * 100;
+
+  return (
+    <section id="amenities" ref={containerRef} className="relative h-[800vh] bg-white pointer-events-auto border-t border-slate-200">
+      
+      {/* DESKTOP/TABLET STICKY VIEW */}
+      <div className="hidden lg:flex sticky top-0 h-screen w-full overflow-hidden text-[#1A1A1A] font-sans bg-white">
+        
+        {/* Left Sidebar (30%) */}
+        <div className="w-[35%] lg:w-[30%] h-full flex flex-col justify-between p-8 lg:p-10 bg-white z-20 relative">
+           
+           <motion.div 
+             initial={{ opacity: 0, x: -20 }} 
+             whileInView={{ opacity: 1, x: 0 }} 
+             transition={{ duration: 0.8, ease: "easeOut" }}
+           >
+              <h2 className="text-2xl lg:text-3xl font-black tracking-tighter text-[#111111]">DOMINION</h2>
+           </motion.div>
+
+           <div className="relative flex-1 w-full">
+              <AnimatePresence mode="wait">
+                 <motion.div 
+                   key={activeIndex}
+                   className="absolute inset-x-0 top-1/2 -translate-y-1/2 pr-4 lg:pr-8"
+                 >
+                    <motion.h3 
+                      initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      className="text-[20px] lg:text-[26px] font-medium leading-[1.2] mb-4 lg:mb-6 tracking-tight text-[#111111]"
+                    >
+                      {AMENITIES[activeIndex].title}
+                    </motion.h3>
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                      className="text-[13px] lg:text-[14px] text-[#7A7A7A] leading-relaxed font-light"
+                    >
+                      {AMENITIES[activeIndex].desc}
+                    </motion.p>
+                 </motion.div>
+              </AnimatePresence>
+           </div>
+
+           <div className="flex justify-between items-end gap-6 pt-6 lg:pt-8">
+              <div className="relative w-full pl-4 border-l border-[#E2E2E2]">
+                 {/* Animated Vertical Track Indicator */}
+                 <motion.div 
+                    animate={{ top: `calc(${indicatorTop}% - ${activeIndex === AMENITIES.length - 1 ? '16px' : '0px'})` }}
+                    transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                    className="absolute left-[-2px] w-[3px] h-4 bg-[#111111] rounded-full"
+                 />
+                 <ul className="w-full flex flex-col gap-2">
+                    {AMENITIES.map((amenity, i) => {
+                      const isActive = activeIndex === i;
+                      return (
+                        <motion.li 
+                          key={amenity.id} 
+                          animate={{ 
+                            x: isActive ? 12 : 0,
+                            backgroundColor: isActive ? '#111111' : 'transparent',
+                            color: isActive ? '#FFFFFF' : '#7A7A7A',
+                            scale: isActive ? 1.02 : 1
+                          }}
+                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                          className={`flex justify-between items-center text-[12px] lg:text-[13px] px-3 py-1.5 rounded-md ${isActive ? 'font-medium shadow-[0_4px_12px_rgba(0,0,0,0.1)]' : 'hover:bg-[#E2E2E2]/50 hover:text-[#1A1A1A]'}`}
+                        >
+                          <span>{amenity.name}</span>
+                          <div className="flex gap-1.5">
+                            {amenity.dots.map((color, idx) => (
+                              <motion.div 
+                                 key={idx} 
+                                 animate={{ scale: isActive ? 1.2 : 1 }}
+                                 className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full border ${isActive ? 'border-transparent' : 'border-black/10'}`} 
+                                 style={{ backgroundColor: color }} 
+                              />
+                            ))}
+                          </div>
+                        </motion.li>
+                      )
+                    })}
+                 </ul>
+              </div>
+           </div>
+        </div>
+
+        {/* Right Image Panel (70%) */}
+        <div className="w-[65%] lg:w-[70%] h-full relative z-10 bg-white py-4 pr-4 lg:py-6 lg:pr-6">
+           <div className="w-full h-full relative overflow-hidden rounded-[1.5rem] lg:rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.08)] bg-[#E2E2E2] border border-[#E5E5E5]">
+             
+             <motion.div 
+               whileHover={{ scale: 1.1 }}
+               onClick={() => setNavOpen(true)}
+               className="absolute top-6 right-6 lg:top-10 lg:right-10 z-30 w-10 h-10 rounded-full bg-[#111111]/40 backdrop-blur-md flex items-center justify-center text-white border border-white/20 cursor-pointer hover:bg-[#111111]/60 transition-colors"
+             >
+               <Menu size={16} />
+             </motion.div>
+
+             {/* Advanced Shutter / Wipe Animation */}
+             <AnimatePresence>
+                <motion.div 
+                  key={activeIndex}
+                  initial={{ clipPath: "inset(100% 0 0 0)", zIndex: 10 }}
+                  animate={{ clipPath: "inset(0% 0 0 0)", zIndex: 10 }}
+                  exit={{ opacity: 0.3, scale: 0.95, zIndex: 0, filter: "blur(4px)" }}
+                  transition={{ duration: 1, ease: [0.77, 0, 0.175, 1] }}
+                  className="absolute inset-0 w-full h-full transform-gpu"
+                >
+                   <motion.img 
+                     initial={{ scale: 1.1 }}
+                     animate={{ scale: 1 }}
+                     transition={{ duration: 1.5, ease: "easeOut" }}
+                     src={AMENITIES[activeIndex].img} 
+                     onError={handleImageError} 
+                     alt={AMENITIES[activeIndex].name} 
+                     className="w-full h-full object-cover transform-gpu origin-bottom"
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent" />
+                </motion.div>
+             </AnimatePresence>
+           </div>
+        </div>
+      </div>
+
+      {/* MOBILE STACKED VIEW */}
+      <div className="lg:hidden flex flex-col w-full bg-white py-20 px-4 sm:px-8 gap-16 text-[#111111] font-sans">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-2"
+        >
+          <h2 className="text-4xl font-black tracking-tighter mb-2 text-[#111111]">DOMINION</h2>
+          <p className="text-[#7A7A7A] text-sm">Explore our curated spatial amenities.</p>
+        </motion.div>
+        
+        {AMENITIES.map((amenity, i) => (
+          <motion.div 
+            key={amenity.id} 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="flex flex-col gap-5 bg-white p-4 rounded-3xl shadow-lg border border-slate-100"
+          >
+            <div className="w-full aspect-[4/3] sm:aspect-[16/9] rounded-2xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.06)] border border-[#E2E2E2] relative">
+              <motion.img 
+                whileInView={{ scale: [1.1, 1] }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                src={amenity.img} 
+                onError={handleImageError} 
+                alt={amenity.name} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+            <div className="px-2">
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-bold text-lg text-[#111111]">{amenity.name}</span>
+                <div className="flex gap-1.5">
+                  {amenity.dots.map((color, idx) => (
+                    <div key={idx} className="w-2.5 h-2.5 rounded-full border border-black/10 shadow-sm" style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+              </div>
+              <h4 className="text-lg font-medium mb-2 leading-snug tracking-tight text-[#1a1a1a]">
+                {amenity.title}
+              </h4>
+              <p className="text-sm text-[#7A7A7A] leading-relaxed">
+                {amenity.desc}
+              </p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- MATERIAL RESONANCE (INTERIOR FINISHES) ---
+// ----------------------------------------------------------------------
+const MaterialResonance = () => {
+  const [hoveredIndex, setHoveredIndex] = useState(0);
+  const panels = [
+    { id: '01', title: 'ITALIAN MARBLE', subtitle: 'Custom Kitchen Finishes', img: 'https://images.unsplash.com/photo-1518005020951-ecc8f935240c?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=1200' },
+    { id: '02', title: 'SMOKED GLASS', subtitle: 'Floor-to-Ceiling Windows', img: 'https://images.unsplash.com/photo-1618060851897-4048eb0327f2?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=1200' },
+    { id: '03', title: 'FRENCH OAK', subtitle: 'Premium Hardwood Flooring', img: 'https://images.unsplash.com/photo-1558244402-286dd740c589?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=1200' },
+    { id: '04', title: 'TITANIUM', subtitle: 'Alloy Reinforcement', img: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=1200' }
+  ];
+
+  return (
+    <section id="finishes" className="h-[150vh] lg:h-screen w-full flex flex-col lg:flex-row bg-[#1E293B]">
+      {panels.map((panel, index) => {
+        const isHovered = hoveredIndex === index;
+        return (
+          <motion.div key={panel.id} onMouseEnter={() => setHoveredIndex(index)} animate={{ flex: isHovered ? 4 : 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} className="relative h-full overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-900 group flex flex-col justify-end p-6 lg:p-8 cursor-pointer pointer-events-auto">
+            <motion.img 
+              src={panel.img} 
+              onError={handleImageError} 
+              animate={{ scale: isHovered ? 1.05 : 1.15, x: isHovered ? "0%" : "-2%", y: isHovered ? "0%" : "-2%", filter: isHovered ? 'grayscale(0) brightness(0.8)' : 'grayscale(1) brightness(0.3)' }} 
+              transition={isHovered ? { duration: 0.8, ease: "easeOut" } : { repeat: Infinity, duration: 20, ease: "linear" }} 
+              className="absolute inset-0 w-full h-full object-cover z-0 transition-all duration-700" 
+            />
+            <motion.div animate={{ opacity: isHovered ? 0 : 1 }} transition={{ duration: 0.4 }} className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none lg:rotate-0">
+              <span className="hidden lg:block origin-center -rotate-90 text-2xl font-bold tracking-[1em] text-white/30 uppercase whitespace-nowrap">{panel.title}</span>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 40 }} transition={{ duration: 0.5, delay: isHovered ? 0.2 : 0 }} className="relative z-20 text-white flex flex-col lg:block items-start pointer-events-none">
+              <div className="flex items-center gap-4 mb-3 lg:mb-4 opacity-70">
+                <div className="w-6 lg:w-8 h-[1px] bg-white" />
+                <span className="text-[9px] lg:text-[10px] tracking-[0.4em] uppercase font-black">FINISH_{panel.id}</span>
+              </div>
+              <h3 className="text-3xl lg:text-5xl font-bold tracking-tighter mb-2 uppercase">{panel.title}</h3>
+              <p className="text-[10px] lg:text-sm font-mono opacity-80 uppercase tracking-widest">{panel.subtitle}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: isHovered ? 1 : 0 }} className="absolute inset-0 pointer-events-none z-10" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)' }} />
+          </motion.div>
+        )
+      })}
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- PHILOSOPHY MATRIX ---
+// ----------------------------------------------------------------------
+const PhilosophyMatrix = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+
+  const text1X = useTransform(scrollYProgress, [0, 1], ["-20vw", "20vw"]);
+  const text2X = useTransform(scrollYProgress, [0, 1], ["20vw", "-20vw"]);
+  
+  const img1Y = useTransform(scrollYProgress, [0, 1], ["20vh", "-30vh"]);
+  const img2Y = useTransform(scrollYProgress, [0, 1], ["-20vh", "40vh"]);
+  const img3Y = useTransform(scrollYProgress, [0, 1], ["10vh", "-50vh"]);
+
+  const compassRotate = useTransform(scrollYProgress, [0, 1], [0, 720]);
+
+  return (
+    <section id="journal" ref={ref} className="relative h-[250vh] bg-black overflow-clip">
+      <div className="sticky top-0 h-screen w-full flex flex-col justify-center overflow-hidden">
+        
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <motion.div style={{ y: img1Y }} className="absolute top-[10%] left-[5%] lg:left-[10%] w-[40vw] lg:w-[20vw] aspect-[3/4] overflow-hidden group pointer-events-auto cursor-pointer">
+             <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" onError={handleImageError} alt="Architecture" className="w-full h-full object-cover opacity-50 grayscale group-hover:scale-105 group-hover:saturate-100 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />
+          </motion.div>
+          <motion.div style={{ y: img2Y }} className="absolute top-[40%] right-[5%] lg:right-[15%] w-[45vw] lg:w-[25vw] aspect-[4/3] overflow-hidden group pointer-events-auto cursor-pointer">
+             <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" onError={handleImageError} alt="Architecture" className="w-full h-full object-cover opacity-60 grayscale group-hover:scale-105 group-hover:saturate-100 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />
+          </motion.div>
+          <motion.div style={{ y: img3Y }} className="absolute bottom-[5%] left-[20%] lg:left-[30%] w-[60vw] lg:w-[35vw] aspect-[16/9] overflow-hidden group pointer-events-auto cursor-pointer">
+             <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" onError={handleImageError} alt="Architecture" className="w-full h-full object-cover opacity-40 grayscale group-hover:scale-105 group-hover:saturate-100 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />
+          </motion.div>
+        </div>
+
+        <div className="relative z-10 w-full flex flex-col gap-8 md:gap-12 pointer-events-none mix-blend-difference text-white">
+           <motion.div style={{ x: text1X }} className="whitespace-nowrap">
+             <h2 className="text-[14vw] lg:text-[10vw] font-black tracking-tighter leading-none uppercase">
+               MORE THAN SQUARE FOOTAGE.
+             </h2>
+           </motion.div>
+           <motion.div style={{ x: text2X }} className="whitespace-nowrap">
+             <h2 className="text-[14vw] lg:text-[10vw] font-black tracking-tighter leading-none text-transparent uppercase" style={{ WebkitTextStroke: "1.5px white" }}>
+               IT'S ABOUT LIFESTYLE. LEGACY.
+             </h2>
+           </motion.div>
+        </div>
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-20 text-white mix-blend-difference pointer-events-none">
+           <motion.div style={{ rotate: compassRotate }}>
+             <Compass size={40} className="mb-4 lg:w-12 lg:h-12" />
+           </motion.div>
+           <p className="text-[9px] lg:text-[10px] font-mono tracking-[0.5em] uppercase text-center max-w-xs">
+             You're not just buying a property.<br/>You're investing in your future.
+           </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- AGENT SYNDICATE ---
+// ----------------------------------------------------------------------
+const AgentSyndicate = ({ globalX, globalY }) => {
+  const [activeAgent, setActiveAgent] = useState(null);
+  
+  const agents = [
+    { name: "ELARA VOSS", role: "SVP, European Acquisitions", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800", specs: "LON: 21.9426° W / ICELAND" },
+    { name: "MARCUS CHEN", role: "Director, Asian Markets", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800", specs: "LON: 135.7681° E / JAPAN" },
+    { name: "SARAH JENKINS", role: "Head of Middle East Operations", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800", specs: "LON: 55.2708° E / UAE" }
+  ];
+
+  const springConfig = { damping: 25, stiffness: 120, mass: 0.5 };
+  const imgX = useSpring(useTransform(globalX, x => x - 150), springConfig);
+  const imgY = useSpring(useTransform(globalY, y => y - 200), springConfig);
+  
+  const xVelocity = useVelocity(globalX);
+  const tiltY = useTransform(xVelocity, [-1000, 1000], [-15, 15]);
+  const smoothTilt = useSpring(tiltY, { damping: 20, stiffness: 100 });
+
+  return (
+    <section id="agents" className="relative py-24 lg:py-32 bg-slate-950 overflow-hidden border-t border-white/10 pointer-events-auto">
+      <div className="container mx-auto px-6 lg:px-8 max-w-7xl relative z-10">
+        <div className="mb-16 lg:mb-20">
+          <p className="text-[10px] font-black tracking-[0.5em] text-blue-500 uppercase mb-4">Dedicated Brokers</p>
+          <h2 className="text-4xl lg:text-7xl font-bold tracking-tighter text-white leading-none">
+            THE <br/><span className="text-white/50 italic font-light">SYNDICATE</span>
+          </h2>
+        </div>
+
+        <div className="flex flex-col border-t border-white/10 relative z-20 pointer-events-auto">
+           {agents.map((agent, i) => (
+             <motion.div 
+               key={i}
+               initial={{ opacity: 0, x: -20 }}
+               whileInView={{ opacity: 1, x: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: i * 0.1 }}
+               onMouseEnter={() => setActiveAgent(i)}
+               onMouseLeave={() => setActiveAgent(null)}
+               className="group flex flex-col md:flex-row justify-between items-start md:items-center py-8 lg:py-14 border-b border-white/10 cursor-none relative"
+             >
+                <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-12 w-full pointer-events-none">
+                   <h3 className="text-3xl lg:text-6xl font-black tracking-tighter text-white/50 group-hover:text-white transition-colors duration-500 uppercase z-10 mix-blend-difference">
+                     {agent.name}
+                   </h3>
+                   <span className="text-[9px] lg:text-[10px] font-mono text-blue-400 uppercase tracking-[0.3em] z-10 mix-blend-difference opacity-50 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                     {agent.specs}
+                   </span>
+                </div>
+                <div className="mt-4 md:mt-0 text-left md:text-right z-10 mix-blend-difference pointer-events-none">
+                   <p className="text-xs lg:text-sm font-light text-white/60 uppercase tracking-widest">{agent.role}</p>
+                </div>
+             </motion.div>
+           ))}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {activeAgent !== null && typeof window !== 'undefined' && window.innerWidth > 1024 && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.8, rotate: 5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{ x: imgX, y: imgY, rotateY: smoothTilt }}
+            className="fixed top-0 left-0 w-[300px] h-[400px] z-0 pointer-events-none overflow-hidden rounded-sm shadow-[0_30px_60px_rgba(0,0,0,0.8)] perspective-1000"
+          >
+             <img 
+               src={agents[activeAgent].img} 
+               onError={handleImageError}
+               alt={agents[activeAgent].name} 
+               className="w-full h-full object-cover filter contrast-125 saturate-50 mix-blend-luminosity" 
+             />
+             <div className="absolute inset-0 bg-blue-900/30 mix-blend-overlay" />
+             
+             <div className="absolute top-4 left-4 w-4 h-[1px] bg-white/50" />
+             <div className="absolute top-4 left-4 h-4 w-[1px] bg-white/50" />
+             <div className="absolute bottom-4 right-4 w-4 h-[1px] bg-white/50" />
+             <div className="absolute bottom-4 right-4 h-4 w-[1px] bg-white/50" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- GLOBAL METRICS ---
+// ----------------------------------------------------------------------
+const GlobalMetrics = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const metrics = [
+    { value: 12.4, suffix: "B+", label: "Transaction Volume", desc: "Global asset transfers executed with absolute precision." },
+    { value: 45, suffix: "+", label: "International Regions", desc: "Premium properties actively managed by our global network." },
+    { value: 100, suffix: "+", label: "Off-Market Sales", desc: "Exclusive private listings matched with high-net-worth clientele." }
+  ];
+
+  return (
+    <section ref={ref} className="relative py-24 lg:py-48 bg-[#FAF9F6] border-t border-slate-200 overflow-hidden pointer-events-auto">
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+        <motion.div 
+          animate={{ rotateZ: 360 }} 
+          transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+          className="w-[150vw] h-[150vw] border-[1px] border-slate-900 rounded-full border-dashed"
+        />
+      </div>
+
+      <div className="container mx-auto px-6 lg:px-8 max-w-7xl relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          <div className="lg:col-span-4">
+            <p className="text-[10px] font-black tracking-[0.5em] text-slate-400 uppercase mb-4">Scale & Scope</p>
+            <h2 className="text-4xl lg:text-7xl font-bold tracking-tighter text-slate-900 leading-none mb-4 lg:mb-6">
+              THE <br/><span className="text-slate-400 italic font-light">METRICS</span>
+            </h2>
+            <p className="text-xs lg:text-sm font-light text-slate-500 leading-relaxed border-l-2 border-blue-500 pl-4">
+              We do not measure success in mere transactions. We measure it in the total footprint of exclusive real estate secured for our clients.
+            </p>
+          </div>
+
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {metrics.map((metric, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                transition={{ duration: 0.8, delay: i * 0.2 }}
+                className="flex flex-col border border-slate-200 p-6 lg:p-8 rounded-xl bg-white/50 backdrop-blur-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group"
+              >
+                <div className="text-4xl lg:text-6xl font-black tracking-tighter text-slate-900 mb-2 flex items-baseline group-hover:text-blue-600 transition-colors">
+                  {isInView ? <Counter value={metric.value} /> : "0"}
+                  <span className="text-2xl lg:text-3xl ml-1">{metric.suffix}</span>
+                </div>
+                <div className="w-8 h-[2px] bg-slate-300 mb-4 lg:mb-6 group-hover:bg-blue-500 transition-colors" />
+                <h4 className="text-[10px] lg:text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">{metric.label}</h4>
+                <p className="text-[9px] lg:text-[10px] font-mono text-slate-500 leading-relaxed uppercase">{metric.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- INTELLIGENCE FEED (Dominion Intelligence) ---
+// ----------------------------------------------------------------------
+const IntelligenceFeed = ({ globalX, globalY }) => {
+  const [activeItem, setActiveIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const posts = [
+    { title: "Q3 Luxury Market Report: Rising Trends in Urban Centers", date: "2026-02-23", tag: "Market Insights", img: "https://images.unsplash.com/photo-1542665952-66b1c0989f55?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" },
+    { title: "Investing in Commercial Real Estate: What You Need to Know", date: "2026-02-02", tag: "Investment", img: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" },
+    { title: "Top 10 Emerging Neighborhoods for High-Yield Returns", date: "2026-01-02", tag: "Development", img: "https://images.unsplash.com/photo-1556761175-4b46a572b786?ixlib=rb-4.0.3&auto=format&fit=crop&q=80&w=800" }
+  ];
+
+  const springConfig = { damping: 25, stiffness: 120, mass: 0.5 };
+  const imgX = useSpring(useTransform(globalX, x => x - 150), springConfig);
+  const imgY = useSpring(useTransform(globalY, y => y - 150), springConfig);
+
+  return (
+    <section id="intelligence" className="py-24 lg:py-32 bg-[#FAF9F6] relative border-t border-slate-200">
+      <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 lg:mb-24 gap-6 lg:gap-8">
+           <div>
+             <p className="text-[10px] font-black tracking-[0.5em] text-slate-400 uppercase mb-4">Market Insights</p>
+             <h2 className="text-4xl lg:text-7xl font-bold tracking-tighter text-slate-900 leading-none uppercase">
+               Real Estate <br className="hidden lg:block"/><span className="text-slate-400 italic font-light lowercase lg:mt-0 mt-2 block">Insights</span>
+             </h2>
+           </div>
+           <Magnetic>
+             <button className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-bold text-slate-900 hover:text-blue-600 transition-colors group pointer-events-auto cursor-pointer">
+                View All
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border border-slate-300 flex items-center justify-center group-hover:border-blue-600 group-hover:bg-blue-50 transition-all">
+                  <ArrowRight size={14} />
+                </div>
+             </button>
+           </Magnetic>
+        </div>
+
+        <div className="flex flex-col border-t border-slate-300 relative z-10 pointer-events-auto">
+           {posts.map((post, i) => (
+             <motion.div 
+               key={i}
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: i * 0.1 }}
+               onMouseEnter={() => setActiveIndex(i)}
+               onMouseLeave={() => setActiveIndex(null)}
+               className="group flex flex-col md:flex-row justify-between items-start md:items-center p-6 lg:p-12 border-b border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer relative overflow-hidden gap-4"
+             >
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-blue-500 group-hover:w-full transition-all duration-500 ease-out" />
+                
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-12 relative z-10 pointer-events-none w-full pr-8 md:pr-0">
+                   <span className="text-[9px] lg:text-[10px] font-mono text-slate-400 w-full md:w-24 shrink-0">{post.date}</span>
+                   <h3 className="text-xl lg:text-4xl font-bold tracking-tighter text-slate-900 uppercase">
+                     {post.title}
+                   </h3>
+                </div>
+                <div className="absolute top-6 right-6 md:relative md:top-auto md:right-auto z-10 transform transition-transform duration-500 group-hover:rotate-45 pointer-events-none">
+                   <ArrowUpRight size={20} className="opacity-40 md:opacity-20 group-hover:opacity-100 group-hover:text-blue-600 transition-all lg:w-6 lg:h-6" />
+                </div>
+             </motion.div>
+           ))}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {!isMobile && activeItem !== null && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+            style={{ x: imgX, y: imgY }}
+            className="fixed top-0 left-0 w-[300px] h-[300px] z-[80] pointer-events-none overflow-hidden rounded-lg shadow-2xl"
+          >
+             <img 
+               src={posts[activeItem].img} 
+               onError={handleImageError}
+               alt="Preview" 
+               className="w-full h-full object-cover filter transition-all duration-500" 
+             />
+             <div className="absolute inset-0 bg-blue-900/10 mix-blend-overlay" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- COMPLEX ARCHITECTURAL FOOTER ---
+// ----------------------------------------------------------------------
+const useTime = () => {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return time;
+};
+
+const ComplexFooter = () => {
+  const time = useTime();
+  
+  const formatTime = (tz) => {
+    return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: tz });
+  };
+
+  return (
+    <footer id="contact" className="bg-[#0A0A0A] text-white pt-24 pb-8 overflow-hidden relative z-10 pointer-events-auto border-t border-[#333]">
+      
+      {/* Background Architectural Grid Lines */}
+      <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '100px 100px' }} />
+
+      <div className="w-full max-w-[1600px] mx-auto px-6 lg:px-12 relative z-20">
+        
+        {/* Top Massive Header Row */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between border-b border-[#333] pb-12 mb-12 gap-8">
+           <h2 className="text-[12vw] lg:text-[8vw] font-black leading-[0.8] tracking-tighter uppercase">
+             DOMINION
+           </h2>
+           <p className="text-[10px] lg:text-xs uppercase tracking-[0.4em] font-bold text-white/50 max-w-xs text-left lg:text-right pb-2">
+             A New Paradigm in <br className="hidden lg:block"/> Sovereign Real Estate.
+           </p>
+        </div>
+
+        {/* Core 4-Column Grid Structure */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-b border-[#333] pb-12 mb-12">
+          
+          {/* Col 1: Navigation */}
+          <div className="flex flex-col gap-4 pr-8 border-b md:border-b-0 lg:border-r border-[#333] pb-8 md:pb-0 mb-8 md:mb-0">
+             <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold mb-4">Sitemap</span>
+             {["Properties", "Agents", "Intelligence", "About Firm", "Client Portal"].map(link => (
+               <a key={link} href="#" className="text-xl font-bold uppercase tracking-tight text-white/80 hover:text-white hover:translate-x-2 transition-all duration-300 w-fit group flex items-center gap-4">
+                 <span className="group-hover:line-through">{link}</span>
+                 <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+               </a>
+             ))}
+          </div>
+
+          {/* Col 2: Global Hubs (Live Clocks) */}
+          <div className="flex flex-col gap-8 lg:px-8 border-b md:border-b-0 lg:border-r border-[#333] pb-8 md:pb-0 mb-8 md:mb-0">
+             <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Global Hubs</span>
+             
+             <div className="flex justify-between items-end group cursor-default">
+               <div className="flex flex-col">
+                 <span className="text-sm font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">New York</span>
+                 <span className="text-[10px] text-white/50 tracking-widest uppercase mt-1">HQ / Americas</span>
+               </div>
+               <span className="font-mono text-xs opacity-70">{formatTime('America/New_York')}</span>
+             </div>
+
+             <div className="flex justify-between items-end group cursor-default">
+               <div className="flex flex-col">
+                 <span className="text-sm font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">London</span>
+                 <span className="text-[10px] text-white/50 tracking-widest uppercase mt-1">EMEA Hub</span>
+               </div>
+               <span className="font-mono text-xs opacity-70">{formatTime('Europe/London')}</span>
+             </div>
+
+             <div className="flex justify-between items-end group cursor-default">
+               <div className="flex flex-col">
+                 <span className="text-sm font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Tokyo</span>
+                 <span className="text-[10px] text-white/50 tracking-widest uppercase mt-1">APAC Hub</span>
+               </div>
+               <span className="font-mono text-xs opacity-70">{formatTime('Asia/Tokyo')}</span>
+             </div>
+          </div>
+
+          {/* Col 3: Intelligence Subscribe */}
+          <div className="flex flex-col gap-4 lg:px-8 border-b md:border-b-0 lg:border-r border-[#333] pb-8 md:pb-0 mb-8 md:mb-0">
+             <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold mb-4">Intelligence Feed</span>
+             <p className="text-sm text-white/70 font-medium leading-relaxed mb-4 max-w-xs">
+               Receive exclusive off-market listings and deep architectural insights directly to your inbox.
+             </p>
+             <div className="relative mt-auto w-full group">
+               <input type="email" placeholder="ENTER EMAIL ADDRESS" className="w-full bg-transparent border-none outline-none text-xs uppercase tracking-widest font-bold py-3 text-white placeholder:text-white/20" />
+               {/* Expandable Line */}
+               <div className="absolute bottom-0 left-0 w-full h-[1px] bg-[#333]">
+                 <div className="h-full w-0 bg-blue-500 group-hover:w-full transition-all duration-500 ease-out" />
+               </div>
+               <button className="absolute right-0 top-1/2 -translate-y-1/2 opacity-50 group-hover:opacity-100 hover:text-blue-400 transition-all cursor-pointer">
+                 <ArrowRight size={16} />
+               </button>
+             </div>
+          </div>
+
+          {/* Col 4: Magnetic CTA */}
+          <div className="flex items-center justify-center lg:px-8">
+            <Magnetic>
+              <div className="w-36 h-36 md:w-48 md:h-48 rounded-full border border-[#333] bg-[#111] hover:bg-blue-600 flex flex-col items-center justify-center cursor-pointer transition-colors duration-500 shadow-2xl group">
+                 <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-center mb-2">Start your<br/>Project</span>
+                 <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </div>
+            </Magnetic>
+          </div>
+
+        </div>
+
+        {/* Bottom Infinity Marquee & Copyright */}
+        <div className="flex flex-col gap-8">
+           <div className="w-full overflow-hidden flex whitespace-nowrap opacity-20 pointer-events-none">
+             <motion.div 
+                animate={{ x: [0, -1000] }} 
+                transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+                className="flex"
+             >
+                <span className="text-[8vw] font-black uppercase tracking-tighter mx-4">DOMINION REAL ESTATE •</span>
+                <span className="text-[8vw] font-black uppercase tracking-tighter mx-4">DOMINION REAL ESTATE •</span>
+                <span className="text-[8vw] font-black uppercase tracking-tighter mx-4">DOMINION REAL ESTATE •</span>
+             </motion.div>
+           </div>
+
+           <div className="flex flex-col md:flex-row justify-between items-center text-[8px] md:text-[9px] uppercase tracking-widest text-white/30 font-bold border-t border-[#333] pt-6">
+             <div className="flex gap-6 mb-4 md:mb-0">
+               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+               <a href="#" className="hover:text-white transition-colors">Cookies</a>
+             </div>
+             <span>© 2026 Dominion. All Rights Reserved.</span>
+           </div>
+        </div>
+
+      </div>
+    </footer>
+  );
+};
+
+// ----------------------------------------------------------------------
+// --- FULL SCREEN OVERLAY NAVIGATION ---
+// ----------------------------------------------------------------------
+const FullScreenNav = () => {
+  const { isNavOpen, setNavOpen } = React.useContext(NavbarContext);
+
+  const menuVariants = {
+    closed: { y: "-100%", transition: { ease: [0.77, 0, 0.175, 1], duration: 0.8 } },
+    open: { y: "0%", transition: { ease: [0.77, 0, 0.175, 1], duration: 0.8 } }
+  };
+
+  const linkVariants = {
+    closed: { y: "110%", rotate: 5, opacity: 0 },
+    open: (i) => ({
+      y: "0%", rotate: 0, opacity: 1,
+      transition: { delay: 0.3 + (i * 0.08), duration: 0.8, ease: [0.77, 0, 0.175, 1] }
+    })
+  };
+
+  const NAV_LINKS = [
+    { name: 'Properties', id: 'properties' },
+    { name: 'Agents', id: 'agents' },
+    { name: 'Intelligence', id: 'intelligence' },
+    { name: 'Journal', id: 'journal' },
+    { name: 'Contact', id: 'contact' }
+  ];
+
+  const handleNavClick = (e, id) => {
+    e.preventDefault();
+    setNavOpen(false); // Close the menu
+    // Wait for the exit animation to finish before scrolling for a smoother feel
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 800); 
+  };
+
+  return (
+    <AnimatePresence>
+      {isNavOpen && (
+         <motion.div
+           variants={menuVariants}
+           initial="closed"
+           animate="open"
+           exit="closed"
+           className="fixed inset-0 z-[200] bg-[#111111] text-[#EBEAE4] flex flex-col justify-between p-6 lg:p-12 pointer-events-auto"
+         >
+            {/* Header (Logo + Close) */}
+            <div className="flex justify-between items-center w-full relative z-10">
+              <span className="text-xl font-black tracking-tighter uppercase">DOMINION</span>
+              <Magnetic>
+                <button onClick={() => setNavOpen(false)} className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-[#EBEAE4] hover:text-[#111111] transition-colors cursor-pointer group">
+                  <span className="text-[10px] font-bold uppercase tracking-wider group-hover:hidden">Close</span>
+                  <div className="hidden group-hover:flex relative w-4 h-4">
+                    <span className="absolute top-1/2 left-0 w-full h-[1.5px] bg-[#111111] -translate-y-1/2 rotate-45" />
+                    <span className="absolute top-1/2 left-0 w-full h-[1.5px] bg-[#111111] -translate-y-1/2 -rotate-45" />
+                  </div>
+                </button>
+              </Magnetic>
+            </div>
+
+            {/* Links */}
+            <div className="flex flex-col gap-2 mt-auto mb-auto items-center lg:items-start">
+               {NAV_LINKS.map((link, i) => (
+                 <div key={link.name} className="overflow-hidden pb-4">
+                   <motion.div custom={i} variants={linkVariants} initial="closed" animate="open" exit="closed" className="origin-bottom-left">
+                     <a 
+                       href={`#${link.id}`} 
+                       onClick={(e) => handleNavClick(e, link.id)} 
+                       className="text-[12vw] lg:text-[7vw] font-medium leading-[0.85] tracking-tighter hover:text-blue-500 transition-colors uppercase block w-fit"
+                     >
+                       {link.name}
+                     </a>
+                   </motion.div>
+                 </div>
+               ))}
+            </div>
+
+            {/* Footer Info */}
+            <div className="flex flex-col md:flex-row justify-between items-center md:items-end border-t border-white/10 pt-8 gap-6 md:gap-0">
+              <div className="text-[10px] uppercase tracking-widest text-white/50 text-center md:text-left">
+                5 West 37th Street, 12th Floor<br className="md:hidden"/> New York, NY 10018
+              </div>
+              <div className="flex gap-6 text-[10px] uppercase tracking-widest text-white/50 font-bold">
+                <a href="#" className="hover:text-white transition-colors">Instagram</a>
+                <a href="#" className="hover:text-white transition-colors">Twitter</a>
+                <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
+              </div>
+            </div>
+            
+            {/* Ambient Background decoration */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at center, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+         </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+const PageLoader = () => (
+  <motion.div initial={{ y: 0 }} animate={{ y: '-100%' }} transition={{ duration: 1.5, delay: 2, ease: [0.8, 0, 0.1, 1] }} className="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center overflow-hidden">
+    <div className="text-white flex flex-col items-center gap-6">
+      <div className="flex gap-2">
+        {[1, 2, 3].map(i => (
+          <motion.div key={i} animate={{ height:[10, 40, 10] }} transition={{ repeat: Infinity, duration: 1, delay: i * 0.1 }} className="w-[2px] bg-white" />
+        ))}
+      </div>
+      <span className="text-[10px] uppercase tracking-[1em] font-black">DOMINION.</span>
+    </div>
+  </motion.div>
+);
+
+// ----------------------------------------------------------------------
+// --- MAIN APP COMPONENT ---
+// ----------------------------------------------------------------------
+export default function App() {
+  const [loading, setLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isNavHidden, setNavHidden] = useState(false);
+  const [isNavOpen, setNavOpen] = useState(false);
+  const globalMouseX = useMotionValue(typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
+  const globalMouseY = useMotionValue(typeof window !== 'undefined' ? window.innerHeight / 2 : 0);
+
+  useEffect(() => { 
+    const handleGlobalMouse = (e) => { 
+      globalMouseX.set(e.clientX); 
+      globalMouseY.set(e.clientY); 
+    }; 
+    window.addEventListener('mousemove', handleGlobalMouse); 
+    return () => window.removeEventListener('mousemove', handleGlobalMouse); 
+  }, [globalMouseX, globalMouseY]);
+
+  useEffect(() => { 
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setTimeout(() => setIsLoaded(true), 100); 
+    }, 2500); 
+    return () => clearTimeout(timer); 
+  }, []);
+
+  return (
+    <NavbarContext.Provider value={{ isNavHidden, setNavHidden, isNavOpen, setNavOpen }}>
+      <div className="bg-[#FAF9F6] font-sans antialiased selection:bg-blue-500 selection:text-white cursor-auto lg:cursor-none relative overflow-clip">
+        <LensCursor globalX={globalMouseX} globalY={globalMouseY} />
+        <EnvironmentalGrid globalX={globalMouseX} globalY={globalMouseY} />
+        <Altimeter />
+        
+        <AnimatePresence>{loading && <PageLoader />}</AnimatePresence>
+        <FullScreenNav />
+        
+        <main className="relative z-10 w-full pointer-events-none">
+          <FINDHero isLoaded={isLoaded} globalX={globalMouseX} globalY={globalMouseY} />
+          <ColorCardsGrid />
+          <BuildingDescription />
+          <CinematicZoomStory />
+          <FutureOfWork />
+          <BusinessWorkspacesTakeover />
+          <FINDServices />
+          <FeaturedListings />
+          <EcosystemCollage />
+          <TheCraft />
+          <SpatialCartography />
+          <MaterialResonance />
+          <PhilosophyMatrix />
+          <AgentSyndicate globalX={globalMouseX} globalY={globalMouseY} />
+          <GlobalMetrics />
+          <IntelligenceFeed globalX={globalMouseX} globalY={globalMouseY} />
+        </main>
+
+        <ComplexFooter />
+      </div>
+    </NavbarContext.Provider>
+  );
+}

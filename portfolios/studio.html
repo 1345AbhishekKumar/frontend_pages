@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A premium digital agency crafting resonant brand and web experiences.">
+    <title>Studio Synthesis | Premium Digital Agency</title>
+    
+    <!-- Fonts: Fraunces (Display/Serif) & Inter (Body/Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.29/dist/lenis.min.js"></script>
+
+    <style>
+        /* =========================================
+           1. CSS VARIABLES & RESET
+           ========================================= */
+        :root {
+            --color-bg: #F7F5EE;
+            --color-bg-alt: #EBE8DF;
+            --color-text: #030303;
+            --color-text-muted: #414141;
+            --color-accent-sky: #B3D6D3;
+            --color-accent-green: #242D29;
+            --color-white: #FFFFFF;
+
+            --font-display: 'Fraunces', serif;
+            --font-body: 'Inter', sans-serif;
+
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 2rem;
+            --space-lg: 4rem;
+            --space-xl: 8rem;
+            --space-xxl: 12rem;
+
+            --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+            --duration-fast: 0.3s;
+            --duration-med: 0.6s;
+            --duration-slow: 1.2s;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: auto;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-body);
+            font-weight: 400;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            cursor: auto; 
+        }
+
+        .js-enabled body {
+            cursor: none;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            cursor: auto;
+        }
+
+        .js-enabled a {
+            cursor: none;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* =========================================
+           2. CUSTOM CURSOR
+           ========================================= */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(calc(var(--x, 50vw) - 50%), calc(var(--y, 50vh) - 50%));
+            will-change: transform;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .js-enabled .cursor-dot,
+        .js-enabled .cursor-outline {
+            opacity: 1;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-text);
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--color-text);
+            transition: width 0.3s var(--ease-smooth), 
+                        height 0.3s var(--ease-smooth), 
+                        background-color 0.3s, 
+                        border-color 0.3s;
+        }
+
+        .js-enabled body.hovering .cursor-dot {
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+
+        .js-enabled body.hovering .cursor-outline {
+            width: 64px;
+            height: 64px;
+            background-color: rgba(3, 3, 3, 0.08);
+            border-color: transparent;
+        }
+
+        @media (hover: none) {
+            .cursor-dot, .cursor-outline { display: none !important; }
+            .js-enabled body, .js-enabled a { cursor: auto !important; }
+        }
+
+        /* =========================================
+           3. TYPOGRAPHY & UTILITIES
+           ========================================= */
+        .font-display { font-family: var(--font-display); }
+        .font-body { font-family: var(--font-body); }
+        
+        h1, h2, h3, h4, h5 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .text-display-xl {
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 300;
+        }
+
+        .text-display-lg {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+        }
+
+        .text-h3 {
+            font-size: clamp(1.5rem, 2.5vw, 2rem);
+            font-family: var(--font-body);
+            font-weight: 500;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-padding {
+            padding: var(--space-xl) 0;
+        }
+
+        /* =========================================
+           4. ANIMATIONS (Progressive Enhancement)
+           ========================================= */
+        .fade-up, .reveal-text span {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .js-enabled .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity var(--duration-med) var(--ease-smooth), 
+                        transform var(--duration-med) var(--ease-smooth);
+        }
+
+        .js-enabled .reveal-text {
+            overflow: hidden;
+            display: block;
+        }
+
+        .js-enabled .reveal-text span {
+            transform: translateY(110%);
+            transition: transform var(--duration-slow) var(--ease-smooth);
+        }
+
+        .js-enabled .fade-up.is-visible,
+        .js-enabled .reveal-text.is-visible span {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =========================================
+           5. COMPONENTS
+           ========================================= */
+        /* Buttons */
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 1rem 2rem;
+            border-radius: 100px;
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 0.95rem;
+            background-color: var(--color-text);
+            color: var(--color-bg);
+            border: 1px solid var(--color-text);
+            transition: all var(--duration-fast) var(--ease-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-pill svg {
+            width: 16px;
+            height: 16px;
+            transition: transform var(--duration-fast) var(--ease-smooth);
+        }
+
+        .btn-pill:hover {
+            background-color: var(--color-accent-sky);
+            color: var(--color-text);
+            border-color: var(--color-accent-sky);
+        }
+
+        .btn-pill:hover svg {
+            transform: translateX(4px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--color-text);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--color-text);
+            color: var(--color-bg);
+            border-color: var(--color-text);
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: var(--space-md) 0;
+            transition: background-color var(--duration-fast), backdrop-filter var(--duration-fast);
+        }
+
+        .nav.scrolled {
+            background-color: rgba(247, 245, 238, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(3, 3, 3, 0.05);
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-md);
+            list-style: none;
+        }
+
+        .nav-link {
+            font-size: 0.9rem;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: var(--color-text);
+            transition: width var(--duration-fast) var(--ease-smooth);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+        }
+
+        /* Marquee */
+        .marquee-section {
+            padding: var(--space-lg) 0;
+            border-top: 1px solid rgba(3, 3, 3, 0.1);
+            border-bottom: 1px solid rgba(3, 3, 3, 0.1);
+            overflow: hidden;
+            background-color: var(--color-accent-green);
+            color: var(--color-accent-sky);
+        }
+
+        .marquee-track {
+            display: flex;
+            width: max-content;
+            animation: scroll 30s linear infinite;
+        }
+
+        .marquee-track:hover {
+            animation-play-state: paused;
+        }
+
+        .marquee-item {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            white-space: nowrap;
+            padding: 0 1.5rem;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px;
+            background-color: rgba(3, 3, 3, 0.1);
+            border: 1px solid rgba(3, 3, 3, 0.1);
+            margin-top: var(--space-lg);
+        }
+
+        .service-card {
+            background-color: var(--color-bg);
+            padding: var(--space-lg) var(--space-md);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 320px;
+            transition: background-color var(--duration-med) var(--ease-smooth), 
+                        color var(--duration-med) var(--ease-smooth);
+        }
+
+        .service-card:hover {
+            background-color: var(--color-accent-sky);
+            color: var(--color-text);
+        }
+
+        .service-num {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-md);
+            transition: color var(--duration-med);
+        }
+
+        .service-card:hover .service-num {
+            color: var(--color-text);
+        }
+
+        .service-title {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .service-desc {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+            transition: color var(--duration-med);
+        }
+
+        .service-card:hover .service-desc {
+            color: var(--color-text);
+        }
+
+        .service-arrow {
+            margin-top: auto;
+            padding-top: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .service-arrow svg {
+            width: 20px;
+            height: 20px;
+            transition: transform var(--duration-fast) var(--ease-smooth);
+        }
+
+        .service-card:hover .service-arrow svg {
+            transform: translateX(6px);
+        }
+
+        /* Work Section */
+        .work-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+        }
+
+        @media (min-width: 768px) {
+            .work-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .work-item:nth-child(even) {
+                margin-top: var(--space-xl);
+            }
+        }
+
+        .work-item {
+            display: block;
+        }
+
+        .work-image-wrap {
+            width: 100%;
+            aspect-ratio: 4/5;
+            overflow: hidden;
+            border-radius: 4px;
+            margin-bottom: var(--space-md);
+            background-color: var(--color-bg-alt);
+        }
+
+        .work-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform var(--duration-slow) var(--ease-smooth);
+        }
+
+        .work-item:hover .work-image {
+            transform: scale(1.05);
+        }
+
+        .work-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-top: 1px solid rgba(3, 3, 3, 0.1);
+            padding-top: var(--space-sm);
+        }
+
+        .work-title {
+            font-family: var(--font-body);
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .work-cat {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        /* =========================================
+           NEW SECTIONS STYLES
+           ========================================= */
+        /* About Section */
+        .about-section {
+            background-color: var(--color-bg-alt);
+        }
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+        }
+        @media (min-width: 900px) {
+            .about-grid {
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+            }
+        }
+        .about-text p {
+            font-size: 1.25rem;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-md);
+        }
+        .about-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Process Section */
+        .process-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+        @media (min-width: 768px) {
+            .process-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .process-card {
+            padding: var(--space-md);
+            border-top: 2px solid var(--color-text);
+            transition: background-color var(--duration-med) var(--ease-smooth), padding var(--duration-med) var(--ease-smooth);
+        }
+        .process-card:hover {
+            background-color: var(--color-accent-sky);
+            padding-top: var(--space-lg);
+        }
+        .process-step {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-sm);
+        }
+        .process-card:hover .process-step {
+            color: var(--color-text);
+        }
+        .process-title {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+        .process-desc {
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+        }
+        .process-card:hover .process-desc {
+            color: var(--color-text);
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            background-color: var(--color-accent-green);
+            color: var(--color-accent-sky);
+        }
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            margin-top: var(--space-lg);
+        }
+        @media (min-width: 768px) {
+            .testimonial-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .testimonial-card {
+            padding: var(--space-md);
+            border: 1px solid rgba(179, 214, 211, 0.2);
+            border-radius: 8px;
+            transition: border-color var(--duration-med) var(--ease-smooth), background-color var(--duration-med) var(--ease-smooth);
+        }
+        .testimonial-card:hover {
+            border-color: var(--color-accent-sky);
+            background-color: rgba(179, 214, 211, 0.05);
+        }
+        .testimonial-quote {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            line-height: 1.4;
+            margin-bottom: var(--space-md);
+            font-style: italic;
+        }
+        .testimonial-author {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-white);
+        }
+        .testimonial-role {
+            font-size: 0.85rem;
+            color: rgba(179, 214, 211, 0.7);
+        }
+
+        /* FAQ Section */
+        .faq-list {
+            max-width: 800px;
+            margin: var(--space-lg) auto 0;
+        }
+        .faq-item {
+            border-bottom: 1px solid rgba(3, 3, 3, 0.1);
+        }
+        .faq-question {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-body);
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--color-text);
+            transition: color var(--duration-fast) var(--ease-smooth);
+        }
+        .faq-question:hover {
+            color: var(--color-text-muted);
+        }
+        .faq-icon {
+            width: 24px;
+            height: 24px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .faq-icon::before, .faq-icon::after {
+            content: '';
+            position: absolute;
+            background-color: var(--color-text);
+            transition: transform var(--duration-med) var(--ease-smooth);
+        }
+        .faq-icon::before {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+        .faq-icon::after {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+        .faq-item.active .faq-icon::after {
+            transform: translateX(-50%) rotate(90deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--duration-med) var(--ease-smooth), padding var(--duration-med) var(--ease-smooth);
+        }
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding-bottom: var(--space-md);
+        }
+        .faq-answer p {
+            font-size: 1rem;
+            color: var(--color-text-muted);
+            line-height: 1.6;
+        }
+
+        /* Final CTA Section */
+        .cta-section {
+            text-align: center;
+            background-color: var(--color-bg-alt);
+        }
+        .cta-title {
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            margin-bottom: var(--space-md);
+        }
+        .cta-desc {
+            font-size: 1.125rem;
+            color: var(--color-text-muted);
+            max-width: 600px;
+            margin: 0 auto var(--space-lg);
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--color-accent-green);
+            color: var(--color-accent-sky);
+            padding: var(--space-xxl) 0 var(--space-lg);
+            text-align: center;
+        }
+
+        .footer-cta {
+            font-size: clamp(3rem, 7vw, 6rem);
+            line-height: 1;
+            margin-bottom: var(--space-xl);
+            font-weight: 300;
+        }
+
+        .footer-cta a {
+            border-bottom: 2px solid var(--color-accent-sky);
+            transition: opacity var(--duration-fast);
+        }
+
+        .footer-cta a:hover {
+            opacity: 0.7;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-lg);
+            border-top: 1px solid rgba(179, 214, 211, 0.2);
+            padding-top: var(--space-lg);
+            text-align: left;
+        }
+
+        .footer-col h4 {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-md);
+            color: rgba(179, 214, 211, 0.6);
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .footer-link {
+            font-size: 1.125rem;
+            transition: color var(--duration-fast);
+        }
+
+        .footer-link:hover {
+            color: var(--color-white);
+        }
+
+        .footer-bottom {
+            margin-top: var(--space-xl);
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(179, 214, 211, 0.2);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: rgba(179, 214, 211, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .footer-bottom {
+                flex-direction: column;
+                gap: var(--space-sm);
+                text-align: center;
+            }
+            .footer-grid {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor Elements -->
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-outline" aria-hidden="true"></div>
+
+    <!-- Navigation -->
+    <header class="nav" id="navbar">
+        <div class="container nav-inner">
+            <a href="#" class="logo hover-target" aria-label="Studio Synthesis Home">Studio Synthesis.</a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#about" class="nav-link hover-target">About</a></li>
+                    <li><a href="#services" class="nav-link hover-target">Services</a></li>
+                    <li><a href="#work" class="nav-link hover-target">Work</a></li>
+                    <li><a href="#faq" class="nav-link hover-target">FAQ</a></li>
+                </ul>
+            </nav>
+            <a href="#contact" class="btn-pill hover-target">
+                Start a Project
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="section-padding" style="padding-top: calc(var(--space-xl) + 60px);">
+            <div class="container">
+                <h1 class="text-display-xl">
+                    <span class="reveal-text"><span>We craft digital</span></span>
+                    <span class="reveal-text"><span>experiences that</span></span>
+                    <span class="reveal-text"><span>resonate & convert.</span></span>
+                </h1>
+                <div class="fade-up" style="margin-top: var(--space-md); max-width: 600px;">
+                    <p class="text-body-lg" style="font-size: 1.125rem; color: var(--color-text-muted);">
+                        A strategic design studio bridging the gap between bold aesthetics and measurable business growth. We build brands and websites that refuse to be ignored.
+                    </p>
+                    <div style="margin-top: var(--space-md);">
+                        <a href="#work" class="btn-pill btn-outline hover-target">
+                            View Selected Work
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marquee Section -->
+        <section class="marquee-section" aria-label="Services marquee">
+            <div class="marquee-track">
+                <span class="marquee-item">Development</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Art Direction</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Brand Strategy</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Web Design</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Development</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Art Direction</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Brand Strategy</span>
+                <span class="marquee-item">•</span>
+                <span class="marquee-item">Web Design</span>
+                <span class="marquee-item">•</span>
+            </div>
+        </section>
+
+        <!-- About Section (NEW) -->
+        <section id="about" class="section-padding about-section">
+            <div class="container">
+                <div class="about-grid">
+                    <div class="fade-up">
+                        <h2 class="text-display-lg">Great work gets us hired.<br>Our process keeps us in business.</h2>
+            </div>
+                    <div class="about-text fade-up">
+                        <p>We are a collective of strategists, designers, and engineers obsessed with the intersection of form and function. We don't just make things look pretty; we build systems that scale.</p>
+                        <p>Every pixel is intentional. Every line of code is optimized. We partner with ambitious founders who understand that a premium digital presence isn't an expense—it's the highest-leverage investment you can make.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="section-padding">
+            <div class="container">
+                <div class="fade-up">
+                    <h2 class="text-display-lg">Our Expertise</h2>
+                </div>
+                <div class="services-grid">
+                    <article class="service-card hover-target fade-up">
+                        <div>
+                            <span class="service-num">01</span>
+                            <h3 class="service-title">Brand Strategy</h3>
+                            <p class="service-desc">We distill your core value into a compelling visual and verbal identity that cuts through the noise.</p>
+                        </div>
+                        <div class="service-arrow">
+                            Learn more 
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </article>
+                    <article class="service-card hover-target fade-up">
+                        <div>
+                            <span class="service-num">02</span>
+                            <h3 class="service-title">Art Direction</h3>
+                            <p class="service-desc">Crafting intuitive, high-converting digital environments that guide users seamlessly to action.</p>
+                        </div>
+                        <div class="service-arrow">
+                            Learn more 
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </article>
+                    <article class="service-card hover-target fade-up">
+                        <div>
+                            <span class="service-num">03</span>
+                            <h3 class="service-title">Web Development</h3>
+                            <p class="service-desc">Pixel-perfect, performant code using modern frameworks, ensuring your site is as robust as it is beautiful.</p>
+                        </div>
+                        <div class="service-arrow">
+                            Learn more 
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process Section (NEW) -->
+        <section class="section-padding" style="background-color: var(--color-bg-alt);">
+            <div class="container">
+                <div class="fade-up">
+                    <h2 class="text-display-lg">How We Work</h2>
+                </div>
+                <div class="process-grid">
+                    <div class="process-card fade-up hover-target">
+                        <span class="process-step">Phase 01</span>
+                        <h3 class="process-title">Discover & Strategize</h3>
+                        <p class="process-desc">We deep-dive into your business, audience, and competitors to uncover the unique leverage points that will drive your growth.</p>
+                    </div>
+                    <div class="process-card fade-up hover-target">
+                        <span class="process-step">Phase 02</span>
+                        <h3 class="process-title">Design & Iterate</h3>
+                        <p class="process-desc">Our designers craft high-fidelity prototypes, refining every interaction and visual detail until it perfectly aligns with your vision.</p>
+                    </div>
+                    <div class="process-card fade-up hover-target">
+                        <span class="process-step">Phase 03</span>
+                        <h3 class="process-title">Develop & Launch</h3>
+                        <p class="process-desc">We build with clean, scalable code, rigorously test across all devices, and deploy with a seamless, zero-downtime handover.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Work Section -->
+        <section id="work" class="section-padding">
+            <div class="container">
+                <div class="fade-up" style="margin-bottom: var(--space-lg); display: flex; justify-content: space-between; align-items: flex-end;">
+                    <h2 class="text-display-lg">Selected Work</h2>
+                    <a href="#" class="btn-pill btn-outline hover-target" style="margin-bottom: var(--space-sm);">
+                        View All Projects
+                    </a>
+                </div>
+                
+                <div class="work-grid">
+                    <a href="#" class="work-item fade-up hover-target">
+                        <div class="work-image-wrap">
+                            <img src="https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2000&auto=format&fit=crop" alt="Minimalist architecture brand identity" class="work-image" loading="lazy">
+                        </div>
+                        <div class="work-meta">
+                            <span class="work-title">Aura Architecture</span>
+                            <span class="work-cat">Branding / Web</span>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="work-item fade-up hover-target">
+                        <div class="work-image-wrap">
+                            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop" alt="Abstract digital product design" class="work-image" loading="lazy">
+                        </div>
+                        <div class="work-meta">
+                            <span class="work-title">Nexus Finance</span>
+                            <span class="work-cat">UX/UI / Development</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="work-item fade-up hover-target">
+                        <div class="work-image-wrap">
+                            <img src="https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=2000&auto=format&fit=crop" alt="Premium coffee brand packaging" class="work-image" loading="lazy">
+                        </div>
+                        <div class="work-meta">
+                            <span class="work-title">Roast & Co.</span>
+                            <span class="work-cat">Art Direction / Packaging</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="work-item fade-up hover-target">
+                        <div class="work-image-wrap">
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop" alt="Retro tech website redesign" class="work-image" loading="lazy">
+                        </div>
+                        <div class="work-meta">
+                            <span class="work-title">Analog Systems</span>
+                            <span class="work-cat">Web Design / Strategy</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section (NEW) -->
+        <section class="section-padding testimonials-section">
+            <div class="container">
+                <div class="fade-up">
+                    <h2 class="text-display-lg" style="color: var(--color-white);">Client Stories</h2>
+                </div>
+                <div class="testimonial-grid">
+                    <div class="testimonial-card fade-up hover-target">
+                        <p class="testimonial-quote">"Within 3 months of launch we saw $2M+ in new project leads. The new site looks premium, qualifies clients better, and shows our work at its absolute best."</p>
+                        <div class="testimonial-author">Johnny Hyde</div>
+                        <div class="testimonial-role">Founder, OH Architecture</div>
+                    </div>
+                    <div class="testimonial-card fade-up hover-target">
+                        <p class="testimonial-quote">"They care about your vision as if it were their own. Talented, humble, and relentless in finding elegant solutions. The partner ambitious brands need."</p>
+                        <div class="testimonial-author">Jonathon Shannon</div>
+                        <div class="testimonial-role">Director, Supersolid Agency</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section (NEW) -->
+        <section id="faq" class="section-padding">
+            <div class="container">
+                <div class="fade-up" style="text-align: center;">
+                    <h2 class="text-display-lg">Frequently Asked Questions</h2>
+                </div>
+                <div class="faq-list fade-up">
+                    <div class="faq-item">
+                        <button class="faq-question hover-target">
+                            <span>What is your typical project timeline?</span>
+                            <span class="faq-icon"></span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Most comprehensive brand and web projects take between 10 to 14 weeks from kickoff to launch. This allows ample time for deep discovery, iterative design, and rigorous development without rushing the craft.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question hover-target">
+                            <span>How do you structure your pricing?</span>
+                            <span class="faq-icon"></span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>We work on a project-value basis rather than hourly rates. After an initial discovery call, we provide a fixed-scope proposal with clear milestones, ensuring total transparency and no surprise costs.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question hover-target">
+                            <span>Do you offer ongoing support after launch?</span>
+                            <span class="faq-icon"></span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Absolutely. We provide 30 days of complimentary post-launch support. Beyond that, we offer flexible retainer packages for ongoing maintenance, content updates, and continuous optimization.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question hover-target">
+                            <span>What do you need from us to get started?</span>
+                            <span class="faq-icon"></span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Just your ambition. We'll guide you through our structured onboarding process, which includes a brand questionnaire, a kickoff workshop, and access to any existing brand assets or analytics you have.</p>
+                        </div>
+                    </div
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA Section (NEW) -->
+        <section id="contact" class="section-padding cta-section">
+            <div class="container fade-up">
+                <h2 class="cta-title">Ready to build an<br>experience that moves people?</h2>
+                <p class="cta-desc">Let's discuss your vision, challenges, and how we can craft a digital presence that drives real business results.</p>
+                <a href="mailto:hello@studiosynthesis.com" class="btn-pill hover-target" style="font-size: 1.1rem; padding: 1.25rem 2.5rem;">
+                    Start the Conversation
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="fade-up">
+                    <h2 class="footer-cta font-display">
+                        Have an idea?<br>
+                        <a href="mailto:hello@studiosynthesis.com" class="hover-target">Let's build it.</a>
+                    </h2>
+                </div>
+
+                <div class="footer-grid fade-up">
+                    <div class="footer-col">
+                        <h4>Sitemap</h4>
+                        <ul class="footer-links">
+                            <li><a href="#" class="footer-link hover-target">Home</a></li>
+                            <li><a href="#about" class="footer-link hover-target">About</a></li>
+                            <li><a href="#services" class="footer-link hover-target">Services</a></li>
+                            <li><a href="#work" class="footer-link hover-target">Work</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Socials</h4>
+                        <ul class="footer-links">
+                            <li><a href="#" class="footer-link hover-target">Instagram</a></li>
+                            <li><a href="#" class="footer-link hover-target">LinkedIn</a></li>
+                            <li><a href="#" class="footer-link hover-target">Twitter / X</a></li>
+                            <li><a href="#" class="footer-link hover-target">Dribbble</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Contact</h4>
+                        <ul class="footer-links">
+                            <li><a href="mailto:hello@studiosynthesis.com" class="footer-link hover-target">hello@studiosynthesis.com</a></li>
+                            <li><span class="footer-link" style="color: rgba(179, 214, 211, 0.6);">New York, NY</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom fade-up">
+                    <span>&copy; 2024 Studio Synthesis. All rights reserved.</span>
+                    <span>Designed & Developed with precision.</span>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // 1. Enable JS-specific features (prevents blank screen if JS fails)
+        document.documentElement.classList.add('js-enabled');
+
+        // 2. Custom Cursor Logic (Fixed X/Y tracking and optimized with requestAnimationFrame)
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        const hoverTargets = document.querySelectorAll('.hover-target');
+
+        let mouseX = 50;
+        let mouseY = 50;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+            cursorDot.style.setProperty('--x', `${mouseX}px`);
+            cursorDot.style.setProperty('--y', `${mouseY}px`);
+            cursorOutline.style.setProperty('--x', `${mouseX}px`);
+            cursorOutline.style.setProperty('--y', `${mouseY}px`);
+            requestAnimationFrame(animateCursor);
+        }
+        requestAnimationFrame(animateCursor);
+
+        // Hover states for cursor
+        hoverTargets.forEach(target => {
+            target.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+            target.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+        });
+
+        // 3. Robust Intersection Observer for Scroll Animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target); // Stop observing once animated
+                }
+            });
+        }, observerOptions);
+
+        // Observe all elements that should animate
+        document.querySelectorAll('.reveal-text, .fade-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 4. Fallback: Force visibility of hero elements immediately on load
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.reveal-text').forEach((el, index) => {
+                setTimeout(() => {
+                    el.classList.add('is-visible');
+                }, index * 150);
+            });
+        });
+
+        // 5. Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }, { passive: true });
+
+        // 6. Smooth Scroll Initialization (Lenis)
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            smoothTouch: false,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // 7. FAQ Accordion Logic (Vanilla JS)
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // Close all other items
+                document.querySelectorAll('.faq-item').forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                });
+
+                // Toggle current item
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

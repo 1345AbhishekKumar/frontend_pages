@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVERYTHING FADES — A meditation on entropy</title>
+<meta name="description" content="A webgl experiment exploring dissolution through forty thousand particles of light.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #0d0c0b;
+    --cream: #ede8dd;
+    --signal: #ff3d2e;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --display: 'Fraunces', 'Times New Roman', serif;
+  }
+  
+  html, body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.05em;
+    overflow-x: hidden;
+  }
+  
+  body { height: 300vh; }
+  
+  #webgl {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+  }
+  
+  .ui {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    padding: 2rem;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  
+  .ui a {
+    pointer-events: auto;
+    color: var(--cream);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+  }
+  
+  .ui a:hover { color: var(--signal); }
+  .ui a:focus-visible { outline: 1px solid var(--signal); outline-offset: 4px; }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  
+  .label { text-transform: uppercase; }
+  .label::before { content: '— '; color: var(--signal); }
+  
+  nav { display: flex; gap: 1.5rem; }
+  
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+  }
+  
+  .caption { max-width: 320px; opacity: 0.7; }
+  .caption em { color: var(--signal); font-style: normal; }
+  
+  .scroll-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.6s ease;
+  }
+  
+  .scroll-indicator.hidden { opacity: 0; }
+  
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--cream), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes scrollPulse {
+    0%, 100% { transform: scaleY(1); opacity: 0.4; }
+    50% { transform: scaleY(1.4); opacity: 1; }
+  }
+  
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  
+  @media (max-width: 640px) {
+    .ui { padding: 1.25rem; }
+    .caption { font-size: 11px; max-width: 220px; }
+    nav { gap: 1rem; }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-line { animation: none; opacity: 0.6; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="webgl"></canvas>
+
+<div class="ui">
+  <header class="header">
+    <span class="label">N° 001 / Ephemera</span>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="#info">Info</a>
+    </nav>
+  </header>
+  
+  <div></div>
+  
+  <footer class="footer">
+    <p class="caption">
+      <em>Everything fades.</em><br>
+      A meditation on entropy, rendered in forty thousand points of light. Scroll to witness the dissolution.
+    </p>
+    <div class="scroll-indicator" id="scrollIndicator">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </footer>
+</div>
+
+<div class="grain"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
+const CONFIG = {
+  text: 'EVERYTHING FADES',
+  particleGap: 3,
+  particleSize: 2.4,
+  bgColor: 0x0d0c0b,
+  creamColor: new THREE.Color(0xede8dd),
+  signalColor: new THREE.Color(0xff3d2e),
+  cameraZ: 5,
+  mouseRadius: 1.2,
+  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  mouse: new THREE.Vector2(9999, 9999),
+  mouseTarget: new THREE.Vector2(9999, 9999),
+  scroll: 0,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  dpr: Math.min(window.devicePixelRatio, 2)
+};
+
+/* ============================================================
+   SCENE
+   ============================================================ */
+const canvas = document.getElementById('webgl');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(CONFIG.bgColor);
+
+const camera = new THREE.PerspectiveCamera(50, state.width / state.height, 0.1, 100);
+camera.position.z = CONFIG.cameraZ;
+
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: false,
+  powerPreference: 'high-performance'
+});
+renderer.setPixelRatio(state.dpr);
+renderer.setSize(state.width, state.height);
+
+/* ============================================================
+   PARTICLE GENERATION
+   Rasterize text to offscreen canvas, sample opaque pixels,
+   map to world-space coordinates via camera frustum math.
+   ============================================================ */
+function generateParticles() {
+  const offscreen = document.createElement('canvas');
+  const ctx = offscreen.getContext('2d');
+  
+  const scale = 2;
+  offscreen.width = state.width * scale;
+  offscreen.height = Math.min(state.height * 0.45, 420) * scale;
+  
+  const fontSize = Math.min(state.width * 0.135, 190) * scale;
+  
+  ctx.fillStyle = 'white';
+  ctx.font = `900 ${fontSize}px 'Fraunces', serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(CONFIG.text, offscreen.width / 2, offscreen.height / 2);
+  
+  const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
+  const positions = [], randoms = [], speeds = [];
+  
+  const fovRad = THREE.MathUtils.degToRad(camera.fov);
+  const worldHeight = 2 * Math.tan(fovRad / 2) * CONFIG.cameraZ;
+  const worldWidth = worldHeight * camera.aspect;
+  
+  const gap = CONFIG.particleGap * scale;
+  
+  for (let y = 0; y < offscreen.height; y += gap) {
+    for (let x = 0; x < offscreen.width; x += gap) {
+      const i = (y * offscreen.width + x) * 4;
+      if (imageData.data[i + 3] > 128) {
+        const wx = (x / offscreen.width - 0.5) * worldWidth * 0.85;
+        const wy = -(y / offscreen.height - 0.5) * worldHeight * 0.85;
+        const wz = (Math.random() - 0.5) * 0.1;
+        positions.push(wx, wy, wz);
+        randoms.push(Math.random());
+        speeds.push(0.5 + Math.random() * 1.5);
+      }
+    }
+  }
+  
+  return {
+    positions: new Float32Array(positions),
+    randoms: new Float32Array(randoms),
+    speeds: new Float32Array(speeds)
+  };
+}
+
+/* ============================================================
+   SHADERS
+   ============================================================ */
+const vertexShader = /* glsl */`
+  uniform float uTime;
+  uniform float uProgress;
+  uniform vec2 uMouse;
+  uniform float uPixelRatio;
+  uniform float uPointSize;
+  uniform float uMouseRadius;
+  
+  attribute float aRandom;
+  attribute float aSpeed;
+  
+  varying float vRandom;
+  varying float vDissolve;
+  
+  /* 3D Simplex Noise — Ashima Arts (MIT License)
+     github.com/ashima/webgl-noise */
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+  vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+  
+  float snoise(vec3 v) {
+    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+    vec3 i = floor(v + dot(v, C.yyy));
+    vec3 x0 = v - i + dot(i, C.xxx);
+    vec3 g = step(x0.yzx, x0.xyz);
+    vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy);
+    vec3 i2 = max(g.xyz, l.zxy);
+    vec3 x1 = x0 - i1 + C.xxx;
+    vec3 x2 = x0 - i2 + C.yyy;
+    vec3 x3 = x0 - D.yyy;
+    i = mod289(i);
+    vec4 p = permute(permute(permute(
+      i.z + vec4(0.0, i1.z, i2.z, 1.0))
+      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+    float n_ = 0.142857142857;
+    vec3 ns = n_ * D.wyz - D.xzx;
+    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+    vec4 x_ = floor(j * ns.z);
+    vec4 y_ = floor(j - 7.0 * x_);
+    vec4 x = x_ * ns.x + ns.yyyy;
+    vec4 y = y_ * ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+    vec4 b0 = vec4(x.xy, y.xy);
+    vec4 b1 = vec4(x.zw, y.zw);
+    vec4 s0 = floor(b0) * 2.0 + 1.0;
+    vec4 s1 = floor(b1) * 2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+    vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+    vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+    vec3 p0 = vec3(a0.xy, h.x);
+    vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z);
+    vec3 p3 = vec3(a1.zw, h.w);
+    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+  }
+  
+  void main() {
+    vRandom = aRandom;
+    vec3 pos = position;
+    
+    // === BREATHING TURBULENCE ===
+    // Organic noise field gives each particle a subtle drift,
+    // intensifying as dissolution progresses.
+    float t = uTime * 0.2 * aSpeed;
+    vec3 noisePos = position * 0.6 + vec3(t, t * 0.7, t * 0.3);
+    float n1 = snoise(noisePos);
+    float n2 = snoise(noisePos * 1.3 + 50.0);
+    
+    float drift = 0.04 + uProgress * 0.18;
+    pos.x += n1 * drift;
+    pos.y += n2 * drift;
+    
+    // === MOUSE REPULSION ===
+    // Particles push away from the cursor in a soft falloff radius.
+    vec2 toMouse = pos.xy - uMouse;
+    float mouseDist = length(toMouse);
+    float mouseForce = smoothstep(uMouseRadius, 0.0, mouseDist);
+    vec2 mouseDir = normalize(toMouse + 0.0001);
+    pos.xy += mouseDir * mouseForce * 0.35;
+    
+    // === DISSOLUTION ===
+    // Each particle has a random threshold. Scroll progress triggers
+    // a staggered cascade — particles rise and swirl as they dissolve.
+    float threshold = aRandom;
+    vDissolve = smoothstep(threshold - 0.05, threshold + 0.15, uProgress);
+    
+    float angle = aRandom * 6.2831 + uTime * 0.8;
+    pos.y += vDissolve * (1.5 + aRandom * 2.5);
+    pos.x += vDissolve * sin(angle) * 0.4;
+    pos.z += vDissolve * cos(angle) * 0.4;
+    
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    
+    float size = uPointSize * uPixelRatio;
+    size *= (1.0 - vDissolve * 0.6);
+    gl_PointSize = size;
+  }
+`;
+
+const fragmentShader = /* glsl */`
+  uniform vec3 uCreamColor;
+  uniform vec3 uSignalColor;
+  
+  varying float vRandom;
+  varying float vDissolve;
+  
+  void main() {
+    // Circular soft-edged point sprite
+    vec2 center = gl_PointCoord - vec2(0.5);
+    float dist = length(center);
+    if (dist > 0.5) discard;
+    
+    float alpha = 1.0 - smoothstep(0.25, 0.5, dist);
+    alpha *= (1.0 - vDissolve * 0.85);
+    
+    // Cream at rest, signal red as the particle decays.
+    vec3 color = mix(uCreamColor, uSignalColor, vDissolve);
+    color *= 0.88 + vRandom * 0.24;
+    
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+/* ============================================================
+   PARTICLE SYSTEM
+   ============================================================ */
+const uniforms = {
+  uTime: { value: 0 },
+  uProgress: { value: 0 },
+  uMouse: { value: new THREE.Vector2(9999, 9999) },
+  uPixelRatio: { value: state.dpr },
+  uPointSize: { value: CONFIG.particleSize },
+  uMouseRadius: { value: CONFIG.mouseRadius },
+  uCreamColor: { value: CONFIG.creamColor },
+  uSignalColor: { value: CONFIG.signalColor }
+};
+
+let particles = null;
+
+function buildParticles() {
+  if (particles) {
+    scene.remove(particles);
+    particles.geometry.dispose();
+    particles.material.dispose();
+  }
+  
+  const data = generateParticles();
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
+  geometry.setAttribute('aRandom', new THREE.BufferAttribute(data.randoms, 1));
+  geometry.setAttribute('aSpeed', new THREE.BufferAttribute(data.speeds, 1));
+  
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  
+  particles = new THREE.Points(geometry, material);
+  scene.add(particles);
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function updateMouseTarget(clientX, clientY) {
+  const nx = (clientX / state.width) * 2 - 1;
+  const ny = -(clientY / state.height) * 2 + 1;
+  
+  const fovRad = THREE.MathUtils.degToRad(camera.fov);
+  const worldHeight = 2 * Math.tan(fovRad / 2) * CONFIG.cameraZ;
+  const worldWidth = worldHeight * camera.aspect;
+  
+  state.mouseTarget.x = nx * worldWidth * 0.5;
+  state.mouseTarget.y = ny * worldHeight * 0.5;
+}
+
+window.addEventListener('mousemove', (e) => updateMouseTarget(e.clientX, e.clientY));
+window.addEventListener('touchmove', (e) => {
+  if (e.touches[0]) updateMouseTarget(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+window.addEventListener('mouseleave', () => state.mouseTarget.set(9999, 9999));
+
+window.addEventListener('scroll', () => {
+  const maxScroll = document.body.scrollHeight - window.innerHeight;
+  state.scroll = window.scrollY / maxScroll;
+  const indicator = document.getElementById('scrollIndicator');
+  if (indicator) indicator.classList.toggle('hidden', state.scroll > 0.05);
+}, { passive: true });
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    state.width = window.innerWidth;
+    state.height = window.innerHeight;
+    state.dpr = Math.min(window.devicePixelRatio, 2);
+    
+    camera.aspect = state.width / state.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(state.width, state.height);
+    renderer.setPixelRatio(state.dpr);
+    uniforms.uPixelRatio.value = state.dpr;
+    
+    buildParticles();
+  }, 200);
+});
+
+/* ============================================================
+   LOOP
+   ============================================================ */
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  const elapsed = clock.getElapsedTime();
+  uniforms.uTime.value = CONFIG.reducedMotion ? 0 : elapsed;
+  
+  // Smooth mouse tracking via lerp
+  state.mouse.x += (state.mouseTarget.x - state.mouse.x) * 0.08;
+  state.mouse.y += (state.mouseTarget.y - state.mouse.y) * 0.08;
+  uniforms.uMouse.value.copy(state.mouse);
+  
+  // Scroll drives dissolution across the first 40% of scroll
+  uniforms.uProgress.value = Math.min(state.scroll * 2.5, 1.0);
+  
+  renderer.render(scene, camera);
+}
+
+/* ============================================================
+   INIT — wait for Fraunces to load so text rasterization
+   matches the displayed typeface.
+   ============================================================ */
+async function init() {
+  try { await document.fonts.ready; } catch (e) {}
+  // Small extra delay for rendering
+  await new Promise(r => setTimeout(r, 100));
+  buildParticles();
+  animate();
+}
+
+init();
+</script>
+</body>
+</html>

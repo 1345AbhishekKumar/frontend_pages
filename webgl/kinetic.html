@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kinetic Fields - An immersive GPU-accelerated WebGL experience showcasing advanced particle systems and real-time shader programming.">
+    <title>Kinetic Fields // GPU-Accelerated WebGL Experience</title>
+
+    <!-- Fontsource CDN Fonts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/inter@latest/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/syne@latest/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/index.css">
+
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0f;
+            --bg-tertiary: #111118;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --text-muted: rgba(255, 255, 255, 0.2);
+            --accent-primary: #00ff88;
+            --accent-secondary: #00d4ff;
+            --accent-tertiary: #ff006e;
+            --accent-gradient: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #8b5cf6 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --grid-line: rgba(255, 255, 255, 0.03);
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-spring: 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: auto;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Custom Cursor */
+        .cursor-dot {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform var(--transition-fast);
+            box-shadow: 0 0 20px var(--accent-primary);
+            will-change: transform;
+        }
+
+        .cursor-ring {
+            position: fixed;
+            width: 44px;
+            height: 44px;
+            border: 1.5px solid rgba(0, 255, 136, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                        width 0.3s ease, 
+                        height 0.3s ease, 
+                        border-color 0.3s ease,
+                        background 0.3s ease;
+            will-change: transform;
+        }
+
+        .cursor-ring.hovering {
+            width: 64px;
+            height: 64px;
+            border-color: var(--accent-secondary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .cursor-dot, .cursor-ring { display: none; }
+        }
+
+        /* Loading Screen */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+        }
+
+        .loader-content {
+            text-align: center;
+        }
+
+        .loader-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .loader-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 2rem;
+        }
+
+        .loader-bar {
+            width: 240px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .loader-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--accent-gradient);
+            animation: loadProgress 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            box-shadow: 0 0 20px var(--accent-primary);
+        }
+
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* WebGL Canvas */
+        #webgl-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Noise Grain Overlay */
+        .noise-overlay {
+            position: fixed;
+            inset: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            animation: noiseShift 0.5s steps(3) infinite;
+        }
+
+        @keyframes noiseShift {
+            0% { transform: translate(0, 0); }
+            33% { transform: translate(-5px, -5px); }
+            66% { transform: translate(5px, 5px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Vignette */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+        }
+
+        /* Grid Overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            z-index: 5;
+            opacity: 0.5;
+        }
+
+        .grid-line {
+            border-right: 1px solid var(--grid-line);
+            height: 100%;
+        }
+
+        .grid-line:last-child {
+            border-right: none;
+        }
+
+        /* Scroll Progress */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            z-index: 200;
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 15px var(--accent-primary);
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+        }
+
+        .logo-mark {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+            box-shadow: 0 0 15px var(--accent-primary);
+            animation: logoPulse 3s infinite ease-in-out;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { opacity: 1; transform: rotate(0deg) scale(1); }
+            50% { opacity: 0.7; transform: rotate(180deg) scale(1.1); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent-primary);
+            transition: width var(--transition-smooth);
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a:focus::after {
+            width: 100%;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--accent-primary);
+            animation: pulse 2.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* Side Navigation */
+        .side-nav {
+            position: fixed;
+            right: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .side-nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+            border: none;
+        }
+
+        .side-nav-dot.active {
+            background: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-primary);
+            transform: scale(1.5);
+        }
+
+        .side-nav-dot::before {
+            content: attr(data-label);
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%) translateX(10px);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0;
+            transition: all var(--transition-smooth);
+            pointer-events: none;
+        }
+
+        .side-nav-dot:hover::before,
+        .side-nav-dot:focus::before {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .side-nav-dot:focus {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 4px;
+        }
+
+        @media (max-width: 1024px) {
+            .side-nav { display: none; }
+            .nav-links { display: none; }
+        }
+
+        /* Scroll Wrapper */
+        .scroll-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        /* Sections */
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 8%;
+            position: relative;
+        }
+
+        /* Section Label */
+        .section-label {
+            position: absolute;
+            top: 10rem;
+            left: 8%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 40px;
+            height: 1px;
+            background: var(--accent-gradient);
+        }
+
+        /* Hero Section */
+        .hero-sec {
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 12rem;
+            padding-bottom: 8rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 4rem;
+            margin-bottom: 4rem;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .hero-meta-item .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.25em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .hero-meta-item .value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .title-container {
+            margin-bottom: 3rem;
+            max-width: 95%;
+        }
+
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(4rem, 12vw, 10rem);
+            line-height: 0.85;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            display: block;
+            opacity: 0;
+            transform: translateY(80px);
+        }
+
+        .hero-title.outline {
+            color: transparent;
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .hero-title .accent {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            -webkit-text-stroke: 0;
+            text-shadow: 0 0 60px rgba(0, 255, 136, 0.3);
+        }
+
+        .hero-desc {
+            max-width: 500px;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            font-weight: 300;
+            transform: translateY(30px);
+            opacity: 0;
+            margin-bottom: 3rem;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .cta-btn {
+            padding: 1.2rem 2.5rem;
+            background: transparent;
+            border: 1.5px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+        }
+
+        .cta-btn:hover,
+        .cta-btn:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+            transform: translateY(-2px);
+            outline: none;
+        }
+
+        .cta-btn:hover::before,
+        .cta-btn:focus::before {
+            opacity: 0.1;
+        }
+
+        .cta-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-arrow {
+            width: 48px;
+            height: 48px;
+            border: 1.5px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            background: transparent;
+        }
+
+        .cta-arrow:hover,
+        .cta-arrow:focus {
+            border-color: var(--accent-secondary);
+            background: rgba(0, 212, 255, 0.05);
+            transform: translateY(-2px);
+            outline: none;
+        }
+
+        .cta-arrow svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-secondary);
+            transition: stroke var(--transition-fast);
+        }
+
+        .cta-arrow:hover svg,
+        .cta-arrow:focus svg {
+            stroke: var(--accent-secondary);
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 4rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .indicator-line {
+            width: 1px;
+            height: 70px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .indicator-line::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--accent-primary));
+            animation: scrollLine 3s infinite ease-in-out;
+        }
+
+        @keyframes scrollLine {
+            0% { top: -100%; }
+            100% { top: 100%; }
+        }
+
+        /* Details Section */
+        .details-sec {
+            justify-content: flex-end;
+        }
+
+        .details-box {
+            max-width: 560px;
+            padding: 4rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            transform: translateX(100px);
+            opacity: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .details-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--accent-gradient);
+            opacity: 0.5;
+        }
+
+        .details-box::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .details-box .section-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--accent-primary);
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .details-box .section-tag::before {
+            content: '';
+            width: 24px;
+            height: 1px;
+            background: var(--accent-primary);
+        }
+
+        .details-box h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .details-box p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.9;
+            font-weight: 300;
+            margin-bottom: 2.5rem;
+        }
+
+        .details-stats {
+            display: flex;
+            gap: 3rem;
+            padding-top: 2.5rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-item .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-item .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Features Section */
+        .features-sec {
+            justify-content: flex-start;
+            padding-right: 15%;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .feature-card {
+            padding: 2.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+        }
+
+        .feature-card:hover,
+        .feature-card:focus {
+            border-color: var(--glass-border-hover);
+            transform: translateY(-4px);
+            outline: none;
+        }
+
+        .feature-card:hover::before,
+        .feature-card:focus::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+        }
+
+        .feature-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--accent-secondary);
+        }
+
+        .feature-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+            }
+        }
+
+        /* End Section */
+        .end-sec {
+            justify-content: center;
+            text-align: center;
+            flex-direction: column;
+        }
+
+        .end-box {
+            max-width: 800px;
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        .end-box .end-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.4em;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .end-box .end-label::before,
+        .end-box .end-label::after {
+            content: '';
+            width: 50px;
+            height: 1px;
+            background: var(--accent-gradient);
+            opacity: 0.5;
+        }
+
+        .end-box h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            line-height: 0.9;
+        }
+
+        .end-box h2 .gradient-text {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .end-box p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            line-height: 1.9;
+            margin-bottom: 4rem;
+            font-weight: 300;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .end-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 1.2rem;
+            padding: 1.3rem 3rem;
+            border: 1.5px solid rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 60px;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            text-decoration: none;
+        }
+
+        .end-cta:hover,
+        .end-cta:focus {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
+            transform: translateY(-3px);
+            outline: none;
+        }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            z-index: 2;
+            padding: 4rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .footer-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 3rem;
+        }
+
+        .footer-links a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color var(--transition-fast);
+        }
+
+        .footer-links a:hover,
+        .footer-links a:focus {
+            color: var(--accent-primary);
+            outline: none;
+        }
+
+        @media (max-width: 768px) {
+            section { padding: 6rem 5%; }
+            .details-sec { justify-content: center; }
+            .details-box { padding: 2.5rem; max-width: 100%; }
+            header { padding: 1.5rem 5%; }
+            .hero-meta { flex-direction: column; gap: 2rem; }
+            .details-stats { flex-wrap: wrap; gap: 2rem; }
+            .footer { flex-direction: column; gap: 2rem; text-align: center; }
+            .features-sec { padding-right: 5%; }
+            .section-label { left: 5%; top: 8rem; }
+        }
+
+        /* Focus Visible for Accessibility */
+        *:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader" role="status" aria-label="Loading">
+        <div class="loader-content">
+            <h1 class="loader-title">KINETIC FIELDS</h1>
+            <p class="loader-text">Initializing GPU Pipeline</p>
+            <div class="loader-bar" aria-hidden="true"></div>
+        </div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+    <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+    <!-- Noise Overlay -->
+    <div class="noise-overlay" aria-hidden="true"></div>
+
+    <!-- Vignette -->
+    <div class="vignette" aria-hidden="true"></div>
+
+    <!-- Grid Overlay -->
+    <div class="grid-overlay" aria-hidden="true">
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+    </div>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" id="scrollProgress" role="progressbar" aria-label="Page scroll progress"></div>
+
+    <!-- WebGL Canvas -->
+    <canvas id="webgl-canvas" aria-label="Interactive 3D particle visualization"></canvas>
+
+    <!-- Header -->
+    <header role="banner">
+        <a href="#" class="logo hoverable" aria-label="Kinetic Fields Home">
+            <div class="logo-mark" aria-hidden="true"></div>
+            <span>KINETIC</span>
+        </a>
+        <nav class="nav-links" role="navigation" aria-label="Main navigation">
+            <a href="#hero" class="hoverable">Index</a>
+            <a href="#details" class="hoverable">Process</a>
+            <a href="#features" class="hoverable">Systems</a>
+            <a href="#end" class="hoverable">Core</a>
+        </nav>
+        <div class="status-container">
+            <div class="status-dot" aria-hidden="true"></div>
+            <span>GPU Active</span>
+        </div>
+    </header>
+
+    <!-- Side Navigation -->
+    <nav class="side-nav" role="navigation" aria-label="Section navigation">
+        <button class="side-nav-dot active" data-label="Origin" data-section="0" aria-label="Go to Origin section"></button>
+        <button class="side-nav-dot" data-label="Process" data-section="1" aria-label="Go to Process section"></button>
+        <button class="side-nav-dot" data-label="Systems" data-section="2" aria-label="Go to Systems section"></button>
+        <button class="side-nav-dot" data-label="Core" data-section="3" aria-label="Go to Core section"></button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="scroll-wrapper" role="main">
+
+        <!-- HERO SECTION -->
+        <section class="section hero-sec" id="hero" aria-labelledby="hero-title">
+            <div class="section-label">Section 001 — Origin</div>
+
+            <div class="hero-meta">
+                <div class="hero-meta-item">
+                    <span class="label">Particles</span>
+                    <span class="value">40,000</span>
+                </div>
+                <div class="hero-meta-item">
+                    <span class="label">Frame Rate</span>
+                    <span class="value">60 FPS</span>
+                </div>
+                <div class="hero-meta-item">
+                    <span class="label">Engine</span>
+                    <span class="value">WebGL 2.0</span>
+                </div>
+            </div>
+
+            <div class="title-container">
+                <h1 class="hero-title" id="hero-title">INTELLIGENT</h1>
+                <h1 class="hero-title outline" aria-hidden="true">MORPH<span class="accent">O</span>LOGY</h1>
+            </div>
+            <p class="hero-desc">An immersive simulation of fluid dynamic motion and cosmic geometry. Intersecting high-performance vertex shaders with smooth motion controllers.</p>
+
+            <div class="hero-cta">
+                <button class="cta-btn hoverable" aria-label="Explore the system">
+                    <span>Explore System</span>
+                </button>
+                <button class="cta-arrow hoverable" aria-label="Scroll down">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="scroll-indicator" aria-hidden="true">
+                <span>Scroll</span>
+                <div class="indicator-line"></div>
+            </div>
+        </section>
+
+        <!-- DETAILS SECTION -->
+        <section class="section details-sec" id="details" aria-labelledby="details-title">
+            <div class="section-label">Section 002 — Process</div>
+            <div class="details-box">
+                <div class="section-tag">01 / Dynamic Cohesion</div>
+                <h2 id="details-title">TRANSFORMING<br>SPATIAL GEOMETRY</h2>
+                <p>As you descend, the linear grid landscape transitions into a spherical structure. Spatial parameters are calculated completely on the vertex shader to optimize memory allocation and prevent bottlenecks.</p>
+                <div class="details-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">200²</span>
+                        <span class="stat-label">Grid Matrix</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">GLSL</span>
+                        <span class="stat-label">Shader Lang</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">0.8ms</span>
+                        <span class="stat-label">Frame Time</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURES SECTION -->
+        <section class="section features-sec" id="features" aria-labelledby="features-title">
+            <div class="section-label">Section 003 — Systems</div>
+            <h2 id="features-title" style="position: absolute; left: -9999px;">Core Systems</h2>
+            <div class="features-grid">
+                <article class="feature-card hoverable" tabindex="0" aria-labelledby="feature-1">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3 id="feature-1">Vertex Displacement</h3>
+                    <p>Real-time geometry morphing computed entirely on the GPU pipeline.</p>
+                </article>
+                <article class="feature-card hoverable" tabindex="0" aria-labelledby="feature-2">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                    </div>
+                    <h3 id="feature-2">Spherical Mapping</h3>
+                    <p>Seamless coordinate transformation from planar to spherical topology.</p>
+                </article>
+                <article class="feature-card hoverable" tabindex="0" aria-labelledby="feature-3">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                    </div>
+                    <h3 id="feature-3">Pointer Dynamics</h3>
+                    <p>Interactive force fields responding to cursor position with fluid decay.</p>
+                </article>
+                <article class="feature-card hoverable" tabindex="0" aria-labelledby="feature-4">
+                    <div class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <h3 id="feature-4">Frame Independence</h3>
+                    <p>Delta-time architecture ensuring consistent behavior across all refresh rates.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- END SECTION -->
+        <section class="section end-sec" id="end" aria-labelledby="end-title">
+            <div class="section-label" style="left: 50%; transform: translateX(-50%);">Section 004 — Core</div>
+            <div class="end-box">
+                <div class="end-label">The Core Synapse</div>
+                <h2 id="end-title">BEYOND THE<br><span class="gradient-text">VISUAL FIELD</span></h2>
+                <p>By blending procedural simplex mathematical noise and real-time pointer interactions, we demonstrate robust WebGL architectures designed for frame-rate independence.</p>
+                <a href="#" class="end-cta hoverable" aria-label="Initialize the render">
+                    <span>Initialize Render</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <span class="footer-text">© 2024 KINETIC FIELDS — ALL SYSTEMS OPERATIONAL</span>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="#" class="hoverable">GitHub</a>
+            <a href="#" class="hoverable">Documentation</a>
+            <a href="#" class="hoverable">Contact</a>
+        </nav>
+    </footer>
+
+    <!-- CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+
+    <script>
+        // Register GSAP plugins
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // --- LOADING SCREEN ---
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                if (!prefersReducedMotion) {
+                    animateHero();
+                } else {
+                    document.querySelectorAll('.hero-title, .hero-desc, .hero-cta, .hero-meta').forEach(el => {
+                        el.style.opacity = '1';
+                        el.style.transform = 'none';
+                    });
+                }
+            }, 2200);
+        });
+
+        // --- CUSTOM CURSOR ---
+        const cursorDot = document.getElementById('cursorDot');
+        const cursorRing = document.getElementById('cursorRing');
+        let cursorX = 0, cursorY = 0;
+        let ringX = 0, ringY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+        });
+
+        function updateCursor() {
+            if (prefersReducedMotion) return;
+            
+            cursorDot.style.left = cursorX - 3 + 'px';
+            cursorDot.style.top = cursorY - 3 + 'px';
+
+            ringX += (cursorX - ringX) * 0.15;
+            ringY += (cursorY - ringY) * 0.15;
+            cursorRing.style.left = ringX - 22 + 'px';
+            cursorRing.style.top = ringY - 22 + 'px';
+
+            requestAnimationFrame(updateCursor);
+        }
+        updateCursor();
+
+        // Hover effects for cursor
+        document.querySelectorAll('.hoverable').forEach(el => {
+            el.addEventListener('mouseenter', () => cursorRing.classList.add('hovering'));
+            el.addEventListener('mouseleave', () => cursorRing.classList.remove('hovering'));
+        });
+
+        // --- GLOBAL UNIFORMS ---
+        const uniforms = {
+            uTime: { value: 0 },
+            uProgress: { value: 0 },
+            uMouse: { value: new THREE.Vector2(0, 0) },
+            uScrollVelocity: { value: 0 }
+        };
+
+        // --- LENIS SMOOTH SCROLL ---
+        const lenis = new Lenis({
+            duration: 1.4,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smoothWheel: true,
+            wheelMultiplier: 1,
+            touchMultiplier: 2
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Smooth velocity tracking
+        let targetScrollVelocity = 0;
+        let currentScrollVelocity = 0;
+
+        lenis.on('scroll', (e) => {
+            ScrollTrigger.update();
+            targetScrollVelocity = Math.min(Math.abs(e.velocity) * 0.03, 1.5);
+
+            // Update scroll progress bar
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            document.getElementById('scrollProgress').style.width = progress + '%';
+
+            // Update side nav dots
+            updateSideNav();
+        });
+
+        // --- SIDE NAV ---
+        function updateSideNav() {
+            const sections = document.querySelectorAll('section');
+            const dots = document.querySelectorAll('.side-nav-dot');
+            const scrollPos = window.scrollY + window.innerHeight / 2;
+
+            sections.forEach((section, i) => {
+                const top = section.offsetTop;
+                const bottom = top + section.offsetHeight;
+                if (scrollPos >= top && scrollPos < bottom) {
+                    dots.forEach(d => d.classList.remove('active'));
+                    if (dots[i]) dots[i].classList.add('active');
+                }
+            });
+        }
+
+        document.querySelectorAll('.side-nav-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const sectionIdx = parseInt(dot.dataset.section);
+                const sections = document.querySelectorAll('section');
+                if (sections[sectionIdx]) {
+                    lenis.scrollTo(sections[sectionIdx], { offset: 0 });
+                }
+            });
+        });
+
+        // --- HERO ANIMATION ---
+        function animateHero() {
+            const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+            tl.to('.hero-meta', { opacity: 1, y: 0, duration: 1.2, delay: 0.3 })
+              .to('.hero-title', { opacity: 1, y: 0, duration: 1.4, stagger: 0.2 }, '-=0.8')
+              .to('.hero-desc', { opacity: 1, y: 0, duration: 1.2 }, '-=0.8')
+              .to('.hero-cta', { opacity: 1, y: 0, duration: 1 }, '-=0.6');
+        }
+
+        // --- WEBGL SETUP ---
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 10);
+
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            antialias: false,
+            powerPreference: "high-performance",
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // --- PARTICLE SYSTEM ---
+        const particleCount = 200;
+        const particleGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * particleCount * 3);
+        const uvs = new Float32Array(particleCount * particleCount * 2);
+
+        let idx = 0;
+        for (let i = 0; i < particleCount; i++) {
+            for (let j = 0; j < particleCount; j++) {
+                const x = (i / (particleCount - 1) - 0.5) * 20;
+                const y = (j / (particleCount - 1) - 0.5) * 20;
+                positions[idx * 3] = x;
+                positions[idx * 3 + 1] = y;
+                positions[idx * 3 + 2] = 0;
+                uvs[idx * 2] = i / (particleCount - 1);
+                uvs[idx * 2 + 1] = j / (particleCount - 1);
+                idx++;
+            }
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uProgress;
+            uniform vec2 uMouse;
+            uniform float uScrollVelocity;
+            varying vec2 vUv;
+            varying float vDist;
+            varying float vElevation;
+
+            // Smooth easing function for transitions
+            float easeInOutCubic(float t) {
+                return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
+            }
+
+            void main() {
+                vUv = uv;
+
+                // State A: Flowing plane with enhanced waves
+                vec3 posA = position;
+                float wave1 = sin(posA.x * 0.4 + uTime * 0.8) * cos(posA.y * 0.4 + uTime * 0.6) * 0.6;
+                float wave2 = sin(posA.x * 0.8 - uTime * 0.3) * 0.2;
+                float wave3 = cos(posA.y * 0.6 + uTime * 0.5) * 0.15;
+                posA.z += wave1 + wave2 + wave3;
+
+                // State B: Spherical mapping with singularity handling
+                float theta = uv.x * 2.0 * 3.14159265;
+                float phi = uv.y * 3.14159265;
+                
+                // Add slight offset to prevent pole singularities
+                float safePhi = clamp(phi, 0.01, 3.13);
+                float radius = 4.0 + sin(uTime * 0.4 + uv.y * 8.0) * 0.25;
+                
+                vec3 posB = vec3(
+                    radius * sin(safePhi) * cos(theta),
+                    radius * cos(safePhi),
+                    radius * sin(safePhi) * sin(theta)
+                );
+
+                // Smooth morphing with easing
+                float easedProgress = easeInOutCubic(uProgress);
+                vec3 mixedPos = mix(posA, posB, easedProgress);
+
+                // Cursor interaction with reduced intensity
+                vec3 cursorSpace = vec3(uMouse * 8.0, 0.0);
+                float distToMouse = distance(mixedPos.xy, cursorSpace.xy);
+                float force = smoothstep(4.0, 0.0, distToMouse);
+                
+                // Reduced displacement to prevent glitching
+                float displacement = force * (1.0 + uScrollVelocity * 2.0);
+                mixedPos.z += displacement;
+                
+                // Smoother XY displacement
+                vec2 pushDir = normalize(mixedPos.xy - cursorSpace.xy + vec2(0.001));
+                mixedPos.xy += pushDir * force * 0.15;
+
+                vec4 mvPosition = modelViewMatrix * vec4(mixedPos, 1.0);
+                
+                // Smoother size attenuation
+                float baseSize = 20.0 / -mvPosition.z;
+                gl_PointSize = baseSize * (1.0 + force * 1.5);
+                gl_Position = projectionMatrix * mvPosition;
+
+                vDist = distToMouse;
+                vElevation = mixedPos.z;
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec2 vUv;
+            varying float vDist;
+            varying float vElevation;
+            uniform float uTime;
+
+            void main() {
+                float distToCenter = length(gl_PointCoord - vec2(0.5));
+                if (distToCenter > 0.5) discard;
+
+                // Softer alpha falloff
+                float alpha = smoothstep(0.5, 0.1, distToCenter);
+
+                vec3 electricBlue = vec3(0.02, 0.35, 1.0);
+                vec3 highViolet = vec3(0.55, 0.1, 0.95);
+                vec3 energyGreen = vec3(0.0, 1.0, 0.53);
+                vec3 warmWhite = vec3(1.0, 0.95, 0.9);
+
+                vec3 finalColor = mix(electricBlue, highViolet, vUv.x);
+                finalColor = mix(finalColor, energyGreen, smoothstep(4.0, 0.0, vDist));
+                finalColor = mix(finalColor, warmWhite, smoothstep(2.5, 0.0, vDist) * 0.3);
+
+                // Smoother pulsation
+                float pulse = 0.88 + 0.12 * sin(uTime * 2.5 + vUv.y * 8.0);
+                float elevationGlow = smoothstep(-1.0, 2.0, vElevation) * 0.2;
+
+                gl_FragColor = vec4(finalColor * (pulse + elevationGlow), alpha * 0.6);
+            }
+        `;
+
+        const particleMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        const points = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(points);
+
+        // --- GSAP SCROLL ANIMATIONS ---
+        // Smoother progress animation with longer scrub
+        gsap.to(uniforms.uProgress, {
+            value: 1,
+            scrollTrigger: {
+                trigger: ".scroll-wrapper",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5
+            }
+        });
+
+        // Smoother camera movement
+        gsap.to(camera.position, {
+            y: -2.0,
+            z: 8.0,
+            scrollTrigger: {
+                trigger: ".scroll-wrapper",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5
+            }
+        });
+
+        gsap.to(".details-box", {
+            opacity: 1,
+            x: 0,
+            scrollTrigger: {
+                trigger: ".details-sec",
+                start: "top 65%",
+                end: "top 25%",
+                scrub: 1.2
+            }
+        });
+
+        gsap.to(".features-grid", {
+            opacity: 1,
+            y: 0,
+            scrollTrigger: {
+                trigger: ".features-sec",
+                start: "top 65%",
+                end: "top 25%",
+                scrub: 1.2
+            }
+        });
+
+        gsap.to(".end-box", {
+            opacity: 1,
+            scale: 1,
+            scrollTrigger: {
+                trigger: ".end-sec",
+                start: "top 70%",
+                end: "top 30%",
+                scrub: 1.2
+            }
+        });
+
+        // --- MOUSE TRACKING ---
+        const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // --- RENDER LOOP ---
+        const clock = new THREE.Clock();
+        let smoothProgress = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            uniforms.uTime.value = elapsedTime;
+
+            // Smooth mouse interpolation
+            mouse.x += (mouse.targetX - mouse.x) * 0.08;
+            mouse.y += (mouse.targetY - mouse.y) * 0.08;
+            uniforms.uMouse.value.set(mouse.x, mouse.y);
+
+            // Smooth scroll velocity decay
+            currentScrollVelocity += (targetScrollVelocity - currentScrollVelocity) * 0.1;
+            uniforms.uScrollVelocity.value = currentScrollVelocity;
+            targetScrollVelocity *= 0.92;
+
+            // Smoother rotation
+            points.rotation.y = elapsedTime * 0.02;
+            points.rotation.x = Math.sin(elapsedTime * 0.08) * 0.04;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        });
+
+        // --- CLEANUP ---
+        window.addEventListener('beforeunload', () => {
+            particleGeometry.dispose();
+            particleMaterial.dispose();
+            renderer.dispose();
+        });
+
+        // --- KEYBOARD NAVIGATION ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                document.body.classList.add('keyboard-nav');
+            }
+        });
+
+        document.addEventListener('mousedown', () => {
+            document.body.classList.remove('keyboard-nav');
+        });
+    </script>
+</body>
+</html>

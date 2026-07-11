@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primer - The OS for Science</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --c-bg: #FAFAF9;
+            --c-ink: #0A0A0A;
+            --c-accent: #0055FF;
+            --c-gray: #666666;
+            --c-border: rgba(10, 10, 10, 0.1);
+            --c-glass: rgba(255, 255, 255, 0.7);
+            
+            --f-display: 'Clash Display', sans-serif;
+            --f-serif: 'Instrument Serif', serif;
+            --f-ui: 'Satoshi', sans-serif;
+            
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            background-color: var(--c-bg);
+            color: var(--c-ink);
+            font-family: var(--f-ui);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--c-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 80%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 24px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-family: var(--f-display);
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            text-decoration: none;
+            color: var(--c-ink);
+        }
+
+        .nav-links { display: flex; gap: 32px; }
+        .nav-link {
+            text-decoration: none;
+            color: var(--c-gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .nav-link:hover { color: var(--c-ink); }
+
+        .nav-cta {
+            background: var(--c-ink);
+            color: var(--c-bg);
+            padding: 10px 20px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s var(--ease-out);
+        }
+        .nav-cta:hover { background: var(--c-accent); transform: translateY(-2px); }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 120px 24px 80px;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-family: var(--f-display);
+            font-weight: 600;
+            font-size: clamp(4rem, 14vw, 12rem);
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+            text-align: center;
+            text-transform: uppercase;
+            color: var(--c-ink);
+            margin-bottom: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title .italic {
+            font-family: var(--f-serif);
+            font-style: italic;
+            font-weight: 400;
+            text-transform: none;
+            color: var(--c-accent);
+            display: inline-block;
+            transform: translateY(10px);
+        }
+
+        .command-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 64px;
+            perspective: 1000px;
+        }
+
+        .command-bar {
+            background: var(--c-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            box-shadow: 
+                0 20px 40px -10px rgba(10, 10, 10, 0.1),
+                0 0 0 1px rgba(10, 10, 10, 0.05);
+            transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+        }
+
+        .command-bar:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 30px 60px -15px rgba(10, 10, 10, 0.15),
+                0 0 0 1px rgba(0, 85, 255, 0.2);
+        }
+
+        .cmd-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--c-ink);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--c-bg);
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .cmd-input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        .cmd-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--c-gray);
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .cmd-text {
+            font-size: 1.1rem;
+            color: var(--c-ink);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            min-height: 24px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: var(--c-accent);
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+
+        .cmd-action {
+            background: var(--c-accent);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: var(--f-ui);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .cmd-action:hover {
+            background: var(--c-ink);
+            transform: scale(1.05);
+        }
+
+        .hero-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            z-index: 10;
+        }
+
+        .trust-logos {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            opacity: 0.6;
+        }
+
+        .trust-logo {
+            font-family: var(--f-display);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--c-gray);
+            letter-spacing: -0.02em;
+        }
+
+        .sub-cta {
+            font-size: 0.9rem;
+            color: var(--c-gray);
+        }
+        .sub-cta a {
+            color: var(--c-ink);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px solid var(--c-ink);
+            padding-bottom: 2px;
+            transition: color 0.2s ease;
+        }
+        .sub-cta a:hover { color: var(--c-accent); border-color: var(--c-accent); }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 16vw; }
+            .command-bar { flex-direction: column; padding: 16px; gap: 16px; }
+            .cmd-icon { margin-right: 0; }
+            .cmd-action { width: 100%; }
+            .trust-logos { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+
+    <nav class="nav">
+        <a href="#" class="nav-logo">Primer</a>
+        <div class="nav-links">
+            <a href="#" class="nav-link">Platform</a>
+            <a href="#" class="nav-link">Research</a>
+            <a href="#" class="nav-link">Pricing</a>
+            <a href="#" class="nav-link">Docs</a>
+        </div>
+        <a href="#" class="nav-cta">Request Access</a>
+    </nav>
+
+    <section class="hero">
+        
+        <h1 class="hero-title">
+            The OS for<br>
+            <span class="italic">Scientific Discovery</span>
+        </h1>
+
+        <div class="command-wrapper">
+            <div class="command-bar">
+                <div class="cmd-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path><path d="M8.5 8.5v.01"></path><path d="M16 15.5v.01"></path><path d="M12 12v.01"></path></svg>
+                </div>
+                <div class="cmd-input-area">
+                    <div class="cmd-label">Ask the Engine</div>
+                    <div class="cmd-text">
+                        <span id="typing-text"></span><span class="cursor"></span>
+                    </div>
+                </div>
+                <button class="cmd-action">Generate</button>
+            </div>
+        </div>
+
+        <div class="hero-footer">
+            <div class="trust-logos">
+                <span class="trust-logo">MIT</span>
+                <span class="trust-logo">CERN</span>
+                <span class="trust-logo">NIH</span>
+                <span class="trust-logo">Stanford</span>
+            </div>
+            <p class="sub-cta">Trusted by 2,400+ research labs. <a href="#">View the data &rarr;</a></p>
+        </div>
+
+    </section>
+
+    <script>
+        const phrases = [
+            "Find hidden connections in amyloid research...",
+            "Generate hypotheses for carbon capture...",
+            "Analyze 10,000 papers on mTOR inhibitors...",
+            "Design experiment for CRISPR-Cas13d..."
+        ];
+        
+        const typingElement = document.getElementById('typing-text');
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typeSpeed = 50;
+
+        function typeEffect() {
+            const currentPhrase = phrases[phraseIndex];
+            
+            if (isDeleting) {
+                typingElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+                typeSpeed = 20;
+            } else {
+                typingElement.textContent = currentPhrase.substring(0, charIndex + 1);
+                charIndex++;
+                typeSpeed = 50;
+            }
+
+            if (!isDeleting && charIndex === currentPhrase.length) {
+                isDeleting = true;
+                typeSpeed = 2000;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                phraseIndex = (phraseIndex + 1) % phrases.length;
+                typeSpeed = 500;
+            }
+
+            setTimeout(typeEffect, typeSpeed);
+        }
+
+        document.addEventListener('DOMContentLoaded', typeEffect);
+
+        const commandBar = document.querySelector('.command-bar');
+        const wrapper = document.querySelector('.command-wrapper');
+
+        wrapper.addEventListener('mousemove', (e) => {
+            const rect = wrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+
+            commandBar.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.02)`;
+        });
+
+        wrapper.addEventListener('mouseleave', () => {
+            commandBar.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0) scale(1)';
+        });
+    </script>
+</body>
+</html>

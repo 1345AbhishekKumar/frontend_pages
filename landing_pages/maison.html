@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAISON — Organic Precision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #F9F9F6;
+            --charcoal: #1A1A1A;
+            --stone: #777777;
+            --border: rgba(26,26,26,0.08);
+            --border-strong: rgba(26,26,26,0.15);
+            --surface: rgba(26,26,26,0.03);
+            --serif: 'Cormorant Garamond', serif;
+            --sans: 'Space Grotesk', sans-serif;
+            --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-snap: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+        }
+
+        ::selection { background: rgba(26,26,26,0.12); color: var(--charcoal); }
+
+        html { scroll-behavior: smooth; font-size: 16px; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--charcoal);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Scroll Progress Bar ── */
+        #scroll-progress {
+            position: fixed; top: 0; left: 0;
+            height: 2px; width: 0%;
+            background: var(--charcoal);
+            z-index: 10001;
+            transition: none;
+            will-change: width;
+        }
+
+        /* ── Grain Overlay ── */
+        #grain-canvas {
+            position: fixed; inset: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.06;
+        }
+
+        /* ── Custom Cursor ── */
+        .cursor-dot {
+            position: fixed;
+            width: 8px; height: 8px;
+            background: var(--charcoal);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: width 0.3s var(--ease-spring), height 0.3s var(--ease-spring), margin 0.3s var(--ease-spring);
+            margin-left: -4px; margin-top: -4px;
+        }
+        .cursor-dot.hovering {
+            width: 40px; height: 40px;
+            margin-left: -20px; margin-top: -20px;
+            background: rgba(26,26,26,0.08);
+            mix-blend-mode: normal;
+        }
+        @media (pointer: coarse) {
+            .cursor-dot { display: none; }
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 28px 48px;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.6s var(--ease-spring), backdrop-filter 0.6s var(--ease-spring), padding 0.6s var(--ease-spring);
+        }
+        nav.scrolled {
+            background: rgba(249,249,246,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 20px 48px;
+        }
+        .nav-logo {
+            font-family: var(--serif);
+            font-size: 22px; font-weight: 400;
+            letter-spacing: 0.15em;
+            color: var(--charcoal);
+            text-decoration: none;
+            transition: letter-spacing 0.5s var(--ease-spring);
+        }
+        .nav-logo:hover { letter-spacing: 0.25em; }
+        .nav-links { display: flex; gap: 40px; align-items: center; }
+        .nav-links a {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.4s var(--ease-spring);
+            position: relative;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            width: 0; height: 1px; background: var(--charcoal);
+            transition: width 0.5s var(--ease-spring);
+        }
+        .nav-links a:hover { color: var(--charcoal); }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* ── Micro Label ── */
+        .micro {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--stone);
+        }
+        .micro-italic {
+            font-family: var(--serif);
+            font-size: 13px; font-weight: 300;
+            font-style: italic;
+            letter-spacing: 0.04em;
+            color: var(--stone);
+        }
+
+        /* ── Pill Button ── */
+        .pill-btn {
+            display: inline-flex; align-items: center; gap: 14px;
+            padding: 18px 44px;
+            background: var(--charcoal);
+            color: var(--bg);
+            border-radius: 100px;
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none; cursor: pointer;
+            transition: all 0.5s var(--ease-spring);
+            position: relative; overflow: hidden;
+        }
+        .pill-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.8s var(--ease-spring);
+        }
+        .pill-btn:hover::before { transform: translateX(100%); }
+        .pill-btn .arrow {
+            display: inline-flex; align-items: center;
+            transition: transform 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            font-size: 13px;
+        }
+        .pill-btn:hover { padding: 18px 52px 18px 44px; gap: 20px; box-shadow: 0 8px 32px rgba(26,26,26,0.15); }
+        .pill-btn:hover .arrow { transform: translateX(6px); }
+
+        .pill-btn-outline {
+            display: inline-flex; align-items: center; gap: 14px;
+            padding: 18px 44px;
+            background: transparent;
+            color: var(--charcoal);
+            border: 1px solid var(--border-strong);
+            border-radius: 100px;
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.5s var(--ease-spring);
+        }
+        .pill-btn-outline .arrow {
+            display: inline-flex; align-items: center;
+            transition: transform 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+            font-size: 13px;
+        }
+        .pill-btn-outline:hover { background: var(--charcoal); color: var(--bg); border-color: var(--charcoal); box-shadow: 0 8px 32px rgba(26,26,26,0.12); }
+        .pill-btn-outline:hover .arrow { transform: translateX(6px); }
+
+        /* ── Chrome Border Image ── */
+        .chrome-img {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        .chrome-img::before {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(180,180,180,0.35), rgba(255,255,255,0.6), rgba(180,180,180,0.2), rgba(220,220,220,0.45));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .chrome-img img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.8s var(--ease-spring);
+        }
+
+        /* ── Reveal Animation ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s var(--ease-spring), transform 1s var(--ease-spring);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: opacity 1s var(--ease-spring), transform 1s var(--ease-spring);
+        }
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 1s var(--ease-spring), transform 1s var(--ease-spring);
+        }
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 1s var(--ease-spring), transform 1s var(--ease-spring);
+        }
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .reveal-clip {
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 1.2s var(--ease-spring);
+        }
+        .reveal-clip.visible {
+            clip-path: inset(0 0 0 0);
+        }
+        .reveal-delay-1 { transition-delay: 0.12s; }
+        .reveal-delay-2 { transition-delay: 0.24s; }
+        .reveal-delay-3 { transition-delay: 0.36s; }
+        .reveal-delay-4 { transition-delay: 0.48s; }
+        .reveal-delay-5 { transition-delay: 0.6s; }
+
+        /* ── Section Divider ── */
+        .divider {
+            width: 100%; height: 1px;
+            background: var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .divider::after {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            height: 100%; width: 100%;
+            background: var(--charcoal);
+            transform-origin: left;
+            transform: scaleX(0);
+            transition: transform 1.2s var(--ease-spring);
+        }
+        .divider.visible::after {
+            transform: scaleX(1);
+        }
+
+        /* ── Word-by-word reveal ── */
+        .word-reveal .word {
+            display: inline-block;
+            overflow: hidden;
+        }
+        .word-reveal .word-inner {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 0.8s var(--ease-spring);
+        }
+        .word-reveal.visible .word-inner {
+            transform: translateY(0);
+        }
+        .word-reveal.visible .word:nth-child(1) .word-inner { transition-delay: 0s; }
+        .word-reveal.visible .word:nth-child(2) .word-inner { transition-delay: 0.06s; }
+        .word-reveal.visible .word:nth-child(3) .word-inner { transition-delay: 0.12s; }
+        .word-reveal.visible .word:nth-child(4) .word-inner { transition-delay: 0.18s; }
+        .word-reveal.visible .word:nth-child(5) .word-inner { transition-delay: 0.24s; }
+        .word-reveal.visible .word:nth-child(6) .word-inner { transition-delay: 0.30s; }
+        .word-reveal.visible .word:nth-child(7) .word-inner { transition-delay: 0.36s; }
+        .word-reveal.visible .word:nth-child(8) .word-inner { transition-delay: 0.42s; }
+        .word-reveal.visible .word:nth-child(9) .word-inner { transition-delay: 0.48s; }
+        .word-reveal.visible .word:nth-child(10) .word-inner { transition-delay: 0.54s; }
+        .word-reveal.visible .word:nth-child(11) .word-inner { transition-delay: 0.60s; }
+        .word-reveal.visible .word:nth-child(12) .word-inner { transition-delay: 0.66s; }
+        .word-reveal.visible .word:nth-child(13) .word-inner { transition-delay: 0.72s; }
+        .word-reveal.visible .word:nth-child(14) .word-inner { transition-delay: 0.78s; }
+        .word-reveal.visible .word:nth-child(15) .word-inner { transition-delay: 0.84s; }
+        .word-reveal.visible .word:nth-child(16) .word-inner { transition-delay: 0.90s; }
+        .word-reveal.visible .word:nth-child(17) .word-inner { transition-delay: 0.96s; }
+        .word-reveal.visible .word:nth-child(18) .word-inner { transition-delay: 1.02s; }
+        .word-reveal.visible .word:nth-child(19) .word-inner { transition-delay: 1.08s; }
+        .word-reveal.visible .word:nth-child(20) .word-inner { transition-delay: 1.14s; }
+
+        /* ── Char-by-char reveal for hero ── */
+        .char-reveal .char {
+            display: inline-block;
+            overflow: hidden;
+        }
+        .char-reveal .char-inner {
+            display: inline-block;
+            transform: translateY(105%);
+            opacity: 0;
+            transition: transform 1s var(--ease-spring), opacity 0.6s ease;
+        }
+        .char-reveal.visible .char-inner {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ── Scroll-parallax images ── */
+        .scroll-parallax {
+            will-change: transform;
+        }
+
+        /* ══════════════════════════════════
+           SECTION 1 — HERO
+        ══════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            padding: 120px 48px 80px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-left {
+            display: flex; flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 60px;
+            position: relative; z-index: 2;
+        }
+        .hero-micros {
+            position: absolute; top: 140px; left: 0;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .hero-micros .micro {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.8s var(--ease-spring) forwards;
+        }
+        .hero-micros .micro:nth-child(1) { animation-delay: 0.3s; }
+        .hero-micros .micro:nth-child(2) { animation-delay: 0.5s; }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hero-headline {
+            font-family: var(--serif);
+            font-size: clamp(60px, 12vw, 200px);
+            font-weight: 300;
+            line-height: 0.88;
+            letter-spacing: -0.03em;
+            color: var(--charcoal);
+            margin-left: -0.04em;
+            position: relative;
+        }
+        .hero-headline .line-2 {
+            display: block;
+            margin-left: 0.15em;
+        }
+        .hero-sub {
+            margin-top: 36px;
+            font-family: var(--serif);
+            font-size: 20px; font-weight: 300;
+            font-style: italic;
+            color: var(--stone);
+            max-width: 380px;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.9s var(--ease-spring) 0.9s forwards;
+        }
+        .hero-cta {
+            margin-top: 48px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.9s var(--ease-spring) 1.2s forwards;
+        }
+        .hero-right {
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hero-image-wrapper {
+            width: 85%; height: 75vh;
+            position: relative;
+            margin-left: auto;
+            margin-top: 40px;
+            transition: transform 0.8s var(--ease-spring);
+            opacity: 0;
+            transform: translateX(80px);
+            animation: heroImageIn 1.4s var(--ease-spring) 0.5s forwards;
+        }
+        @keyframes heroImageIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .hero-image-wrapper img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .hero-float-label {
+            position: absolute;
+            bottom: -24px; left: -60px;
+            background: var(--bg);
+            padding: 14px 24px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            opacity: 0;
+            animation: fadeUp 0.8s var(--ease-spring) 1.6s forwards;
+        }
+        .hero-scroll-indicator {
+            position: absolute; bottom: 40px; left: 48px;
+            display: flex; align-items: center; gap: 12px;
+            opacity: 0;
+            animation: fadeUp 0.8s var(--ease-spring) 2s forwards;
+        }
+        .scroll-line {
+            width: 40px; height: 1px;
+            background: var(--charcoal);
+            animation: scrollPulse 2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        .scroll-line::after {
+            content: '';
+            position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: var(--charcoal);
+            animation: scrollLineSweep 2s ease-in-out infinite;
+        }
+        @keyframes scrollLineSweep {
+            0% { left: -100%; }
+            50% { left: 0; }
+            100% { left: 100%; }
+        }
+        @keyframes scrollPulse {
+            0%, 100% { opacity: 0.3; width: 40px; }
+            50% { opacity: 1; width: 60px; }
+        }
+
+        /* ── Hero decorative elements ── */
+        .hero-deco-line {
+            position: absolute;
+            background: var(--border);
+        }
+        .hero-deco-line--vertical {
+            width: 1px; height: 120px;
+            right: 48px; top: 120px;
+            transform: scaleY(0);
+            transform-origin: top;
+            animation: lineGrowV 1s var(--ease-spring) 1.8s forwards;
+        }
+        @keyframes lineGrowV {
+            to { transform: scaleY(1); }
+        }
+
+        /* ══════════════════════════════════
+           SECTION 2 — MANIFESTO
+        ══════════════════════════════════ */
+        .manifesto {
+            padding: 160px 48px;
+            display: flex; gap: 80px;
+            align-items: flex-start;
+        }
+        .manifesto-left {
+            flex: 0 0 200px;
+            padding-top: 12px;
+        }
+        .manifesto-right { flex: 1; max-width: 900px; }
+        .manifesto-text {
+            font-family: var(--serif);
+            font-size: clamp(32px, 4.5vw, 56px);
+            font-weight: 300;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: var(--charcoal);
+        }
+        .manifesto-text em {
+            font-style: italic;
+            color: var(--stone);
+        }
+
+        /* ══════════════════════════════════
+           SECTION 3 — COLLECTION
+        ══════════════════════════════════ */
+        .collection {
+            padding: 120px 48px;
+        }
+        .collection-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 80px;
+        }
+        .collection-header h2 {
+            font-family: var(--serif);
+            font-size: clamp(40px, 6vw, 80px);
+            font-weight: 300;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+        }
+        .collection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 32px;
+        }
+        .collection-card {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.6s var(--ease-spring);
+        }
+        .collection-card:hover { transform: translateY(-8px); }
+        .collection-card:nth-child(2) { margin-top: 60px; }
+        .collection-card .card-image {
+            width: 100%; aspect-ratio: 3/4;
+            overflow: hidden; border-radius: 4px;
+            position: relative;
+        }
+        .collection-card .card-image::before {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(180,180,180,0.35), rgba(255,255,255,0.6), rgba(180,180,180,0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none; z-index: 2;
+        }
+        .collection-card .card-image img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.8s var(--ease-spring);
+        }
+        .collection-card:hover .card-image img { transform: scale(1.06); }
+        .card-info { padding: 20px 0 0; }
+        .card-info h3 {
+            font-family: var(--serif);
+            font-size: 24px; font-weight: 400;
+            margin-bottom: 6px;
+        }
+        .card-info .price {
+            font-family: var(--sans);
+            font-size: 13px; font-weight: 300;
+            color: var(--stone);
+            letter-spacing: 0.06em;
+        }
+        .card-index {
+            position: absolute; top: -20px; left: -4px;
+            font-family: var(--serif);
+            font-size: 11px; font-weight: 300;
+            color: var(--stone);
+            letter-spacing: 0.15em;
+            opacity: 0.6;
+        }
+
+        /* ══════════════════════════════════
+           SECTION 4 — EDITORIAL
+        ══════════════════════════════════ */
+        .editorial {
+            padding: 120px 0;
+            position: relative;
+        }
+        .editorial-image {
+            width: 100%; height: 70vh;
+            overflow: hidden;
+            position: relative;
+        }
+        .editorial-image img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .editorial-image::before {
+            content: '';
+            position: absolute; inset: -1px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(180,180,180,0.2), rgba(255,255,255,0.4), rgba(180,180,180,0.15));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none; z-index: 2;
+        }
+        .editorial-content {
+            position: absolute;
+            bottom: 80px; left: 80px;
+            max-width: 560px;
+            background: rgba(249,249,246,0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            padding: 56px;
+            border-radius: 4px;
+            border: 1px solid rgba(26,26,26,0.05);
+        }
+        .editorial-content h2 {
+            font-family: var(--serif);
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 300;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+        .editorial-content p {
+            font-family: var(--serif);
+            font-size: 17px; font-weight: 300;
+            font-style: italic;
+            color: var(--stone);
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        /* ══════════════════════════════════
+           SECTION 5 — ATELIER
+        ══════════════════════════════════ */
+        .atelier {
+            padding: 160px 48px;
+        }
+        .atelier-header {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+        .atelier-header h2 {
+            font-family: var(--serif);
+            font-size: clamp(40px, 6vw, 80px);
+            font-weight: 300;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            margin-top: 20px;
+        }
+        .atelier-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .step { position: relative; }
+        .step-number {
+            font-family: var(--serif);
+            font-size: 64px; font-weight: 300;
+            color: rgba(26,26,26,0.06);
+            line-height: 1;
+            margin-bottom: 24px;
+            transition: color 0.6s var(--ease-spring);
+        }
+        .step:hover .step-number { color: rgba(26,26,26,0.12); }
+        .step-title {
+            font-family: var(--serif);
+            font-size: 24px; font-weight: 400;
+            margin-bottom: 16px;
+        }
+        .step-desc {
+            font-family: var(--sans);
+            font-size: 14px; font-weight: 300;
+            color: var(--stone);
+            line-height: 1.7;
+        }
+        .step-line {
+            position: absolute;
+            top: 32px; right: -24px;
+            width: 0;
+            height: 1px;
+            background: var(--border-strong);
+            transition: width 1s var(--ease-spring);
+        }
+        .step.visible .step-line { width: 48px; }
+        .step:last-child .step-line { display: none; }
+
+        /* ══════════════════════════════════
+           SECTION 6 — METRICS
+        ══════════════════════════════════ */
+        .metrics {
+            padding: 120px 48px;
+            background: var(--charcoal);
+            color: var(--bg);
+            position: relative;
+            overflow: hidden;
+        }
+        .metrics::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.03), transparent 60%);
+            pointer-events: none;
+        }
+        .metrics-header {
+            margin-bottom: 80px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 48px;
+        }
+        .metric-label {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: rgba(249,249,246,0.4);
+            margin-bottom: 20px;
+        }
+        .metric-value {
+            font-family: var(--serif);
+            font-size: clamp(48px, 5vw, 72px);
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .metric-line {
+            width: 0; height: 1px;
+            background: rgba(249,249,246,0.15);
+            margin-bottom: 16px;
+            transition: width 1.2s var(--ease-spring) 0.3s;
+        }
+        .metric.visible .metric-line { width: 48px; }
+        .metric-desc {
+            font-family: var(--sans);
+            font-size: 13px; font-weight: 300;
+            color: rgba(249,249,246,0.5);
+            line-height: 1.6;
+        }
+
+        /* ══════════════════════════════════
+           SECTION 7 — PORTRAIT
+        ══════════════════════════════════ */
+        .portrait {
+            padding: 160px 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        .portrait-image {
+            width: 100%; aspect-ratio: 4/5;
+            overflow: hidden; border-radius: 4px;
+            position: relative;
+        }
+        .portrait-image::before {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: inherit; padding: 1px;
+            background: linear-gradient(135deg, rgba(180,180,180,0.35), rgba(255,255,255,0.6), rgba(180,180,180,0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none; z-index: 2;
+        }
+        .portrait-image img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.8s var(--ease-spring);
+        }
+        .portrait-content { padding: 40px 0; }
+        .portrait-quote {
+            font-family: var(--serif);
+            font-size: clamp(28px, 3vw, 40px);
+            font-weight: 300;
+            font-style: italic;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .portrait-quote::before {
+            content: '';
+            position: absolute;
+            top: -24px; left: 0;
+            width: 0; height: 1px;
+            background: var(--charcoal);
+            transition: width 1s var(--ease-spring) 0.4s;
+        }
+        .portrait-quote.visible::before { width: 48px; }
+        .portrait-author {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--charcoal);
+            margin-bottom: 6px;
+        }
+        .portrait-role {
+            font-family: var(--serif);
+            font-size: 14px; font-weight: 300;
+            font-style: italic;
+            color: var(--stone);
+        }
+
+        /* ══════════════════════════════════
+           SECTION 8 — LOOKBOOK
+        ══════════════════════════════════ */
+        .lookbook {
+            padding: 120px 48px;
+        }
+        .lookbook-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 80px;
+        }
+        .lookbook-header h2 {
+            font-family: var(--serif);
+            font-size: clamp(40px, 6vw, 80px);
+            font-weight: 300;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+        }
+        .lookbook-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .lookbook-item {
+            overflow: hidden; border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+        .lookbook-item::before {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: inherit; padding: 1px;
+            background: linear-gradient(135deg, rgba(180,180,180,0.3), rgba(255,255,255,0.5), rgba(180,180,180,0.15));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none; z-index: 2;
+        }
+        .lookbook-item:nth-child(1) { aspect-ratio: 4/5; }
+        .lookbook-item:nth-child(2) { aspect-ratio: 4/5; margin-top: 80px; }
+        .lookbook-item:nth-child(3) { aspect-ratio: 4/5; margin-top: -80px; }
+        .lookbook-item:nth-child(4) { aspect-ratio: 4/5; }
+        .lookbook-item img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.8s var(--ease-spring);
+        }
+        .lookbook-item:hover img { transform: scale(1.05); }
+        .lookbook-item .overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(26,26,26,0.55), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s var(--ease-spring);
+            display: flex; align-items: flex-end;
+            padding: 32px;
+        }
+        .lookbook-item:hover .overlay { opacity: 1; }
+        .overlay-text {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--bg);
+            transform: translateY(10px);
+            transition: transform 0.5s var(--ease-spring);
+        }
+        .lookbook-item:hover .overlay-text { transform: translateY(0); }
+
+        /* ══════════════════════════════════
+           SECTION 9 — JOURNAL
+        ══════════════════════════════════ */
+        .journal {
+            padding: 160px 48px;
+        }
+        .journal-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 80px;
+        }
+        .journal-header h2 {
+            font-family: var(--serif);
+            font-size: clamp(40px, 6vw, 80px);
+            font-weight: 300;
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+        }
+        .journal-entries {
+            display: flex; flex-direction: column;
+        }
+        .journal-entry {
+            display: grid;
+            grid-template-columns: 200px 1fr auto;
+            gap: 40px;
+            align-items: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: padding-left 0.5s var(--ease-spring), background 0.3s;
+        }
+        .journal-entry:first-child { border-top: 1px solid var(--border); }
+        .journal-entry:hover { padding-left: 24px; background: rgba(26,26,26,0.01); }
+        .journal-date {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.2em;
+            color: var(--stone);
+        }
+        .journal-title {
+            font-family: var(--serif);
+            font-size: clamp(22px, 2.5vw, 32px);
+            font-weight: 400;
+            line-height: 1.2;
+            transition: color 0.3s;
+        }
+        .journal-entry:hover .journal-title { color: var(--stone); }
+        .journal-arrow {
+            font-size: 20px;
+            color: var(--stone);
+            transition: transform 0.5s var(--ease-snap), color 0.3s;
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        .journal-entry:hover .journal-arrow {
+            transform: translateX(8px);
+            color: var(--charcoal);
+            opacity: 1;
+        }
+
+        /* ══════════════════════════════════
+           SECTION 10 — EPILOGUE
+        ══════════════════════════════════ */
+        .epilogue {
+            padding: 200px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .epilogue::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 600px; height: 600px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(26,26,26,0.03), transparent 70%);
+            pointer-events: none;
+        }
+        .epilogue h2 {
+            font-family: var(--serif);
+            font-size: clamp(48px, 8vw, 120px);
+            font-weight: 300;
+            line-height: 0.9;
+            letter-spacing: -0.03em;
+            margin-bottom: 40px;
+        }
+        .epilogue p {
+            font-family: var(--serif);
+            font-size: 18px; font-weight: 300;
+            font-style: italic;
+            color: var(--stone);
+            max-width: 480px;
+            margin: 0 auto 56px;
+            line-height: 1.7;
+        }
+        .epilogue .thin-line {
+            width: 0; height: 1px;
+            background: var(--charcoal);
+            margin: 0 auto 56px;
+            transition: width 1.2s var(--ease-spring) 0.2s;
+        }
+        .epilogue.visible .thin-line { width: 48px; }
+
+        /* ── Footer ── */
+        footer {
+            padding: 60px 48px;
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between;
+            align-items: center;
+        }
+        .footer-left {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 300;
+            letter-spacing: 0.1em;
+            color: var(--stone);
+        }
+        .footer-links {
+            display: flex; gap: 32px;
+        }
+        .footer-links a {
+            font-family: var(--sans);
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--stone);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-links a:hover { color: var(--charcoal); }
+
+        /* ── Smooth image load ── */
+        img {
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        img.loaded { opacity: 1; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; padding: 120px 32px 60px; }
+            .hero-left { justify-content: flex-start; padding-top: 80px; padding-bottom: 40px; }
+            .hero-micros { top: auto; bottom: 0; left: 0; flex-direction: row; gap: 24px; }
+            .hero-right { display: flex; justify-content: center; }
+            .hero-image-wrapper { width: 80%; height: 55vh; margin: 0 auto; }
+            .hero-scroll-indicator { display: none; }
+            .hero-deco-line--vertical { display: none; }
+            .manifesto { flex-direction: column; gap: 32px; padding: 120px 32px; }
+            .collection-grid { grid-template-columns: 1fr 1fr; }
+            .collection-card:nth-child(2) { margin-top: 40px; }
+            .editorial-content { left: 32px; right: 32px; bottom: 40px; padding: 36px; }
+            .atelier-steps { grid-template-columns: 1fr 1fr; }
+            .step-line { display: none; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
+            .portrait { grid-template-columns: 1fr; padding: 120px 32px; gap: 48px; }
+            .lookbook-grid { grid-template-columns: 1fr; }
+            .lookbook-item:nth-child(2),
+            .lookbook-item:nth-child(3) { margin-top: 0; }
+            .journal-entry { grid-template-columns: 140px 1fr auto; gap: 24px; }
+        }
+        @media (max-width: 768px) {
+            nav { padding: 20px 24px; }
+            nav.scrolled { padding: 16px 24px; }
+            .nav-links { display: none; }
+            .hero { padding: 100px 24px 60px; }
+            .hero-headline { font-size: clamp(52px, 14vw, 100px); }
+            .hero-image-wrapper { width: 100%; height: 45vh; }
+            .hero-float-label { left: 0; bottom: -20px; }
+            .collection { padding: 80px 24px; }
+            .collection-grid { grid-template-columns: 1fr; }
+            .collection-card:nth-child(2) { margin-top: 0; }
+            .editorial-content { position: relative; bottom: auto; left: auto; right: auto; margin-top: 24px; background: transparent; backdrop-filter: none; padding: 24px 0; border: none; }
+            .atelier { padding: 100px 24px; }
+            .atelier-steps { grid-template-columns: 1fr; gap: 48px; }
+            .metrics { padding: 80px 24px; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+            .portrait { padding: 80px 24px; }
+            .lookbook { padding: 80px 24px; }
+            .lookbook-grid { gap: 16px; }
+            .journal { padding: 100px 24px; }
+            .journal-entry { grid-template-columns: 1fr; gap: 8px; }
+            .journal-date { order: 2; }
+            .journal-arrow { display: none; }
+            .epilogue { padding: 120px 24px; }
+            footer { flex-direction: column; gap: 24px; text-align: center; }
+            .manifesto { padding: 80px 24px; }
+            .editorial { padding: 80px 0; }
+            .cursor-dot { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+
+    <!-- Grain Overlay -->
+    <canvas id="grain-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav id="main-nav">
+        <a href="#" class="nav-logo">MAISON</a>
+        <div class="nav-links">
+            <a href="#collection">Collection</a>
+            <a href="#atelier">Atelier</a>
+            <a href="#journal">Journal</a>
+            <a href="#lookbook">Lookbook</a>
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="Menu">
+            <iconify-icon icon="solar:hamburger-menu-linear"></iconify-icon>
+        </button>
+    </nav>
+
+    <main>
+
+        <!-- ═══ SECTION 1 — HERO ═══ -->
+        <section class="hero" id="hero">
+            <div class="hero-left">
+                <div class="hero-micros">
+                    <span class="micro">SS25 Collection</span>
+                    <span class="micro">Paris</span>
+                </div>
+                <h1 class="hero-headline char-reveal" id="hero-headline">
+                    <span class="line-1"></span>
+                    <span class="line-2"></span>
+                </h1>
+                <p class="hero-sub">Where raw beauty meets calculated design — a new language of form and feeling.</p>
+                <div class="hero-cta">
+                    <a href="#collection" class="pill-btn" data-magnetic>
+                        Discover Collection
+                        <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                    </a>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="hero-image-wrapper scroll-parallax" data-parallax="0.04" data-scroll-speed="0.08">
+                    <div class="chrome-img" style="width:100%;height:100%;">
+                        <img src="https://picsum.photos/seed/maison-hero-portrait/800/1100" alt="Hero Portrait">
+                    </div>
+                    <div class="hero-float-label">
+                        <span class="micro">No. 001 — Essence</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-scroll-indicator">
+                <div class="scroll-line"></div>
+                <span class="micro">Scroll</span>
+            </div>
+            <div class="hero-deco-line hero-deco-line--vertical"></div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 2 — MANIFESTO ═══ -->
+        <section class="manifesto" id="manifesto">
+            <div class="manifesto-left reveal-left">
+                <span class="micro">Philosophy</span>
+            </div>
+            <div class="manifesto-right">
+                <p class="manifesto-text word-reveal" id="manifesto-text">
+                    We believe in the tension between instinct and intent — the space where a gesture becomes a signature, where accident transforms into architecture. Every creation begins with a feeling, then submits to the discipline of form.
+                </p>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 3 — COLLECTION ═══ -->
+        <section class="collection" id="collection">
+            <div class="collection-header">
+                <div>
+                    <span class="micro reveal">AW25</span>
+                    <h2 class="reveal reveal-delay-1">The Collection</h2>
+                </div>
+                <a href="#" class="pill-btn-outline reveal reveal-delay-2" data-magnetic>
+                    View All
+                    <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </a>
+            </div>
+            <div class="collection-grid">
+                <div class="collection-card reveal">
+                    <span class="card-index">01</span>
+                    <div class="card-image">
+                        <img src="https://picsum.photos/seed/maison-piece-01/600/800" alt="Silhouette No. 1">
+                    </div>
+                    <div class="card-info">
+                        <h3>Silhouette No. 1</h3>
+                        <span class="price">Wool & Cashmere — €1,280</span>
+                    </div>
+                </div>
+                <div class="collection-card reveal reveal-delay-2">
+                    <span class="card-index">02</span>
+                    <div class="card-image">
+                        <img src="https://picsum.photos/seed/maison-piece-02/600/800" alt="Forma Jacket">
+                    </div>
+                    <div class="card-info">
+                        <h3>Forma Jacket</h3>
+                        <span class="price">Japanese Twill — €960</span>
+                    </div>
+                </div>
+                <div class="collection-card reveal reveal-delay-4">
+                    <span class="card-index">03</span>
+                    <div class="card-image">
+                        <img src="https://picsum.photos/seed/maison-piece-03/600/800" alt="Essence Dress">
+                    </div>
+                    <div class="card-info">
+                        <h3>Essence Dress</h3>
+                        <span class="price">Silk Organza — €2,140</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 4 — EDITORIAL ═══ -->
+        <section class="editorial" id="editorial">
+            <div class="editorial-image reveal-clip scroll-parallax" data-scroll-speed="-0.06">
+                <img src="https://picsum.photos/seed/maison-editorial-wide/1400/900" alt="Editorial Spread">
+            </div>
+            <div class="editorial-content reveal">
+                <span class="micro" style="margin-bottom:16px;display:block;">Editorial</span>
+                <h2 class="word-reveal">The Art of Restraint</h2>
+                <p>An exploration of deliberate minimalism — where what is left out defines what remains. Photographed in the ateliers of Marais, Paris.</p>
+                <a href="#" class="pill-btn" data-magnetic>
+                    Read Story
+                    <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </a>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 5 — ATELIER ═══ -->
+        <section class="atelier" id="atelier">
+            <div class="atelier-header">
+                <span class="micro reveal">Process</span>
+                <h2 class="reveal reveal-delay-1 word-reveal">The Atelier</h2>
+            </div>
+            <div class="atelier-steps">
+                <div class="step reveal">
+                    <div class="step-number">01</div>
+                    <div class="step-line"></div>
+                    <h3 class="step-title">Conception</h3>
+                    <p class="step-desc">Every piece begins as a feeling — a sketch born from observation, a silhouette imagined in stillness.</p>
+                </div>
+                <div class="step reveal reveal-delay-1">
+                    <div class="step-number">02</div>
+                    <div class="step-line"></div>
+                    <h3 class="step-title">Material</h3>
+                    <p class="step-desc">We source only from artisans who share our reverence for fiber — Japanese mills, Italian weavers, heritage houses.</p>
+                </div>
+                <div class="step reveal reveal-delay-2">
+                    <div class="step-number">03</div>
+                    <div class="step-line"></div>
+                    <h3 class="step-title">Construction</h3>
+                    <p class="step-desc">Hand-finished seams, invisible stitching, sculptural draping — each garment is built to endure both time and trend.</p>
+                </div>
+                <div class="step reveal reveal-delay-3">
+                    <div class="step-number">04</div>
+                    <h3 class="step-title">Reveal</h3>
+                    <p class="step-desc">The final form emerges only when the wearer brings it to life — our work is complete when it feels like yours.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 6 — METRICS ═══ -->
+        <section class="metrics" id="metrics">
+            <div class="metrics-header">
+                <span class="micro" style="color:rgba(249,249,246,0.4);">In Numbers</span>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric reveal">
+                    <div class="metric-label">Artisan Partners</div>
+                    <div class="metric-value" data-count="47">0</div>
+                    <div class="metric-line"></div>
+                    <div class="metric-desc">Heritage ateliers across Europe and Japan, each vetted over decades of collaboration.</div>
+                </div>
+                <div class="metric reveal reveal-delay-1">
+                    <div class="metric-label">Pieces Per Collection</div>
+                    <div class="metric-value" data-count="32">0</div>
+                    <div class="metric-line"></div>
+                    <div class="metric-desc">Deliberately limited — every piece earns its place in the edit.</div>
+                </div>
+                <div class="metric reveal reveal-delay-2">
+                    <div class="metric-label">Countries</div>
+                    <div class="metric-value" data-count="18">0</div>
+                    <div class="metric-line"></div>
+                    <div class="metric-desc">From Paris to Tokyo, our community values craft over convention.</div>
+                </div>
+                <div class="metric reveal reveal-delay-3">
+                    <div class="metric-label">Years of Vision</div>
+                    <div class="metric-value" data-count="12">0</div>
+                    <div class="metric-line"></div>
+                    <div class="metric-desc">A decade of distillation — building a house on the principle of less, always better.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SECTION 7 — PORTRAIT ═══ -->
+        <section class="portrait" id="portrait">
+            <div class="portrait-image reveal-left scroll-parallax" data-scroll-speed="0.05">
+                <img src="https://picsum.photos/seed/maison-creative-director/700/875" alt="Creative Director">
+            </div>
+            <div class="portrait-content">
+                <span class="micro reveal">Vision</span>
+                <blockquote class="portrait-quote reveal reveal-delay-1 word-reveal">
+                    We don't design for seasons — we design for people who understand that true elegance is invisible. The moment someone notices the clothes, we've already failed.
+                </blockquote>
+                <div class="reveal reveal-delay-2">
+                    <div class="portrait-author">Isabelle Morel</div>
+                    <div class="portrait-role">Creative Director, Maison</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 8 — LOOKBOOK ═══ -->
+        <section class="lookbook" id="lookbook">
+            <div class="lookbook-header">
+                <div>
+                    <span class="micro reveal">Visual Diary</span>
+                    <h2 class="reveal reveal-delay-1">Lookbook</h2>
+                </div>
+                <a href="#" class="pill-btn-outline reveal reveal-delay-2" data-magnetic>
+                    Explore
+                    <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </a>
+            </div>
+            <div class="lookbook-grid">
+                <div class="lookbook-item reveal-clip">
+                    <img src="https://picsum.photos/seed/maison-look-01/600/750" alt="Look 01">
+                    <div class="overlay">
+                        <span class="overlay-text">Look 01 — Shadow</span>
+                    </div>
+                </div>
+                <div class="lookbook-item reveal-clip reveal-delay-1">
+                    <img src="https://picsum.photos/seed/maison-look-02/600/750" alt="Look 02">
+                    <div class="overlay">
+                        <span class="overlay-text">Look 02 — Structure</span>
+                    </div>
+                </div>
+                <div class="lookbook-item reveal-clip reveal-delay-2">
+                    <img src="https://picsum.photos/seed/maison-look-03/600/750" alt="Look 03">
+                    <div class="overlay">
+                        <span class="overlay-text">Look 03 — Drape</span>
+                    </div>
+                </div>
+                <div class="lookbook-item reveal-clip reveal-delay-3">
+                    <img src="https://picsum.photos/seed/maison-look-04/600/750" alt="Look 04">
+                    <div class="overlay">
+                        <span class="overlay-text">Look 04 — Light</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 9 — JOURNAL ═══ -->
+        <section class="journal" id="journal">
+            <div class="journal-header">
+                <div>
+                    <span class="micro reveal">Insights</span>
+                    <h2 class="reveal reveal-delay-1">Journal</h2>
+                </div>
+                <a href="#" class="pill-btn-outline reveal reveal-delay-2" data-magnetic>
+                    All Entries
+                    <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </a>
+            </div>
+            <div class="journal-entries">
+                <div class="journal-entry reveal">
+                    <span class="journal-date">Mar 2025</span>
+                    <h3 class="journal-title">On the Silence of Good Design</h3>
+                    <span class="journal-arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </div>
+                <div class="journal-entry reveal reveal-delay-1">
+                    <span class="journal-date">Feb 2025</span>
+                    <h3 class="journal-title">Material Alchemy: A Visit to the Kyoto Mills</h3>
+                    <span class="journal-arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </div>
+                <div class="journal-entry reveal reveal-delay-2">
+                    <span class="journal-date">Jan 2025</span>
+                    <h3 class="journal-title">Between Instinct and Architecture</h3>
+                    <span class="journal-arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </div>
+                <div class="journal-entry reveal reveal-delay-3">
+                    <span class="journal-date">Dec 2024</span>
+                    <h3 class="journal-title">The Weight of a Seam: Craft in the Age of Speed</h3>
+                    <span class="journal-arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- ═══ SECTION 10 — EPILOGUE ═══ -->
+        <section class="epilogue reveal" id="epilogue">
+            <div class="thin-line"></div>
+            <h2 class="word-reveal">Begin Your Story</h2>
+            <p>Enter a world where every detail is deliberate, every silhouette considered, and every moment yours to define.</p>
+            <div>
+                <a href="#" class="pill-btn" style="padding:22px 56px;" data-magnetic>
+                    Enter the House
+                    <span class="arrow"><iconify-icon icon="solar:arrow-right-linear"></iconify-icon></span>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-left">© 2025 Maison. All rights reserved.</div>
+        <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Contact</a>
+            <a href="#">Instagram</a>
+        </div>
+    </footer>
+
+    <script>
+        // ── Grain Overlay ──
+        (function generateGrain() {
+            const canvas = document.getElementById('grain-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 256;
+            const imageData = ctx.createImageData(256, 256);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const v = Math.random() * 255;
+                imageData.data[i] = v;
+                imageData.data[i + 1] = v;
+                imageData.data[i + 2] = v;
+                imageData.data[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+            canvas.style.backgroundImage = `url(${canvas.toDataURL()})`;
+            canvas.style.backgroundRepeat = 'repeat';
+            canvas.style.backgroundSize = '256px 256px';
+        })();
+
+        // ── Smooth Image Load ──
+        document.querySelectorAll('img').forEach(img => {
+            if (img.complete) {
+                img.classList.add('loaded');
+            } else {
+                img.addEventListener('load', () => img.classList.add('loaded'));
+                img.addEventListener('error', () => img.classList.add('loaded'));
+            }
+        });
+
+        // ── Custom Cursor ──
+        const cursorDot = document.getElementById('cursor-dot');
+        let cursorX = 0, cursorY = 0, dotX = 0, dotY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            cursorX = e.clientX;
+            cursorY = e.clientY;
+        });
+
+        function animateCursor() {
+            dotX += (cursorX - dotX) * 0.15;
+            dotY += (cursorY - dotY) * 0.15;
+            cursorDot.style.left = dotX + 'px';
+            cursorDot.style.top = dotY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Cursor hover states
+        const interactiveElements = document.querySelectorAll('a, button, .collection-card, .lookbook-item, .journal-entry, .pill-btn, .pill-btn-outline');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => cursorDot.classList.add('hovering'));
+            el.addEventListener('mouseleave', () => cursorDot.classList.remove('hovering'));
+        });
+
+        // ── Scroll Progress Bar ──
+        const progressBar = document.getElementById('scroll-progress');
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            progressBar.style.width = progress + '%';
+        }
+
+        // ── Navigation Scroll State ──
+        const nav = document.getElementById('main-nav');
+        function updateNav() {
+            nav.classList.toggle('scrolled', window.scrollY > 60);
+        }
+
+        // ── Hero Character Animation ──
+        function setupHeroChars() {
+            const headline = document.getElementById('hero-headline');
+            const line1Text = 'Organic';
+            const line2Text = 'Precision';
+            
+            let html = '<span class="line-1">';
+            for (let i = 0; i < line1Text.length; i++) {
+                const char = line1Text[i] === ' ' ? '&nbsp;' : line1Text[i];
+                const delay = i * 0.04;
+                html += `<span class="char"><span class="char-inner" style="transition-delay:${delay}s">${char}</span></span>`;
+            }
+            html += '</span>';
+            html += '<span class="line-2">';
+            for (let i = 0; i < line2Text.length; i++) {
+                const char = line2Text[i] === ' ' ? '&nbsp;' : line2Text[i];
+                const delay = (line1Text.length + i) * 0.04 + 0.1;
+                html += `<span class="char"><span class="char-inner" style="transition-delay:${delay}s">${char}</span></span>`;
+            }
+            html += '</span>';
+            
+            headline.innerHTML = html;
+            
+            // Trigger after a small delay
+            setTimeout(() => headline.classList.add('visible'), 100);
+        }
+        setupHeroChars();
+
+        // ── Word-by-Word Setup ──
+        function setupWordReveal(el) {
+            const text = el.textContent.trim();
+            const words = text.split(/\s+/);
+            let html = '';
+            words.forEach((word, i) => {
+                if (i < 20) {
+                    html += `<span class="word"><span class="word-inner">${word}</span></span> `;
+                } else {
+                    html += word + ' ';
+                }
+            });
+            el.innerHTML = html;
+        }
+
+        document.querySelectorAll('.word-reveal').forEach(el => {
+            setupWordReveal(el);
+        });
+
+        // ── Scroll Reveal Observer ──
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Trigger counter animation for metrics
+                    if (entry.target.classList.contains('metric')) {
+                        const counter = entry.target.querySelector('[data-count]');
+                        if (counter && !counter.dataset.counted) {
+                            counter.dataset.counted = 'true';
+                            animateCounter(counter);
+                        }
+                    }
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-clip, .word-reveal, .divider, .step, .metric, .portrait-quote, .epilogue').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // ── Counter Animation ──
+        function animateCounter(el) {
+            const target = parseInt(el.dataset.count);
+            const duration = 1800;
+            const start = performance.now();
+            
+            function update(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(eased * target);
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        // ── 3D Spatial Parallax (Mouse) ──
+        let mouseX = 0, mouseY = 0;
+        let currentMX = 0, currentMY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function animateMouseParallax() {
+            currentMX += (mouseX - currentMX) * 0.04;
+            currentMY += (mouseY - currentMY) * 0.04;
+
+            document.querySelectorAll('[data-parallax]').forEach(el => {
+                const speed = parseFloat(el.dataset.parallax) || 0.03;
+                const moveX = currentMX * speed * 100;
+                const moveY = currentMY * speed * 80;
+                const rotY = currentMX * speed * 60;
+                const rotX = -currentMY * speed * 40;
+                el.style.transform = `perspective(1200px) translate3d(${moveX}px, ${moveY}px, 30px) rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+            });
+
+            requestAnimationFrame(animateMouseParallax);
+        }
+        animateMouseParallax();
+
+        // ── Scroll-based Parallax ──
+        function animateScrollParallax() {
+            const scrollTop = window.scrollY;
+            
+            document.querySelectorAll('[data-scroll-speed]').forEach(el => {
+                const speed = parseFloat(el.dataset.scrollSpeed) || 0;
+                const rect = el.getBoundingClientRect();
+                const centerY = rect.top + rect.height / 2;
+                const viewportCenter = window.innerHeight / 2;
+                const offset = (centerY - viewportCenter) * speed;
+                
+                // Only apply scroll parallax, preserve mouse parallax via separate wrapper or combine
+                el.style.transform = `translateY(${offset}px)`;
+            });
+
+            requestAnimationFrame(animateScrollParallax);
+        }
+
+        // ── Magnetic Buttons ──
+        document.querySelectorAll('[data-magnetic]').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = '';
+            });
+        });
+
+        // ── Combined Scroll Handler ──
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    updateProgress();
+                    updateNav();
+                    animateScrollParallax();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // Initial calls
+        updateProgress();
+        updateNav();
+
+        // ── Smooth Scroll for Anchor Links ──
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ── Mobile Nav Toggle ──
+        const navToggle = document.getElementById('navToggle');
+        const navLinks = document.querySelector('.nav-links');
+        let mobileMenuOpen = false;
+
+        navToggle.addEventListener('click', () => {
+            mobileMenuOpen = !mobileMenuOpen;
+            if (mobileMenuOpen) {
+                navLinks.style.display = 'flex';
+                navLinks.style.flexDirection = 'column';
+                navLinks.style.position = 'fixed';
+                navLinks.style.top = '70px';
+                navLinks.style.left = '0';
+                navLinks.style.right = '0';
+                navLinks.style.background = 'rgba(249,249,246,0.95)';
+                navLinks.style.backdropFilter = 'blur(20px)';
+                navLinks.style.padding = '32px 24px';
+                navLinks.style.gap = '24px';
+                navLinks.style.zIndex = '999';
+                navLinks.style.borderBottom = '1px solid rgba(26,26,26,0.08)';
+                navLinks.style.opacity = '0';
+                navLinks.style.transform = 'translateY(-10px)';
+                navLinks.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                requestAnimationFrame(() => {
+                    navLinks.style.opacity = '1';
+                    navLinks.style.transform = 'translateY(0)';
+                });
+                navToggle.innerHTML = '<iconify-icon icon="solar:close-circle-linear"></iconify-icon>';
+            } else {
+                navLinks.style.opacity = '0';
+                navLinks.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    navLinks.style = '';
+                    mobileMenuOpen = false;
+                }, 400);
+                navToggle.innerHTML = '<iconify-icon icon="solar:hamburger-menu-linear"></iconify-icon>';
+            }
+        });
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (mobileMenuOpen) {
+                    mobileMenuOpen = false;
+                    navLinks.style = '';
+                    navToggle.innerHTML = '<iconify-icon icon="solar:hamburger-menu-linear"></iconify-icon>';
+                }
+            });
+        });
+
+        // ── Grain subtle shift on scroll ──
+        const grainCanvas = document.getElementById('grain-canvas');
+        let grainFrame = 0;
+        function shiftGrain() {
+            grainFrame++;
+            if (grainFrame % 8 === 0) {
+                const x = Math.random() * 2 - 1;
+                const y = Math.random() * 2 - 1;
+                grainCanvas.style.transform = `translate(${x}px, ${y}px)`;
+            }
+            requestAnimationFrame(shiftGrain);
+        }
+        shiftGrain();
+    </script>
+</body>
+</html>

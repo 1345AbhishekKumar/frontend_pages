@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Atla — Frontier models to evaluate generative AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+<script>document.documentElement.classList.add('js-enabled')</script>
+<style>
+  :root{
+    --bg:#0A0A0A; --bg2:#1A1A1A; --light:#F5F5F7; --surface:#FFFFFF;
+    --ink:#111111; --inv:#F8F8F8; --muted:#6B7280; --border:#E5E7EB;
+    --mint:#7EE7C1; --gray:#D9D9DE;
+  }
+  *{ -webkit-tap-highlight-color: transparent; }
+  html{scroll-behavior:smooth}
+  body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden; background:radial-gradient(circle at 50% 0%, #FFFFFF 0%, #F5F5F7 100%)}
+  
+  /* Dark sections override body bg */
+  .bg-dark-section{ background: radial-gradient(circle at 50% 50%, #161618 0%, #0A0A0A 70%); }
+  
+  /* Subtle Noise Texture for Premium Matte Feel */
+  .noise-overlay{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); mix-blend-mode: multiply;}
+  .bg-dark-section ~ .noise-overlay, .bg-dark-section .noise-overlay { mix-blend-mode: screen; opacity: 0.04; }
+  
+  .h1{font-size:clamp(42px, 6.5vw, 68px);line-height:1.02;font-weight:600;letter-spacing:-0.04em}
+  .h2{font-size:clamp(32px, 4.8vw, 46px);line-height:1.05;font-weight:600;letter-spacing:-0.03em}
+  .h3{font-size:clamp(22px, 2.5vw, 30px);line-height:1.2;font-weight:600;letter-spacing:-0.015em}
+  .body-lg{font-size:18px;line-height:1.6;font-weight:400;letter-spacing:-0.005em}
+  .cap{font-size:13px;line-height:1.4;letter-spacing:0.02em}
+  
+  .btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;padding:12px 24px;border-radius:999px;transition:all .35s cubic-bezier(0.2, 0.8, 0.2, 1);cursor:pointer;border:1px solid transparent;white-space:nowrap}
+  .btn-primary{background:#0A0A0A;color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.2)}
+  .btn-secondary{background:#fff;color:#0A0A0A;border-color:var(--border)}
+  .btn-secondary:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.06)}
+  .btn-ghost{color:var(--ink)}
+  .btn-ghost:hover{background:rgba(0,0,0,.04)}
+  .btn-inv{background:#fff;color:#0A0A0A}
+  .btn-inv:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(255,255,255,.2)}
+  .btn-outline-inv{background:transparent;color:#fff;border-color:rgba(255,255,255,.2)}
+  .btn-outline-inv:hover{background:rgba(255,255,255,.06);transform:translateY(-2px);border-color:rgba(255,255,255,.5)}
+  
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.04);transition:all .4s cubic-bezier(0.2, 0.8, 0.2, 1); position:relative}
+  .card:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(0,0,0,.08); border-color:rgba(0,0,0,0.08)}
+  
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;letter-spacing:.02em}
+  
+  /* Subtle Grid Overlay */
+  .grid-overlay{position:absolute;inset:0;pointer-events:none;z-index:0;mask-image:radial-gradient(ellipse at center, black 30%, transparent 85%); -webkit-mask-image:radial-gradient(ellipse at center, black 30%, transparent 85%)}
+  .grid-dark{background-image:linear-gradient(to right,rgba(255,255,255,.05) 1px,transparent 1px);background-size:8.333% 100%}
+  .grid-light{background-image:linear-gradient(to right,rgba(0,0,0,.04) 1px,transparent 1px);background-size:8.333% 100%}
+  
+  .mint-num{font-size:13px;font-weight:600;color:#34D399;letter-spacing:.06em}
+  
+  /* Default state is visible. JS-enabled state is hidden until 'in' class is added */
+  .reveal{opacity:1; transform:none; transition:opacity 1.2s cubic-bezier(.2,.8,.2,1),transform 1.2s cubic-bezier(.2,.8,.2,1)}
+  .js-enabled .reveal{opacity:0; transform:translateY(40px) scale(0.98)}
+  .js-enabled .reveal.in{opacity:1; transform:none}
+  
+  /* Fixed canvas to prevent infinite resize loops */
+  .canvas-wrap{position:relative;width:100%;height:100%;min-height:300px;overflow:hidden; z-index: 1;}
+  .canvas-wrap canvas{position:absolute !important;top:0;left:0;width:100% !important;height:100% !important;display:block;outline:none}
+  
+  /* Ambient glows behind 3D objects */
+  .glow-dark::before{content:'';position:absolute;inset:10%;background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);z-index:0;pointer-events:none;filter:blur(40px)}
+  .glow-light::before{content:'';position:absolute;inset:10%;background:radial-gradient(circle, rgba(0,0,0,0.03) 0%, transparent 70%);z-index:0;pointer-events:none;filter:blur(40px)}
+  
+  .link-hover{position:relative}
+  .link-hover::after{content:'';position:absolute;left:0;bottom:-2px;width:0;height:1px;background:currentColor;transition:width .3s}
+  .link-hover:hover::after{width:100%}
+  
+  .focus-ring:focus-visible{outline:2px solid var(--mint);outline-offset:3px;border-radius:6px}
+  .nav-link{font-size:14px;color:rgba(255,255,255,.7);transition:color .2s}
+  .nav-link:hover{color:#fff}
+  
+  .logo-mark{filter:grayscale(1);opacity:.5;transition:opacity .3s, filter .3s}
+  .logo-mark:hover{opacity:1;filter:grayscale(0)}
+  
+  .diag-card{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s;will-change:transform}
+  .diag-card:hover{transform:translateY(-10px) translateZ(40px) !important;box-shadow:0 30px 60px rgba(0,0,0,.12)}
+  
+  .footer-link{font-size:14px;color:rgba(255,255,255,.5);transition:color .2s}
+  .footer-link:hover{color:#fff}
+  
+  ::selection{background:#7EE7C1;color:#0A0A0A}
+  
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#c1c1c6;border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:#a1a1a6}
+  
+  /* Sticky Header Background */
+  .nav-scrolled{background:rgba(10,10,10,0.7);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.05)}
+  
+  /* Special Gradient Border Card for Features Container */
+  .gradient-border-card{position:relative; background:var(--light); border-radius:28px;}
+  .gradient-border-card::before{content:'';position:absolute;inset:0;padding:1px;border-radius:28px;background:linear-gradient(135deg, rgba(255,255,255,0.8), rgba(229,231,235,1), rgba(255,255,255,0.8)); -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
+  
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body class="bg-[#F5F5F7]">
+
+<div class="noise-overlay"></div>
+
+<!-- ================= NAVBAR ================= -->
+<header id="navbar" class="fixed top-0 left-0 right-0 z-50 text-white transition-all duration-300">
+  <nav class="max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16 py-4 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5 focus-ring">
+      <div class="w-7 h-7 rounded-full border border-white/30 flex items-center justify-center">
+        <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+      </div>
+      <span class="text-[17px] font-semibold tracking-tight">Atla</span>
+    </a>
+    <div class="hidden lg:flex items-center gap-9">
+      <a href="#features" class="nav-link link-hover">Product</a>
+      <a href="#accuracy" class="nav-link link-hover">Research</a>
+      <a href="#workflow" class="nav-link link-hover">Workflow</a>
+      <a href="#pricing" class="nav-link link-hover">Pricing</a>
+      <a href="#" class="nav-link link-hover">Docs</a>
+      <a href="#" class="nav-link link-hover">Company</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="#" class="hidden md:inline-flex btn btn-ghost text-white/80">Sign in</a>
+      <a href="#pricing" class="btn btn-inv">Get started <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+      <button id="menuBtn" class="lg:hidden p-2 text-white/80" aria-label="Open menu">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </nav>
+  <div id="mobileMenu" class="hidden lg:hidden px-6 pb-6 border-t border-white/10 bg-[#0A0A0A]/95 backdrop-blur-xl">
+    <div class="flex flex-col gap-4 pt-5">
+      <a href="#features" class="nav-link">Product</a>
+      <a href="#accuracy" class="nav-link">Research</a>
+      <a href="#workflow" class="nav-link">Workflow</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="#" class="nav-link">Docs</a>
+      <a href="#" class="nav-link">Company</a>
+    </div>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="relative bg-dark-section text-white overflow-hidden pt-32 pb-28 lg:pt-40 lg:pb-40">
+  <div class="grid-overlay grid-dark"></div>
+  <div class="relative z-10 max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="reveal">
+      <span class="pill bg-white/5 border border-white/10 text-white/70 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#7EE7C1] animate-pulse"></span>
+        Introducing Atla-1 · Frontier eval model
+      </span>
+      <h1 class="h1 text-white">Frontier models to evaluate generative AI</h1>
+      <p class="body-lg text-white/60 mt-7 max-w-[540px]">
+          Atla gives every AI team a reliable way to measure, monitor and improve the quality of their LLM applications — from offline experiments to live production traffic.
+      </p>
+      <div class="flex flex-wrap items-center gap-3 mt-10">
+        <a href="#pricing" class="btn btn-inv">Start evaluating free <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+        <a href="#" class="btn btn-outline-inv">Book a demo</a>
+      </div>
+      <div class="flex items-center gap-6 mt-12 text-white/40 text-[13px]">
+        <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7EE7C1]"></i> SOC 2 Type II</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7EE7C1]"></i> No credit card</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-[#7EE7C1]"></i> 2-min setup</span>
+      </div>
+    </div>
+    <div class="reveal h-[400px] md:h-[500px] lg:h-[580px] relative glow-dark">
+      <div class="canvas-wrap"><div data-scene="hero"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURE OVERVIEW CARD ================= -->
+<section id="features" class="relative -mt-24 lg:-mt-32 z-20">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16">
+    <div class="gradient-border-card relative overflow-hidden" style="box-shadow:0 50px 100px -20px rgba(0,0,0,.12)">
+      <div class="grid-overlay grid-light"></div>
+      <div class="relative z-10 px-6 md:px-12 lg:px-20 py-16 lg:py-24">
+
+        <div class="text-center max-w-[760px] mx-auto reveal">
+          <span class="mint-num">/ 01 — FEATURES</span>
+          <h2 class="h2 mt-3">Evals are often all you need</h2>
+          <p class="body-lg text-[#6B7280] mt-5">
+            Most LLM failures are not modeling problems — they're measurement problems. Atla's evaluation models work across every stage of your pipeline.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 lg:gap-8 mt-16">
+          <article class="card p-7 reveal" style="transition-delay:0.1s">
+            <div class="flex items-center justify-between mb-5">
+              <span class="mint-num">01</span>
+              <i data-lucide="flask-conical" class="w-4 h-4 text-[#6B7280]"></i>
+            </div>
+            <div class="h-[200px] mb-6 relative glow-light"><div class="canvas-wrap"><div data-scene="feature-1"></div></div></div>
+            <h3 class="h3">Offline evaluation</h3>
+            <p class="text-[#6B7280] mt-2 text-[15px] leading-relaxed">
+              Score thousands of model responses in seconds. Compare checkpoints, prompts and providers with calibrated accuracy metrics.
+            </p>
+          </article>
+          
+          <article class="card p-7 reveal" style="transition-delay:0.2s">
+            <div class="flex items-center justify-between mb-5">
+              <span class="mint-num">02</span>
+              <i data-lucide="git-merge" class="w-4 h-4 text-[#6B7280]"></i>
+            </div>
+            <div class="h-[200px] mb-6 relative glow-light"><div class="canvas-wrap"><div data-scene="feature-2"></div></div></div>
+            <h3 class="h3">Integrate with CI</h3>
+            <p class="text-[#6B7280] mt-2 text-[15px] leading-relaxed">
+              Block regressions before they ship. Run Atla on every PR and catch silent quality drops in your evals dashboard.
+            </p>
+          </article>
+          
+          <article class="card p-7 reveal" style="transition-delay:0.3s">
+            <div class="flex items-center justify-between mb-5">
+              <span class="mint-num">03</span>
+              <i data-lucide="activity" class="w-4 h-4 text-[#6B7280]"></i>
+            </div>
+            <div class="h-[200px] mb-6 relative glow-light"><div class="canvas-wrap"><div data-scene="feature-3"></div></div></div>
+            <h3 class="h3">Online evaluation</h3>
+            <p class="text-[#6B7280] mt-2 text-[15px] leading-relaxed">
+              Continuously monitor live traffic. Atla scores every response in real time and alerts you the moment quality drifts.
+            </p>
+          </article>
+        </div>
+
+        <div class="mt-24 lg:mt-32 reveal">
+          <p class="text-center text-[13px] tracking-[0.18em] uppercase text-[#6B7280]">Trusted by AI teams shipping in production</p>
+          <div class="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-10 items-center">
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="scale" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Leya</span></div>
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="hexagon" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Huxli</span></div>
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="orbit" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Vellum</span></div>
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="diamond" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Orca</span></div>
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="aperture" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Mira</span></div>
+            <div class="logo-mark flex items-center justify-center gap-2 text-[#111]"><i data-lucide="compass" class="w-5 h-5"></i><span class="font-semibold text-[17px]">Northwind</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ACCURACY SECTION ================= -->
+<section id="accuracy" class="relative py-24 lg:py-32">
+  <div class="grid-overlay grid-light"></div>
+  <div class="relative z-10 max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16">
+
+    <div class="text-center max-w-[760px] mx-auto reveal">
+      <span class="mint-num">/ 02 — ACCURACY</span>
+      <h2 class="h2 mt-3">Know the accuracy of your LLM app</h2>
+      <p class="body-lg text-[#6B7280] mt-5">
+        Stop relying on vibes. Atla turns subjective quality into rigorous, reproducible signals your team can act on.
+      </p>
+    </div>
+
+    <div class="mt-20 lg:mt-28 space-y-24 lg:space-y-32">
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+        <div>
+          <span class="mint-num">01</span>
+          <h3 class="h3 mt-3">Automate labeling</h3>
+          <p class="text-[#6B7280] mt-4 text-[16px] leading-[1.7]">
+            Replace expensive human raters with Atla-1, our frontier evaluation model. It labels responses on the same scale your domain experts use — at 1000× the speed and a fraction of the cost.
+          </p>
+          <ul class="mt-6 space-y-3 text-[15px]">
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> 92% agreement with expert raters on legal tasks</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Custom rubrics in plain English</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> No prompt engineering required</li>
+          </ul>
+          <a href="#" class="inline-flex items-center gap-1.5 mt-7 text-[14px] font-medium link-hover">Read the technical report <i data-lucide="arrow-up-right" class="w-4 h-4"></i></a>
+        </div>
+        <div class="h-[340px] relative glow-light"><div class="canvas-wrap"><div data-scene="acc-1"></div></div></div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+        <div class="h-[340px] lg:order-2 relative glow-light"><div class="canvas-wrap"><div data-scene="acc-2"></div></div></div>
+        <div class="lg:order-1">
+          <span class="mint-num">02</span>
+          <h3 class="h3 mt-3">Gain control over every output</h3>
+          <p class="text-[#6B7280] mt-4 text-[16px] leading-[1.7]">
+            Trace every score back to its source. Drill into failure modes by user, prompt template, retrieval chunk or model version. Quality stops being a black box.
+          </p>
+          <ul class="mt-6 space-y-3 text-[15px]">
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Slice metrics by any metadata field</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Regression detection across deploys</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Native OpenTelemetry export</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+        <div>
+          <span class="mint-num">03</span>
+          <h3 class="h3 mt-3">Filter out the worst outputs</h3>
+          <p class="text-[#6B7280] mt-4 text-[16px] leading-[1.7]">
+            Gate every generation behind an Atla score. Low-confidence responses are held back, retried, or routed to a fallback model — your users only ever see your best work.
+          </p>
+          <ul class="mt-6 space-y-3 text-[15px]">
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Score-based routing & retries</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Sub-100ms p95 latency</li>
+            <li class="flex items-start gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399] mt-1 shrink-0"></i> Deploy as a sidecar or proxy</li>
+          </ul>
+        </div>
+        <div class="h-[340px] relative glow-light"><div class="canvas-wrap"><div data-scene="acc-3"></div></div></div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+        <div class="h-[340px] lg:order-2 relative glow-light"><div class="canvas-wrap"><div data-scene="acc-4"></div></div></div>
+        <div class="lg:order-1">
+          <span class="mint-num">04</span>
+          <h3 class="h3 mt-3">Install in seconds</h3>
+          <p class="text-[#6B7280] mt-4 text-[16px] leading-[1.7]">
+            One pip install. Drop Atla into your existing stack — LangChain, LlamaIndex, Vercel AI SDK, or raw OpenAI calls. No infrastructure to manage, no models to host.
+          </p>
+          <div class="mt-6 bg-[#0A0A0A] rounded-xl p-5 font-mono text-[13px] text-[#D9D9DE] overflow-x-auto border border-[#1A1A1A] shadow-lg">
+            <span class="text-[#6B7280]">$</span> pip install atla-ai<br>
+            <span class="text-[#6B7280]">>>></span> <span class="text-[#7EE7C1]">from</span> atla <span class="text-[#7EE7C1]">import</span> Atla<br>
+            <span class="text-[#6B7280]">>>></span> atla.score(response, criteria=<span class="text-[#D9D9DE]">"factual accuracy"</span>)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WORKFLOW DIAGRAM ================= -->
+<section id="workflow" class="relative py-12 lg:py-20">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16">
+    <div class="gradient-border-card relative overflow-hidden" style="perspective:1400px;box-shadow:0 8px 30px rgba(0,0,0,.04)">
+      <div class="grid-overlay grid-light"></div>
+      <div class="relative z-10 px-6 md:px-12 lg:px-20 py-20 lg:py-28">
+
+        <div class="text-center max-w-[760px] mx-auto reveal">
+          <span class="mint-num">/ 03 — WORKFLOW</span>
+          <h2 class="h2 mt-3">From prompt to production in one loop</h2>
+          <p class="body-lg text-[#6B7280] mt-5">
+            Every layer of your evaluation pipeline — datasets, models, scores and rollouts — visible in one place.
+          </p>
+        </div>
+
+        <div class="mt-16 lg:mt-20 max-w-3xl mx-auto" style="transform-style:preserve-3d">
+          <div class="diag-card card p-6 mb-5 reveal" style="transform:rotateX(8deg) translateZ(20px)">
+            <div class="flex items-center gap-5">
+              <div class="w-12 h-12 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center font-semibold text-[14px] shrink-0">01</div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-semibold text-[16px]">Load your dataset</h4>
+                  <span class="cap text-[#6B7280]">.csv · .jsonl · HuggingFace</span>
+                </div>
+                <p class="text-[14px] text-[#6B7280] mt-1">Connect prompts, gold answers and metadata in one click.</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center my-1"><div class="w-px h-8 bg-[#D9D9DE]"></div></div>
+          
+          <div class="diag-card card p-6 mb-5 reveal" style="transform:rotateX(8deg) translateZ(40px); transition-delay:0.1s">
+            <div class="flex items-center gap-5">
+              <div class="w-12 h-12 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center font-semibold text-[14px] shrink-0">02</div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-semibold text-[16px]">Score with Atla-1</h4>
+                  <span class="cap text-[#6B7280]">~1,200 rows / sec</span>
+                </div>
+                <p class="text-[14px] text-[#6B7280] mt-1">Our frontier eval model grades every response on your custom rubric.</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center my-1"><div class="w-px h-8 bg-[#D9D9DE]"></div></div>
+          
+          <div class="diag-card card p-6 mb-5 reveal" style="transform:rotateX(8deg) translateZ(60px); transition-delay:0.2s">
+            <div class="flex items-center gap-5">
+              <div class="w-12 h-12 rounded-full bg-[#0A0A0A] text-white flex items-center justify-center font-semibold text-[14px] shrink-0">03</div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-semibold text-[16px]">Slice, compare & decide</h4>
+                  <span class="cap text-[#6B7280]">PR-ready reports</span>
+                </div>
+                <p class="text-[14px] text-[#6B7280] mt-1">Compare runs side-by-side and ship only the prompts that improve quality.</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center my-1"><div class="w-px h-8 bg-[#D9D9DE]"></div></div>
+          
+          <div class="diag-card card p-6 reveal" style="transform:rotateX(8deg) translateZ(80px); transition-delay:0.3s">
+            <div class="flex items-center gap-5">
+              <div class="w-12 h-12 rounded-full bg-[#34D399] text-[#0A0A0A] flex items-center justify-center font-semibold text-[14px] shrink-0">04</div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-semibold text-[16px]">Deploy & monitor</h4>
+                  <span class="cap text-[#34D399]">Live in production</span>
+                </div>
+                <p class="text-[14px] text-[#6B7280] mt-1">Route, retry and alert on every live response without leaving Atla.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRICING / CTA CARDS ================= -->
+<section id="pricing" class="relative py-24 lg:py-32">
+  <div class="grid-overlay grid-light"></div>
+  <div class="relative z-10 max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16">
+    <div class="text-center max-w-[760px] mx-auto reveal">
+      <span class="mint-num">/ 04 — PLANS</span>
+      <h2 class="h2 mt-3">Two ways to start</h2>
+      <p class="body-lg text-[#6B7280] mt-5">Whether you're a solo builder or running evals across a 500-engineer org, Atla scales with you.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 lg:gap-8 mt-16 max-w-4xl mx-auto">
+      <div class="card p-8 lg:p-10 reveal">
+        <span class="pill bg-[#F5F5F7] border border-[#E5E7EB] text-[#6B7280]">Free forever</span>
+        <h3 class="h3 mt-5">Get started today</h3>
+        <p class="text-[#6B7280] mt-2 text-[15px]">For individual researchers and small teams evaluating their first LLM apps.</p>
+        <div class="mt-6 flex items-baseline gap-2">
+          <span class="text-[48px] font-semibold tracking-tight">$0</span>
+          <span class="text-[#6B7280] text-[14px]">/ month</span>
+        </div>
+        <a href="#" class="btn btn-primary w-full justify-center mt-7">Start free <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+        <ul class="mt-8 space-y-3 text-[14px]">
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#34D399] mt-0.5 shrink-0"></i> 5,000 evaluations / month</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#34D399] mt-0.5 shrink-0"></i> 3 custom rubrics</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#34D399] mt-0.5 shrink-0"></i> Community Slack support</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#34D399] mt-0.5 shrink-0"></i> Python & TypeScript SDKs</li>
+        </ul>
+      </div>
+
+      <div class="card p-8 lg:p-10 reveal relative overflow-hidden bg-[#0A0A0A] text-white border-[#1A1A1A]" style="transition-delay:0.1s">
+        <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/[0.03] blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#7EE7C1]/[0.02] blur-3xl"></div>
+        <span class="pill bg-white/5 border border-white/10 text-white/70">Enterprise</span>
+        <h3 class="h3 mt-5 text-white">Upgrade to custom evals</h3>
+        <p class="text-white/60 mt-2 text-[15px]">For teams running evals in CI and monitoring production traffic at scale.</p>
+        <div class="mt-6 flex items-baseline gap-2">
+          <span class="text-[48px] font-semibold tracking-tight text-white">Custom</span>
+        </div>
+        <a href="#" class="btn btn-inv w-full justify-center mt-7">Talk to sales <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+        <ul class="mt-8 space-y-3 text-[14px] text-white/80">
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#7EE7C1] mt-0.5 shrink-0"></i> Unlimited evaluations</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#7EE7C1] mt-0.5 shrink-0"></i> Fine-tuned domain models</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#7EE7C1] mt-0.5 shrink-0"></i> SOC 2, HIPAA, EU residency</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#7EE7C1] mt-0.5 shrink-0"></i> Dedicated solutions engineer</li>
+          <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-[#7EE7C1] mt-0.5 shrink-0"></i> 99.95% uptime SLA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="relative bg-dark-section text-white overflow-hidden">
+  <div class="grid-overlay grid-dark"></div>
+  <div class="relative z-10 max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16 py-32 lg:py-40 text-center">
+    <div class="reveal max-w-[760px] mx-auto">
+      <span class="pill bg-white/5 border border-white/10 text-white/70 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#7EE7C1]"></span> Ready when you are
+      </span>
+      <h2 class="h1 text-white">Start shipping reliable GenAI apps faster</h2>
+      <p class="body-lg text-white/60 mt-6 max-w-[560px] mx-auto">
+        Join hundreds of AI teams who replaced guesswork with measurement. Set up your first evaluation in under two minutes.
+      </p>
+      <div class="flex flex-wrap justify-center items-center gap-3 mt-10">
+        <a href="#" class="btn btn-inv">Get started free <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+        <a href="#" class="btn btn-outline-inv">Book a demo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="relative bg-dark-section text-white overflow-hidden">
+  <div class="grid-overlay grid-dark"></div>
+  <div class="absolute -right-40 -bottom-40 w-[700px] h-[700px] pointer-events-none opacity-90 hidden md:block glow-dark">
+    <div class="canvas-wrap"><div data-scene="footer"></div></div>
+  </div>
+  <div class="relative z-10 max-w-[1280px] mx-auto px-6 md:px-10 lg:px-16 pt-20 pb-10">
+    <div class="grid lg:grid-cols-5 gap-12 lg:gap-8">
+      <div class="lg:col-span-2">
+        <a href="#" class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-full border border-white/30 flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+          </div>
+          <span class="text-[17px] font-semibold tracking-tight">Atla</span>
+        </a>
+        <p class="text-white/50 text-[14px] mt-5 max-w-xs leading-relaxed">
+          Frontier evaluation models for generative AI. Built by researchers from Google DeepMind, OpenAI and Cambridge.
+        </p>
+        <div class="flex items-center gap-3 mt-6">
+          <a href="#" class="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:text-white hover:border-white/30 transition focus-ring"><i data-lucide="github" class="w-4 h-4"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:text-white hover:border-white/30 transition focus-ring"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:text-white hover:border-white/30 transition focus-ring"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
+        </div>
+      </div>
+      <div>
+        <p class="text-[12px] tracking-[0.18em] uppercase text-white/40 mb-4">Product</p>
+        <ul class="space-y-3">
+          <li><a href="#" class="footer-link">Evaluations</a></li>
+          <li><a href="#" class="footer-link">Monitoring</a></li>
+          <li><a href="#" class="footer-link">CI Integrations</a></li>
+          <li><a href="#" class="footer-link">Atla-1 Model</a></li>
+          <li><a href="#" class="footer-link">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-[12px] tracking-[0.18em] uppercase text-white/40 mb-4">Resources</p>
+        <ul class="space-y-3">
+          <li><a href="#" class="footer-link">Documentation</a></li>
+          <li><a href="#" class="footer-link">Research papers</a></li>
+          <li><a href="#" class="footer-link">Changelog</a></li>
+          <li><a href="#" class="footer-link">Blog</a></li>
+          <li><a href="#" class="footer-link">Status</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-[12px] tracking-[0.18em] uppercase text-white/40 mb-4">Company</p>
+        <ul class="space-y-3">
+          <li><a href="#" class="footer-link">About</a></li>
+          <li><a href="#" class="footer-link">Careers</a></li>
+          <li><a href="#" class="footer-link">Security</a></li>
+          <li><a href="#" class="footer-link">Privacy</a></li>
+          <li><a href="#" class="footer-link">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <p class="text-white/40 text-[13px]">© 2025 Atla Labs, Inc. All rights reserved.</p>
+      <div class="flex items-center gap-5 text-white/40 text-[13px]">
+        <a href="#" class="footer-link">Terms</a>
+        <a href="#" class="footer-link">Privacy</a>
+        <a href="#" class="footer-link">Cookies</a>
+        <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#7EE7C1]"></span> All systems operational</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+import * as THREE from 'three';
+
+function ceramicMaterial(opts = {}) {
+  return new THREE.MeshPhysicalMaterial({
+    color: 0xf4f4f4,
+    roughness: 0.25, 
+    metalness: 0.1,
+    clearcoat: 0.8,
+    clearcoatRoughness: 0.2,
+    ...opts
+  });
+}
+
+function setupScene(container, opts = {}) {
+  const wrap = container.parentElement;
+  
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(opts.fov || 35, 1, 0.1, 100);
+  const baseZ = opts.camera ? opts.camera[2] : 11;
+  camera.position.set(0, 0, baseZ);
+
+  // Robust Standard Studio Lighting (No external dependencies)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const key = new THREE.DirectionalLight(0xffffff, 2.5);
+  key.position.set(5, 8, 5);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 1.0);
+  fill.position.set(-4, 2, -2);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 1.5);
+  rim.position.set(0, -5, -5);
+  scene.add(rim);
+  
+  // Subtle Mint Rim Light for Premium Feel
+  if (opts.darkScene) {
+    const mintRim = new THREE.PointLight(0x7EE7C1, 1.5, 20);
+    mintRim.position.set(-5, 2, -2);
+    scene.add(mintRim);
+  }
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+  wrap.addEventListener('mousemove', (e) => {
+    const r = wrap.getBoundingClientRect();
+    mouse.tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+    mouse.ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+  });
+  wrap.addEventListener('mouseleave', () => { mouse.tx = 0; mouse.ty = 0; });
+
+  function resize() {
+    requestAnimationFrame(() => {
+      const w2 = Math.max(1, wrap.clientWidth);
+      const h2 = Math.max(1, wrap.clientHeight);
+      if (renderer.domElement.width !== w2 * renderer.getPixelRatio() || renderer.domElement.height !== h2 * renderer.getPixelRatio()) {
+        renderer.setSize(w2, h2);
+        const aspect = w2 / h2;
+        camera.aspect = aspect;
+        
+        // Dynamically adjust camera distance for portrait/narrow aspect ratios 
+        if (aspect < 1) {
+          camera.position.z = baseZ * (1.2 / aspect);
+        } else {
+          camera.position.z = baseZ;
+        }
+        camera.updateProjectionMatrix();
+      }
+    });
+  }
+  
+  const w = Math.max(1, wrap.clientWidth);
+  const h = Math.max(1, wrap.clientHeight);
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  if (camera.aspect < 1) camera.position.z = baseZ * (1.2 / camera.aspect);
+  camera.updateProjectionMatrix();
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(wrap);
+  window.addEventListener('resize', resize);
+
+  let running = true;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => running = e.isIntersecting);
+  }, { threshold: 0.01 });
+  io.observe(wrap);
+
+  return { renderer, scene, camera, group, mouse, getRunning: () => running };
+}
+
+function buildHero(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 11], darkScene: true });
+  
+  // Pure High-Gloss Polished Sphere
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(2.8, 96, 96), new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.1, 
+    metalness: 0.2,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05
+  }));
+  group.add(sphere);
+  
+  // Pure Chrome Ring
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.12, 32, 200), new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.05,
+    metalness: 1.0,
+    clearcoat: 1.0
+  }));
+  ring.rotation.set(Math.PI * 0.35, 0, Math.PI * 0.12);
+  group.add(ring);
+  
+  // Subtle Outer Ring
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.03, 16, 200), new THREE.MeshStandardMaterial({
+    color: 0xcccccc,
+    roughness: 0.2,
+    metalness: 0.9
+  }));
+  ring2.rotation.set(Math.PI * 0.45, Math.PI * 0.2, Math.PI * 0.05);
+  group.add(ring2);
+  
+  // Faint geometric background lines
+  const ico = new THREE.Mesh(new THREE.IcosahedronGeometry(3.4, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.05 }));
+  group.add(ico);
+  
+  group.scale.setScalar(0.75);
+  group.rotation.y = -0.4;
+
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      sphere.rotation.y += 0.001;
+      ring.rotation.z += 0.0008;
+      ring2.rotation.z -= 0.0005;
+      ico.rotation.y -= 0.0004;
+      ico.rotation.x += 0.0002;
+      sphere.position.y = Math.sin(t * 0.4) * 0.08;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      mouse.y += (mouse.ty - mouse.y) * 0.05;
+      group.rotation.y = -0.4 + mouse.x * 0.25;
+      group.rotation.x = mouse.y * 0.15;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildFeature1(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 40, camera: [0, 0, 5] });
+  const inner = new THREE.Mesh(new THREE.SphereGeometry(0.9, 64, 64), ceramicMaterial({ color: 0xf0f0f0, roughness: 0.1, clearcoat: 1 }));
+  group.add(inner);
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1.15, 64, 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.95, thickness: 0.4, roughness: 0.1, metalness: 0, transparent: true, opacity: 0.4, ior: 1.3, clearcoat: 1 }));
+  group.add(shell);
+  group.scale.setScalar(0.9);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      group.position.y = Math.sin(t * 1.0) * 0.1;
+      group.rotation.y = Math.sin(t * 0.4) * 0.3;
+      group.rotation.x = Math.cos(t * 0.3) * 0.15;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      group.rotation.y += mouse.x * 0.2;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildFeature2(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 40, camera: [0, 0, 5] });
+  const box = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1, 4, 4, 4), ceramicMaterial({ color: 0xf0f0f0, roughness: 0.2, clearcoat: 1 }));
+  group.add(box);
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1.4, 48, 48), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, thickness: 0.3, roughness: 0.2, transparent: true, opacity: 0.4, ior: 1.25, clearcoat: 1 }));
+  group.add(shell);
+  group.scale.setScalar(0.9);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      box.rotation.y += 0.01;
+      box.rotation.x += 0.005;
+      group.position.y = Math.sin(t * 0.8) * 0.06;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      group.rotation.y += mouse.x * 0.15;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildFeature3(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 40, camera: [0, 0, 5] });
+  const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 64, 64), ceramicMaterial({ color: 0xf0f0f0, roughness: 0.1, clearcoat: 1 }));
+  s1.position.set(-0.9, 0, 0);
+  group.add(s1);
+  const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64), ceramicMaterial({ color: 0xe8e8ea, roughness: 0.2, clearcoat: 1 }));
+  s2.position.set(0.9, 0, 0);
+  group.add(s2);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.04, 16, 100), new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.2, metalness: 0.9 }));
+  ring.rotation.y = Math.PI / 2;
+  group.add(ring);
+  group.scale.setScalar(0.9);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      s1.position.x = -0.9 + Math.sin(t * 0.7) * 0.1;
+      s2.position.x = 0.9 - Math.sin(t * 0.7) * 0.1;
+      ring.rotation.z = t * 0.3;
+      group.position.y = Math.sin(t * 0.9) * 0.05;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      group.rotation.y = mouse.x * 0.3;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildAcc1(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 6] });
+  const planesGroup = new THREE.Group();
+  const colors = [0xf0f0f0, 0xe6e6e8, 0xdcdce0, 0xf6f6f6];
+  const rotations = [
+    { rot: [0.2, 0.5, 0], pos: [0, 0, 0] },
+    { rot: [-0.3, -0.4, 0.2], pos: [0.5, 0.3, 0.2] },
+    { rot: [0.4, 0.8, -0.3], pos: [-0.4, -0.2, 0.1] },
+    { rot: [-0.2, 1.2, 0.4], pos: [0.1, -0.4, -0.2] },
+    { rot: [0.6, -0.7, -0.2], pos: [-0.6, 0.3, -0.1] },
+  ];
+  rotations.forEach((r, i) => {
+    const geo = new THREE.PlaneGeometry(2.0, 2.0, 1, 1);
+    const mat = new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.6, metalness: 0.2, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.set(...r.rot);
+    m.position.set(...r.pos);
+    planesGroup.add(m);
+  });
+  group.add(planesGroup);
+  group.scale.setScalar(0.8);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      group.rotation.y = Math.sin(t * 0.2) * 0.4 + 0.5;
+      group.rotation.x = Math.sin(t * 0.15) * 0.15;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      mouse.y += (mouse.ty - mouse.y) * 0.05;
+      group.rotation.y += mouse.x * 0.2;
+      group.rotation.x += mouse.y * 0.1;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildAcc2(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 6] });
+  const spheres = [];
+  const baseGeo = new THREE.SphereGeometry(0.28, 32, 32);
+  const matA = ceramicMaterial({ color: 0xf0f0f0, roughness: 0.3, clearcoat: 1 });
+  const matB = ceramicMaterial({ color: 0xddddde, roughness: 0.4, metalness: 0.2, clearcoat: 1 });
+  for (let x = 0; x < 4; x++) {
+    for (let y = 0; y < 4; y++) {
+      const m = new THREE.Mesh(baseGeo, (x + y) % 2 === 0 ? matA : matB);
+      const px = (x - 1.5) * 0.9;
+      const py = (y - 1.5) * 0.9;
+      m.position.set(px, py, 0);
+      m.userData.baseY = py;
+      m.userData.idx = x * 4 + y;
+      group.add(m);
+      spheres.push(m);
+    }
+  }
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      spheres.forEach(s => {
+        s.position.y = s.userData.baseY + Math.sin(t * 1.2 + s.userData.idx * 0.4) * 0.12;
+        s.position.z = Math.cos(t + s.userData.idx * 0.3) * 0.1;
+      });
+      group.rotation.y = Math.sin(t * 0.2) * 0.25;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      group.rotation.y += mouse.x * 0.25;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildAcc3(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 6] });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.8, 2.8), ceramicMaterial({ color: 0xeaeaec, roughness: 0.4, clearcoat: 1 }));
+  group.add(slab);
+  const sA = new THREE.Mesh(new THREE.SphereGeometry(0.75, 64, 64), ceramicMaterial({ color: 0xf4f4f4, roughness: 0.2, clearcoat: 1 }));
+  sA.position.set(-1.5, 0, 0);
+  group.add(sA);
+  const sB = new THREE.Mesh(new THREE.SphereGeometry(0.55, 64, 64), ceramicMaterial({ color: 0xededee, roughness: 0.2, clearcoat: 1 }));
+  sB.position.set(1.5, 0, 0);
+  group.add(sB);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      sA.position.x = -1.5 + Math.sin(t * 0.8) * 0.4 + 0.4;
+      sB.position.x = 1.5 - Math.sin(t * 0.8) * 0.4 - 0.4;
+      sA.rotation.y += 0.003;
+      sB.rotation.y -= 0.003;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      group.rotation.y = mouse.x * 0.2;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildAcc4(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 6] });
+  const cubeGroup = new THREE.Group();
+  const edgeMat = new THREE.MeshPhysicalMaterial({ color: 0xd0d0d4, roughness: 0.2, metalness: 0.6, clearcoat: 1 });
+  const edgeLen = 2.2;
+  const edgeThick = 0.04;
+  function addEdge(x, y, z, w, h, d) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), edgeMat);
+    m.position.set(x, y, z);
+    cubeGroup.add(m);
+  }
+  const s = edgeLen / 2;
+  addEdge(0, -s, -s, edgeLen, edgeThick, edgeThick);
+  addEdge(0, -s,  s, edgeLen, edgeThick, edgeThick);
+  addEdge(-s, -s, 0, edgeThick, edgeThick, edgeLen);
+  addEdge( s, -s, 0, edgeThick, edgeThick, edgeLen);
+  addEdge(0,  s, -s, edgeLen, edgeThick, edgeThick);
+  addEdge(0,  s,  s, edgeLen, edgeThick, edgeThick);
+  addEdge(-s,  s, 0, edgeThick, edgeThick, edgeLen);
+  addEdge( s,  s, 0, edgeThick, edgeThick, edgeLen);
+  addEdge(-s, 0, -s, edgeThick, edgeLen, edgeThick);
+  addEdge( s, 0, -s, edgeThick, edgeLen, edgeThick);
+  addEdge(-s, 0,  s, edgeThick, edgeLen, edgeThick);
+  addEdge( s, 0,  s, edgeThick, edgeLen, edgeThick);
+  group.add(cubeGroup);
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.8, 64, 64), ceramicMaterial({ color: 0xf4f4f4, roughness: 0.2, clearcoat: 1 }));
+  group.add(sphere);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      group.rotation.y += 0.002;
+      sphere.position.y = Math.sin(t * 0.6) * 0.1;
+      mouse.x += (mouse.tx - mouse.x) * 0.05;
+      mouse.y += (mouse.ty - mouse.y) * 0.05;
+      group.rotation.x = mouse.y * 0.15;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function buildFooter(container) {
+  const { renderer, scene, camera, group, mouse, getRunning } = setupScene(container, { fov: 35, camera: [0, 0, 10], darkScene: true });
+  // Dark Metallic Sphere for Footer
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(2.8, 96, 96), new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.9, clearcoat: 1, clearcoatRoughness: 0.1 }));
+  group.add(sphere);
+  
+  // Chrome Ring
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(3.8, 0.12, 32, 200), new THREE.MeshPhysicalMaterial({ color: 0x333333, roughness: 0.1, metalness: 1, clearcoat: 1 }));
+  ring.rotation.set(Math.PI * 0.35, 0, Math.PI * 0.12);
+  group.add(ring);
+  
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.04, 16, 200), new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.2, metalness: 0.9 }));
+  ring2.rotation.set(Math.PI * 0.45, Math.PI * 0.2, Math.PI * 0.05);
+  group.add(ring2);
+  
+  group.position.set(1.8, -0.6, 0);
+  group.scale.setScalar(1.1);
+  
+  const clock = new THREE.Clock();
+  function tick() {
+    if (getRunning()) {
+      const t = clock.getElapsedTime();
+      sphere.rotation.y += 0.001;
+      ring.rotation.z += 0.0008;
+      ring2.rotation.z -= 0.0005;
+      sphere.position.y = Math.sin(t * 0.4) * 0.08;
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+const builders = {
+  'hero': buildHero,
+  'feature-1': buildFeature1,
+  'feature-2': buildFeature2,
+  'feature-3': buildFeature3,
+  'acc-1': buildAcc1,
+  'acc-2': buildAcc2,
+  'acc-3': buildAcc3,
+  'acc-4': buildAcc4,
+  'footer': buildFooter
+};
+
+document.querySelectorAll('[data-scene]').forEach(el => {
+  const name = el.getAttribute('data-scene');
+  if (builders[name]) {
+    try { 
+      builders[name](el); 
+    } catch(e) { 
+      console.warn('Scene failed:', name, e); 
+    }
+  }
+});
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// Safely initialize Lucide Icons
+if (window.lucide) {
+  window.lucide.createIcons();
+}
+
+const menuBtn = document.getElementById('menuBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+if (menuBtn && mobileMenu) {
+  menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+}
+
+// Sticky Nav Background Scroll Effect
+const navbar = document.getElementById('navbar');
+if (navbar) {
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      navbar.classList.add('nav-scrolled');
+    } else {
+      navbar.classList.remove('nav-scrolled');
+    }
+  });
+}
+</script>
+</body>
+</html>

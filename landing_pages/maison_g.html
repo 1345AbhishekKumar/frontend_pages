@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAISON — SS26 Collection</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/cormorant-garamond@latest/latin-300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/cormorant-garamond@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/cormorant-garamond@latest/latin-300-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/inter@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/inter@latest/latin-300.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --alabaster: #F9F9F6;
+    --charcoal: #1A1A1A;
+    --stone: #777777;
+    --chrome: rgba(180, 180, 175, 0.45);
+    --chrome-bright: rgba(220, 220, 215, 0.7);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  html, body {
+    background: var(--alabaster);
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+    color: var(--charcoal);
+  }
+
+  .global-grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.08;
+    mix-blend-mode: multiply;
+  }
+
+  /* ============ HERO ============ */
+  .hero-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: var(--alabaster);
+  }
+
+  .hero {
+    position: relative;
+    width: 100%;
+    max-width: 1600px;
+    aspect-ratio: 16 / 9;
+    background: var(--alabaster);
+    overflow: hidden;
+    perspective: 1200px;
+  }
+
+  .nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px 48px;
+    z-index: 50;
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 18px;
+    letter-spacing: 0.35em;
+    color: var(--charcoal);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+
+  .nav-links li {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    cursor: pointer;
+    transition: color 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-links li:hover { color: var(--charcoal); }
+
+  .nav-meta {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .headline-container {
+    position: absolute;
+    left: 48px;
+    top: 50%;
+    transform: translateY(-55%);
+    z-index: 20;
+    max-width: 55%;
+  }
+
+  .headline-label {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .headline-label::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--stone);
+  }
+
+  .headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(48px, 11vw, 168px);
+    line-height: 0.88;
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+  }
+
+  .headline .line-1 { display: block; transform: translateX(-8px); }
+  .headline .line-2 { display: block; transform: translateX(42px); font-style: italic; font-weight: 400; }
+  .headline .line-3 { display: block; transform: translateX(12px); }
+
+  .sub-copy {
+    margin-top: 36px;
+    max-width: 340px;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--stone);
+  }
+
+  .cta-btn {
+    margin-top: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 36px;
+    background: var(--charcoal);
+    color: var(--alabaster);
+    border: none;
+    border-radius: 100px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cta-btn .arrow {
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: var(--alabaster);
+    position: relative;
+    transition: width 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+
+  .cta-btn .arrow::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-right: 1px solid var(--alabaster);
+    border-top: 1px solid var(--alabaster);
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .cta-btn:hover { padding: 16px 44px; background: #0a0a0a; }
+  .cta-btn:hover .arrow { width: 32px; }
+
+  .image-float {
+    position: absolute;
+    border: 1px solid var(--chrome);
+    background: var(--alabaster);
+    padding: 3px;
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.8s;
+    will-change: transform;
+  }
+
+  .image-float::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--chrome-bright), transparent 40%, transparent 60%, var(--chrome-bright)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .image-float img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.08) contrast(1.02);
+  }
+
+  .img-main { width: 26%; aspect-ratio: 4/5; right: 8%; top: 14%; z-index: 15; }
+  .img-secondary { width: 13%; aspect-ratio: 1/1; right: 36%; top: 52%; z-index: 16; }
+  .img-tertiary { width: 11%; aspect-ratio: 3/4; right: 2%; bottom: 8%; z-index: 14; }
+
+  .micro-label {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    z-index: 30;
+  }
+
+  .micro-label.top-right {
+    top: 100px;
+    right: 48px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .micro-label.bottom-left {
+    bottom: 32px;
+    left: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .micro-label.bottom-left .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--charcoal);
+    animation: pulse 2.4s infinite;
+  }
+
+  .micro-label.center-right {
+    right: 36%;
+    top: 47%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .micro-label.center-right::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--stone);
+  }
+
+  .micro-label.image-tag {
+    bottom: -28px;
+    left: 0;
+    font-size: 10px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .index-number {
+    position: absolute;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 140px;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--chrome);
+    z-index: 5;
+    right: 38%;
+    top: 8%;
+    line-height: 1;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 32px;
+    right: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 30;
+  }
+
+  .scroll-indicator span {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--stone);
+    writing-mode: vertical-rl;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: var(--stone);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scroll-line::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: var(--charcoal);
+    animation: scrollAnim 2s infinite;
+  }
+
+  @keyframes scrollAnim {
+    0% { top: -40px; }
+    100% { top: 40px; }
+  }
+
+  .deco-circle {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 1px solid var(--chrome);
+    border-radius: 50%;
+    left: 42%;
+    top: 18%;
+    z-index: 3;
+    opacity: 0.5;
+  }
+
+  .deco-line {
+    position: absolute;
+    width: 1px;
+    height: 120px;
+    background: var(--chrome);
+    left: 50%;
+    top: 30%;
+    z-index: 3;
+  }
+
+  /* ============ SECTION SHARED ============ */
+  section.panel {
+    position: relative;
+    padding: 160px 48px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .section-index {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 48px;
+  }
+
+  .section-index::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--stone);
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(40px, 6vw, 96px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--charcoal);
+    margin-bottom: 32px;
+  }
+
+  .section-title em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .section-body {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--stone);
+    max-width: 480px;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1), transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ============ MANIFESTO ============ */
+  .manifesto {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    min-height: 90vh;
+  }
+
+  .manifesto-text .manifesto-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(28px, 3.2vw, 52px);
+    line-height: 1.2;
+    color: var(--charcoal);
+    letter-spacing: -0.01em;
+    margin-bottom: 48px;
+  }
+
+  .manifesto-quote em { font-style: italic; font-weight: 400; }
+
+  .manifesto-meta {
+    display: flex;
+    gap: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--chrome);
+  }
+
+  .manifesto-meta .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .meta-item .meta-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--charcoal);
+    line-height: 1;
+  }
+
+  .meta-item .meta-label {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .manifesto-image {
+    position: relative;
+    aspect-ratio: 4/5;
+    border: 1px solid var(--chrome);
+    padding: 4px;
+    background: var(--alabaster);
+  }
+
+  .manifesto-image::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--chrome-bright), transparent 40%, transparent 60%, var(--chrome-bright)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .manifesto-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.1) contrast(1.03);
+  }
+
+  .manifesto-image .tag {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--stone);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  /* ============ COLLECTION GRID ============ */
+  .collection-grid-wrap { padding-top: 40px; }
+
+  .collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 80px;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  .collection-header .right-meta {
+    display: flex;
+    gap: 32px;
+  }
+
+  .collection-header .right-meta div {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+    position: relative;
+  }
+
+  .look-card {
+    position: relative;
+    border: 1px solid var(--chrome);
+    background: var(--alabaster);
+    padding: 4px;
+    cursor: pointer;
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: visible;
+  }
+
+  .look-card:hover { transform: translateY(-8px); }
+
+  .look-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--chrome-bright), transparent 40%, transparent 60%, var(--chrome-bright)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .look-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.08) contrast(1.02);
+    transition: filter 0.6s;
+  }
+
+  .look-card:hover img { filter: grayscale(0) contrast(1.05); }
+
+  .look-card .look-meta {
+    position: absolute;
+    bottom: -32px;
+    left: 4px;
+    right: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .look-card .look-num {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--alabaster);
+    mix-blend-mode: difference;
+    z-index: 2;
+  }
+
+  .look-1 { grid-column: 1 / span 5; aspect-ratio: 4/5; margin-top: 0; }
+  .look-2 { grid-column: 7 / span 4; aspect-ratio: 3/4; margin-top: 80px; }
+  .look-3 { grid-column: 2 / span 4; aspect-ratio: 1/1; margin-top: 100px; }
+  .look-4 { grid-column: 7 / span 5; aspect-ratio: 4/5; margin-top: 40px; }
+
+  /* ============ ATELIER ============ */
+  .atelier {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    align-items: center;
+    min-height: 80vh;
+  }
+
+  .atelier-image-stack {
+    position: relative;
+    height: 640px;
+  }
+
+  .atelier-image-stack .at-img {
+    position: absolute;
+    border: 1px solid var(--chrome);
+    padding: 3px;
+    background: var(--alabaster);
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .atelier-image-stack .at-img::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--chrome-bright), transparent 40%, transparent 60%, var(--chrome-bright)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .atelier-image-stack .at-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.1) contrast(1.03);
+  }
+
+  .at-img-1 {
+    width: 65%;
+    aspect-ratio: 4/5;
+    top: 0;
+    left: 0;
+    z-index: 2;
+  }
+
+  .at-img-2 {
+    width: 50%;
+    aspect-ratio: 1/1;
+    bottom: 0;
+    right: 0;
+    z-index: 3;
+  }
+
+  .atelier-text .pillars {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .pillar {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--chrome);
+    align-items: baseline;
+  }
+
+  .pillar:last-child { border-bottom: 1px solid var(--chrome); }
+
+  .pillar .p-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    color: var(--stone);
+    font-weight: 300;
+  }
+
+  .pillar .p-content h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--charcoal);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .pillar .p-content p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--stone);
+    font-weight: 300;
+  }
+
+  /* ============ ARCHIVE ============ */
+  .archive { padding-top: 80px; }
+
+  .archive-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-items: stretch;
+    border-top: 1px solid var(--chrome);
+    border-bottom: 1px solid var(--chrome);
+  }
+
+  .archive-left {
+    padding: 80px 48px 80px 0;
+    border-right: 1px solid var(--chrome);
+    position: relative;
+  }
+
+  .archive-left .big-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(140px, 22vw, 320px);
+    line-height: 0.85;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--chrome);
+    letter-spacing: -0.05em;
+    margin-bottom: 24px;
+  }
+
+  .archive-left .archive-caption {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.15;
+    color: var(--charcoal);
+    letter-spacing: -0.01em;
+  }
+
+  .archive-left .archive-caption em { font-style: italic; font-weight: 400; }
+
+  .archive-right {
+    padding: 0 0 0 48px;
+    position: relative;
+    aspect-ratio: 4/5;
+  }
+
+  .archive-right img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.08) contrast(1.03);
+  }
+
+  .archive-right .archive-tag {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--alabaster);
+    mix-blend-mode: difference;
+  }
+
+  /* ============ JOURNAL ============ */
+  .journal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 120px;
+    align-items: center;
+    min-height: 70vh;
+    padding-top: 120px;
+  }
+
+  .journal-left .journal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(48px, 7vw, 112px);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--charcoal);
+    margin-bottom: 32px;
+  }
+
+  .journal-left .journal-title em { font-style: italic; font-weight: 400; }
+
+  .journal-left .journal-desc {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--stone);
+    font-weight: 300;
+    max-width: 420px;
+    margin-bottom: 40px;
+  }
+
+  .journal-form {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--charcoal);
+    padding-bottom: 12px;
+    max-width: 440px;
+    transition: border-color 0.6s;
+  }
+
+  .journal-form:focus-within { border-color: var(--stone); }
+
+  .journal-form input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--charcoal);
+    letter-spacing: 0.05em;
+    padding: 8px 0;
+  }
+
+  .journal-form input::placeholder {
+    color: var(--stone);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .journal-form button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--charcoal);
+    padding: 8px;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+
+  .journal-form button:hover { transform: translateX(6px); }
+
+  .journal-form button svg { display: block; }
+
+  .journal-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    height: 560px;
+  }
+
+  .journal-right .j-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--chrome);
+    padding: 3px;
+    background: var(--alabaster);
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .journal-right .j-card:nth-child(2) { margin-top: 48px; }
+  .journal-right .j-card:hover { transform: translateY(-6px); }
+
+  .journal-right .j-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.1) contrast(1.02);
+  }
+
+  .journal-right .j-card .j-label {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--alabaster);
+    mix-blend-mode: difference;
+  }
+
+  /* ============ VI — PRESS ============ */
+  .press-wrap { padding-top: 40px; }
+
+  .press-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 80px;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  .press-header .press-meta {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .press-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .press-item {
+    display: grid;
+    grid-template-columns: 200px 1fr auto;
+    gap: 48px;
+    padding: 48px 0;
+    border-top: 1px solid var(--chrome);
+    align-items: center;
+    transition: padding 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+
+  .press-item:last-child { border-bottom: 1px solid var(--chrome); }
+
+  .press-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background: rgba(26, 26, 26, 0.02);
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: -1;
+  }
+
+  .press-item:hover::before { width: 100%; }
+  .press-item:hover { padding-left: 24px; }
+
+  .press-item .pub-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 28px;
+    color: var(--charcoal);
+    letter-spacing: -0.01em;
+  }
+
+  .press-item .pub-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(18px, 2vw, 26px);
+    line-height: 1.35;
+    color: var(--charcoal);
+    letter-spacing: -0.005em;
+    position: relative;
+    padding-left: 24px;
+    border-left: 1px solid var(--chrome);
+  }
+
+  .press-item .pub-date {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    white-space: nowrap;
+  }
+
+  .press-pullquote {
+    margin: 120px auto;
+    max-width: 1100px;
+    text-align: center;
+    padding: 80px 0;
+    position: relative;
+  }
+
+  .press-pullquote::before,
+  .press-pullquote::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 1px;
+    background: var(--chrome);
+  }
+
+  .press-pullquote::before { top: 0; }
+  .press-pullquote::after { bottom: 0; }
+
+  .press-pullquote .pq-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(32px, 4.5vw, 72px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--charcoal);
+    margin-bottom: 32px;
+  }
+
+  .press-pullquote .pq-text em { font-style: italic; font-weight: 400; }
+
+  .press-pullquote .pq-attr {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  /* ============ VII — OBJECTS ============ */
+  .objects-wrap { padding-top: 40px; position: relative; }
+
+  .objects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 80px;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  .objects-header .obj-meta {
+    display: flex;
+    gap: 32px;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .objects-stage {
+    position: relative;
+    min-height: 780px;
+    perspective: 1200px;
+  }
+
+  .obj-card {
+    position: absolute;
+    border: 1px solid var(--chrome);
+    background: var(--alabaster);
+    padding: 4px;
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: pointer;
+    will-change: transform;
+  }
+
+  .obj-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--chrome-bright), transparent 40%, transparent 60%, var(--chrome-bright)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .obj-card:hover { z-index: 20; }
+
+  .obj-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.08) contrast(1.02);
+  }
+
+  .obj-card .obj-meta-tag {
+    position: absolute;
+    bottom: -30px;
+    left: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .obj-card .obj-meta-tag .obj-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--charcoal);
+    letter-spacing: -0.01em;
+  }
+
+  .obj-card .obj-meta-tag .obj-cat {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .obj-1 {
+    width: 30%;
+    aspect-ratio: 1/1;
+    top: 0;
+    left: 4%;
+  }
+
+  .obj-2 {
+    width: 26%;
+    aspect-ratio: 4/5;
+    top: 60px;
+    left: 38%;
+  }
+
+  .obj-3 {
+    width: 28%;
+    aspect-ratio: 1/1.1;
+    top: 140px;
+    right: 4%;
+  }
+
+  .obj-4 {
+    width: 22%;
+    aspect-ratio: 3/4;
+    bottom: 60px;
+    left: 24%;
+  }
+
+  .objects-footer {
+    margin-top: 140px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 32px;
+    border-top: 1px solid var(--chrome);
+  }
+
+  .objects-footer .obj-note {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--stone);
+    font-weight: 300;
+    max-width: 480px;
+  }
+
+  .objects-footer .obj-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    cursor: pointer;
+    border-bottom: 1px solid var(--charcoal);
+    padding-bottom: 4px;
+    transition: gap 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+
+  .objects-footer .obj-cta:hover { gap: 24px; }
+
+  .objects-footer .obj-cta svg { display: block; }
+
+  /* ============ VIII — APPOINTMENTS ============ */
+  .appointments {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: 90vh;
+    border-top: 1px solid var(--chrome);
+    border-bottom: 1px solid var(--chrome);
+  }
+
+  .apt-visual {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .apt-visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.1) contrast(1.03);
+    display: block;
+    transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .apt-visual:hover img { transform: scale(1.03); }
+
+  .apt-visual .apt-tag {
+    position: absolute;
+    top: 32px;
+    left: 32px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--alabaster);
+    mix-blend-mode: difference;
+  }
+
+  .apt-visual .apt-coord {
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--alabaster);
+    mix-blend-mode: difference;
+  }
+
+  .apt-content {
+    padding: 80px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  .apt-content .apt-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(44px, 6vw, 96px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--charcoal);
+    margin-bottom: 32px;
+  }
+
+  .apt-content .apt-title em { font-style: italic; font-weight: 400; }
+
+  .apt-content .apt-desc {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--stone);
+    font-weight: 300;
+    max-width: 440px;
+    margin-bottom: 48px;
+  }
+
+  .apt-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 48px;
+    padding: 32px 0;
+    border-top: 1px solid var(--chrome);
+    border-bottom: 1px solid var(--chrome);
+  }
+
+  .apt-details .apt-detail .apt-d-label {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 8px;
+  }
+
+  .apt-details .apt-detail .apt-d-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--charcoal);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .apt-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .apt-actions .cta-btn.outline {
+    background: transparent;
+    color: var(--charcoal);
+    border: 1px solid var(--charcoal);
+  }
+
+  .apt-actions .cta-btn.outline .arrow { background: var(--charcoal); }
+  .apt-actions .cta-btn.outline .arrow::after {
+    border-color: var(--charcoal);
+  }
+
+  .apt-actions .cta-btn.outline:hover {
+    background: var(--charcoal);
+    color: var(--alabaster);
+  }
+
+  .apt-actions .cta-btn.outline:hover .arrow { background: var(--alabaster); }
+  .apt-actions .cta-btn.outline:hover .arrow::after { border-color: var(--alabaster); }
+
+  /* ============ FOOTER ============ */
+  footer.foot {
+    border-top: 1px solid var(--chrome);
+    padding: 80px 48px 40px;
+    margin-top: 120px;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .foot-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 64px;
+    border-bottom: 1px solid var(--chrome);
+  }
+
+  .foot-brand .foot-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 48px;
+    letter-spacing: 0.1em;
+    color: var(--charcoal);
+    margin-bottom: 16px;
+  }
+
+  .foot-brand .foot-tag {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--stone);
+    font-weight: 300;
+    max-width: 320px;
+  }
+
+  .foot-col h5 {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  .foot-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .foot-col ul li {
+    font-size: 13px;
+    color: var(--charcoal);
+    font-weight: 300;
+    cursor: pointer;
+    transition: color 0.4s;
+  }
+
+  .foot-col ul li:hover { color: var(--stone); }
+
+  .foot-bottom {
+    padding-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .foot-bottom .copyright {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .foot-bottom .foot-meta {
+    display: flex;
+    gap: 32px;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  @media (max-width: 900px) {
+    section.panel { padding: 100px 24px; }
+    .manifesto, .atelier, .archive-layout, .journal, .appointments { grid-template-columns: 1fr; gap: 48px; }
+    .archive-left { padding: 48px 0; border-right: none; border-bottom: 1px solid var(--chrome); }
+    .archive-right { padding: 0; }
+    .collection-grid { grid-template-columns: repeat(6, 1fr); }
+    .look-1, .look-2, .look-3, .look-4 { grid-column: 1 / span 6; margin-top: 40px; }
+    .foot-top { grid-template-columns: 1fr 1fr; }
+    .nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .headline-container { left: 24px; }
+    .atelier-image-stack { height: 480px; }
+    .press-item { grid-template-columns: 1fr; gap: 16px; }
+    .objects-stage { min-height: 1200px; }
+    .obj-1, .obj-2, .obj-3, .obj-4 { position: relative; width: 100%; left: auto; right: auto; top: auto; bottom: auto; margin-bottom: 48px; }
+    .apt-content { padding: 48px 24px; }
+    .apt-details { grid-template-columns: 1fr; }
+  }
+
+  /* ============ ADDITIVE RESPONSIVE — TABLET ============ */
+  @media (max-width: 1100px) {
+    .hero { aspect-ratio: auto; min-height: 90vh; padding-top: 80px; padding-bottom: 40px; }
+    .headline-container { max-width: 60%; }
+    .img-main { width: 32%; }
+    .img-secondary { width: 16%; }
+    .img-tertiary { width: 13%; }
+    .index-number { font-size: 110px; }
+  }
+
+  @media (max-width: 900px) {
+    .hero-wrapper { padding: 0; min-height: auto; }
+    .hero { aspect-ratio: auto; min-height: 100vh; padding: 120px 0 40px; }
+    .headline-container {
+      position: relative;
+      left: 24px;
+      right: 24px;
+      top: auto;
+      transform: none;
+      max-width: calc(100% - 48px);
+      margin-bottom: 40px;
+    }
+    .headline {
+      font-size: clamp(56px, 14vw, 120px);
+    }
+    .headline .line-2 { transform: translateX(20px); }
+    .headline .line-3 { transform: translateX(6px); }
+    .sub-copy { max-width: 100%; }
+    .img-main {
+      position: relative;
+      width: 78%;
+      right: auto;
+      top: auto;
+      margin: 0 auto;
+      aspect-ratio: 4/5;
+    }
+    .img-secondary {
+      position: relative;
+      width: 55%;
+      right: auto;
+      top: auto;
+      margin: -60px 24px 0 auto;
+      aspect-ratio: 1/1;
+    }
+    .img-tertiary {
+      display: none;
+    }
+    .micro-label.top-right { display: none; }
+    .micro-label.center-right { display: none; }
+    .micro-label.bottom-left {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      margin: 40px 24px 0;
+    }
+    .index-number {
+      font-size: 80px;
+      right: 24px;
+      top: 90px;
+    }
+    .scroll-indicator { right: 24px; bottom: 24px; }
+    .deco-circle, .deco-line { display: none; }
+
+    .manifesto { min-height: auto; gap: 48px; }
+    .manifesto-image { aspect-ratio: 4/5; }
+    .manifesto-image .tag { top: -16px; left: 0; }
+    .manifesto-meta { flex-wrap: wrap; gap: 24px; }
+    .manifesto-meta .meta-item { flex: 1 1 100px; }
+
+    .atelier { min-height: auto; gap: 48px; }
+    .atelier-image-stack { height: 420px; }
+    .at-img-1 { width: 70%; }
+    .at-img-2 { width: 55%; }
+
+    .archive-left { padding: 40px 0; }
+    .archive-left .big-number { font-size: clamp(120px, 30vw, 220px); }
+
+    .journal { min-height: auto; gap: 48px; padding-top: 80px; }
+    .journal-right { height: 420px; }
+
+    .press-item {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 32px 0;
+    }
+    .press-item .pub-name { font-size: 22px; }
+    .press-item .pub-quote { font-size: 17px; padding-left: 16px; }
+    .press-pullquote { margin: 60px auto; padding: 48px 0; }
+
+    .objects-stage { min-height: auto; }
+    .obj-1, .obj-2, .obj-3, .obj-4 {
+      position: relative;
+      width: 100%;
+      left: auto;
+      right: auto;
+      top: auto;
+      bottom: auto;
+      margin-bottom: 56px;
+      aspect-ratio: 4/5;
+    }
+    .objects-footer { flex-direction: column; align-items: flex-start; gap: 32px; margin-top: 60px; }
+
+    .appointments { grid-template-columns: 1fr; min-height: auto; }
+    .apt-visual { aspect-ratio: 4/5; }
+    .apt-content { padding: 48px 24px; }
+    .apt-actions .cta-btn { padding: 14px 28px; font-size: 10px; }
+
+    footer.foot { padding: 60px 24px 32px; margin-top: 80px; }
+    .foot-brand .foot-logo { font-size: 36px; }
+  }
+
+  /* ============ ADDITIVE RESPONSIVE — MOBILE ============ */
+  @media (max-width: 600px) {
+    .nav { padding: 16px 20px; }
+    .nav-logo { font-size: 16px; letter-spacing: 0.3em; }
+    .nav-meta { display: none; }
+
+    .hero { padding: 100px 0 32px; }
+    .headline-container { left: 20px; max-width: calc(100% - 40px); }
+    .headline-label { margin-bottom: 16px; font-size: 10px; }
+    .headline {
+      font-size: clamp(48px, 16vw, 80px);
+    }
+    .headline .line-2 { transform: translateX(12px); }
+    .headline .line-3 { transform: translateX(4px); }
+    .sub-copy { margin-top: 24px; font-size: 12px; }
+    .cta-btn { margin-top: 28px; padding: 14px 28px; font-size: 10px; gap: 12px; }
+    .img-main { width: 85%; }
+    .img-secondary { width: 60%; margin-top: -40px; }
+    .index-number { font-size: 60px; top: 70px; right: 20px; }
+    .micro-label.bottom-left { margin: 32px 20px 0; font-size: 10px; }
+    .scroll-indicator { right: 20px; bottom: 20px; }
+
+    section.panel { padding: 72px 20px; }
+    .section-index { margin-bottom: 28px; font-size: 10px; }
+    .section-index::before { width: 24px; }
+    .section-title { margin-bottom: 20px; }
+
+    .manifesto-quote { margin-bottom: 32px; }
+    .manifesto-meta { gap: 16px; }
+    .meta-item .meta-num { font-size: 28px; }
+    .meta-item .meta-label { font-size: 10px; }
+
+    .collection-header { margin-bottom: 48px; }
+    .collection-header .right-meta { gap: 16px; font-size: 10px; }
+    .look-card .look-meta { font-size: 9px; letter-spacing: 0.2em; bottom: -28px; }
+
+    .atelier-image-stack { height: 360px; }
+    .at-img-1 { width: 72%; }
+    .at-img-2 { width: 58%; }
+    .pillar { grid-template-columns: 40px 1fr; gap: 16px; padding: 20px 0; }
+    .pillar .p-num { font-size: 20px; }
+    .pillar .p-content h4 { font-size: 20px; }
+    .pillar .p-content p { font-size: 12px; }
+
+    .archive-left .big-number { font-size: clamp(100px, 36vw, 180px); }
+    .archive-left .archive-caption { font-size: 22px; }
+
+    .journal-right { height: 360px; gap: 12px; }
+    .journal-form input { font-size: 12px; }
+    .journal-form input::placeholder { font-size: 10px; }
+
+    .press-pullquote { margin: 40px auto; padding: 40px 0; }
+    .press-pullquote::before, .press-pullquote::after { width: 40px; }
+
+    .objects-header { margin-bottom: 48px; }
+    .objects-header .obj-meta { gap: 16px; font-size: 10px; }
+    .obj-card .obj-meta-tag .obj-name { font-size: 16px; }
+    .obj-card .obj-meta-tag .obj-cat { font-size: 9px; }
+    .objects-footer .obj-note { font-size: 12px; }
+
+    .apt-content { padding: 40px 20px; }
+    .apt-content .apt-desc { margin-bottom: 32px; }
+    .apt-details { gap: 20px; padding: 24px 0; margin-bottom: 32px; }
+    .apt-details .apt-detail .apt-d-label { font-size: 10px; }
+    .apt-details .apt-detail .apt-d-value { font-size: 18px; }
+    .apt-actions { flex-direction: column; align-items: stretch; }
+    .apt-actions .cta-btn { justify-content: center; }
+    .apt-visual .apt-tag, .apt-visual .apt-coord { font-size: 9px; }
+
+    footer.foot { padding: 48px 20px 28px; margin-top: 60px; }
+    .foot-top { grid-template-columns: 1fr; gap: 32px; padding-bottom: 40px; }
+    .foot-brand .foot-logo { font-size: 32px; }
+    .foot-brand .foot-tag { font-size: 11px; }
+    .foot-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .foot-bottom .foot-meta { flex-direction: column; gap: 10px; }
+  }
+
+  /* ============ ADDITIVE RESPONSIVE — SMALL MOBILE ============ */
+  @media (max-width: 400px) {
+    .hero { padding: 90px 0 24px; }
+    .headline-container { left: 16px; max-width: calc(100% - 32px); }
+    .headline { font-size: 44px; }
+    .headline .line-2 { transform: translateX(8px); }
+    .headline .line-3 { transform: translateX(2px); }
+    .img-main { width: 92%; }
+    .img-secondary { width: 65%; margin-top: -32px; }
+    .index-number { display: none; }
+    .micro-label.bottom-left { margin: 24px 16px 0; }
+
+    section.panel { padding: 56px 16px; }
+    .atelier-image-stack { height: 300px; }
+    .journal-right { height: 300px; }
+    .press-item .pub-name { font-size: 18px; }
+    .press-item .pub-quote { font-size: 15px; }
+  }
+
+  /* ============ MOBILE NAV TOGGLE ============ */
+  .nav-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 60;
+  }
+
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 1px;
+    background: var(--charcoal);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s;
+  }
+
+  .nav-toggle.active span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .nav-toggle.active span:nth-child(2) { opacity: 0; }
+  .nav-toggle.active span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  .nav-links-mobile {
+    position: fixed;
+    inset: 0;
+    background: var(--alabaster);
+    z-index: 55;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    list-style: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-links-mobile.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links-mobile li {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--charcoal);
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-links-mobile.open li {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .nav-links-mobile.open li:nth-child(1) { transition-delay: 0.1s; }
+  .nav-links-mobile.open li:nth-child(2) { transition-delay: 0.18s; }
+  .nav-links-mobile.open li:nth-child(3) { transition-delay: 0.26s; }
+  .nav-links-mobile.open li:nth-child(4) { transition-delay: 0.34s; }
+  .nav-links-mobile.open li:nth-child(5) { transition-delay: 0.42s; }
+
+  @media (max-width: 900px) {
+    .nav-toggle { display: flex; }
+  }
+
+  /* ============ LANDSCAPE PHONES ============ */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .hero-wrapper { min-height: auto; padding: 0; }
+    .hero { aspect-ratio: 16/9; min-height: 100vh; }
+    .headline-container { max-width: 50%; }
+    .headline { font-size: 8vw; }
+    .sub-copy { margin-top: 16px; font-size: 11px; }
+    .cta-btn { margin-top: 20px; padding: 12px 24px; }
+  }
+
+  /* ============ HOVER CAPABILITY CHECK ============ */
+  @media (hover: none) {
+    .look-card:hover { transform: none; }
+    .look-card:hover img { filter: grayscale(0.08) contrast(1.02); }
+    .press-item:hover { padding-left: 0; }
+    .press-item:hover::before { width: 0; }
+    .obj-card:hover { z-index: auto; }
+    .apt-visual:hover img { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Global paper grain -->
+<svg class="global-grain" width="100%" height="100%">
+  <filter id="grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#grain)"/>
+</svg>
+
+<!-- Mobile Nav Overlay -->
+<ul class="nav-links-mobile" id="navMobile">
+  <li>Collection</li>
+  <li>Atelier</li>
+  <li>Journal</li>
+  <li>Archive</li>
+  <li>EN / FR</li>
+</ul>
+
+<!-- ============ HERO ============ -->
+<div class="hero-wrapper">
+  <section class="hero" id="hero">
+    <nav class="nav">
+      <div class="nav-logo">MAISON</div>
+      <ul class="nav-links">
+        <li>Collection</li>
+        <li>Atelier</li>
+        <li>Journal</li>
+        <li>Archive</li>
+      </ul>
+      <div class="nav-meta">EN / FR</div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+
+    <div class="index-number" data-parallax="0.15">N°26</div>
+    <div class="deco-circle" data-parallax="0.08"></div>
+    <div class="deco-line" data-parallax="0.12"></div>
+
+    <div class="headline-container" data-parallax="0.05">
+      <div class="headline-label">Spring — Summer 2026</div>
+      <h1 class="headline">
+        <span class="line-1">Quiet</span>
+        <span class="line-2">Precision</span>
+        <span class="line-3">of Form</span>
+      </h1>
+      <p class="sub-copy">An editorial study in restraint — where material honesty and architectural silence converge into a singular language of understatement.</p>
+      <button class="cta-btn">
+        <span>Explore Collection</span>
+        <span class="arrow"></span>
+      </button>
+    </div>
+
+    <div class="image-float img-main" data-parallax="0.25" data-depth="1">
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1e39e8d4b-3e19-49aa-ad6e-cab80624e0b3.png" alt="Editorial">
+      <div class="micro-label image-tag">Look 01 — Alabaster Silk</div>
+    </div>
+
+    <div class="image-float img-secondary" data-parallax="0.18" data-depth="2">
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/19befbda0-b115-4ac4-a5b1-94e0ca51fc12.png" alt="Vessel">
+      <div class="micro-label image-tag">Objet — Vessel N°4</div>
+    </div>
+
+    <div class="image-float img-tertiary" data-parallax="0.22" data-depth="3">
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/10a18a98a-ce12-47cb-bdb9-c1f5e2a90404.png" alt="Linen">
+      <div class="micro-label image-tag">Matière — Linen</div>
+    </div>
+
+    <div class="micro-label top-right">Maison — Édition Limitée</div>
+    <div class="micro-label bottom-left">
+      <span class="dot"></span>
+      <span>Atelier Active — Paris, 48.8566°N</span>
+    </div>
+    <div class="micro-label center-right">Vol. III</div>
+
+    <div class="scroll-indicator">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ MANIFESTO ============ -->
+<section class="panel" id="manifesto">
+  <div class="manifesto">
+    <div class="manifesto-text reveal">
+      <div class="section-index">I — Manifesto</div>
+      <p class="manifesto-quote">
+        We reject the <em>loud</em> and the ornamented. In its place we offer silence — garments cut with <em>surgical patience</em>, materials that age with dignity, and a design language that whispers rather than declares.
+      </p>
+      <div class="section-body">
+        Founded in the quiet corridors of a Parisian atelier, Maison operates at the intersection of architectural minimalism and textile craft. Each piece is considered, reconsidered, and then considered again.
+      </div>
+      <div class="manifesto-meta">
+        <div class="meta-item">
+          <span class="meta-num">14</span>
+          <span class="meta-label">Years of Practice</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-num">08</span>
+          <span class="meta-label">Artisans</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-num">∞</span>
+          <span class="meta-label">Revisions</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="manifesto-image reveal">
+      <span class="tag">Plate N°01 — Manifesto</span>
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1be87ff24-66f7-4e98-a675-3fa070077509.png" alt="Manifesto portrait">
+    </div>
+  </div>
+</section>
+
+<!-- ============ COLLECTION ============ -->
+<section class="panel" id="collection">
+  <div class="collection-grid-wrap">
+    <div class="collection-header reveal">
+      <div>
+        <div class="section-index">II — The Collection</div>
+        <h2 class="section-title">Four studies in <em>restraint</em>.</h2>
+      </div>
+      <div class="right-meta">
+        <div>SS26</div>
+        <div>04 Looks</div>
+        <div>Paris</div>
+      </div>
+    </div>
+
+    <div class="collection-grid">
+      <div class="look-card look-1 reveal">
+        <span class="look-num">01</span>
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1e39e8d4b-3e19-49aa-ad6e-cab80624e0b3.png" alt="Look 01">
+        <div class="look-meta">
+          <span>Alabaster Silk</span>
+          <span>€ 2,840</span>
+        </div>
+      </div>
+
+      <div class="look-card look-2 reveal">
+        <span class="look-num">02</span>
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1be87ff24-66f7-4e98-a675-3fa070077509.png" alt="Look 02">
+        <div class="look-meta">
+          <span>Charcoal Wool</span>
+          <span>€ 3,420</span>
+        </div>
+      </div>
+
+      <div class="look-card look-3 reveal">
+        <span class="look-num">03</span>
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1eb427c73-7703-44c2-9464-960b5b8555f6.png" alt="Look 03">
+        <div class="look-meta">
+          <span>Linen Collar</span>
+          <span>€ 1,960</span>
+        </div>
+      </div>
+
+      <div class="look-card look-4 reveal">
+        <span class="look-num">04</span>
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/15c2b2c6c-0ed2-4b0a-95a3-30b602916c18.png" alt="Look 04">
+        <div class="look-meta">
+          <span>Translucent Gown</span>
+          <span>€ 4,180</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ATELIER ============ -->
+<section class="panel" id="atelier">
+  <div class="atelier">
+    <div class="atelier-image-stack reveal">
+      <div class="at-img at-img-1" data-parallax="0.15">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1459a0a1f-f47f-4427-a17d-19dc23a9050b.png" alt="Artisan hands">
+      </div>
+      <div class="at-img at-img-2" data-parallax="0.22">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/19befbda0-b115-4ac4-a5b1-94e0ca51fc12.png" alt="Vessel">
+      </div>
+    </div>
+
+    <div class="atelier-text reveal">
+      <div class="section-index">III — Atelier</div>
+      <h2 class="section-title">The discipline of the <em>hand</em>.</h2>
+      <div class="section-body">
+        Each garment passes through eight pairs of hands before it leaves our rue de Sévigné studio. There are no shortcuts. There is only the patient accumulation of care.
+      </div>
+
+      <div class="pillars">
+        <div class="pillar">
+          <span class="p-num">01</span>
+          <div class="p-content">
+            <h4>Material Sourcing</h4>
+            <p>Heritage mills in Biella, hand-selected for their commitment to natural fibers and slow production cycles.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <span class="p-num">02</span>
+          <div class="p-content">
+            <h4>Pattern Cutting</h4>
+            <p>Architectural drafts on archival paper, refined across multiple fittings until the silhouette achieves quiet inevitability.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <span class="p-num">03</span>
+          <div class="p-content">
+            <h4>Finishing</h4>
+            <p>Hand-pressed seams, hidden topstitching, and finishing details visible only to the wearer. This is where restraint becomes luxury.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHIVE ============ -->
+<section class="panel archive" id="archive">
+  <div class="reveal">
+    <div class="section-index">IV — Archive</div>
+  </div>
+
+  <div class="archive-layout">
+    <div class="archive-left reveal">
+      <div class="big-number">26</div>
+      <p class="archive-caption">
+        Twenty-six seasons of <em>unhurried</em> design. A catalogue of quiet decisions, documented in linen and light.
+      </p>
+    </div>
+    <div class="archive-right reveal">
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/15c3dabb6-13d2-428c-b453-4597f5cf4a64.png" alt="Archive">
+      <span class="archive-tag">Archive — Vol. XXVI</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOURNAL ============ -->
+<section class="panel" id="journal">
+  <div class="journal">
+    <div class="journal-left reveal">
+      <div class="section-index">V — Journal</div>
+      <h2 class="journal-title">Letters from the <em>atelier</em>.</h2>
+      <p class="journal-desc">
+        A monthly correspondence on materiality, craft, and the slow practice of making. No marketing. No noise. Only considered writing, delivered to your inbox on the first Sunday of each month.
+      </p>
+      <form class="journal-form" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('input').placeholder='Subscribed — Thank You';">
+        <input type="email" placeholder="Your email address" required>
+        <button type="submit" aria-label="Subscribe">
+          <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+            <path d="M0 6H22M22 6L17 1M22 6L17 11" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <div class="journal-right reveal">
+      <div class="j-card">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/10a18a98a-ce12-47cb-bdb9-c1f5e2a90404.png" alt="Journal 1">
+        <span class="j-label">Essay N°14</span>
+      </div>
+      <div class="j-card">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/19befbda0-b115-4ac4-a5b1-94e0ca51fc12.png" alt="Journal 2">
+        <span class="j-label">Study N°09</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VI — PRESS ============ -->
+<section class="panel" id="press">
+  <div class="press-wrap">
+    <div class="press-header reveal">
+      <div>
+        <div class="section-index">VI — In Print</div>
+        <h2 class="section-title">Quietly <em>recognised</em>.</h2>
+      </div>
+      <div class="press-meta">Selected Features — 2024 / 2026</div>
+    </div>
+
+    <div class="press-list reveal">
+      <div class="press-item">
+        <div class="pub-name">Vogue Paris</div>
+        <div class="pub-quote">"A house that has chosen silence as its most articulate statement — the most important collection of the season, precisely because it refuses to insist."</div>
+        <div class="pub-date">March 2026</div>
+      </div>
+
+      <div class="press-item">
+        <div class="pub-name">Kinfolk</div>
+        <div class="pub-quote">"In an era of relentless visibility, Maison offers the rarest currency of all: patience, rendered in linen."</div>
+        <div class="pub-date">Issue 48</div>
+      </div>
+
+      <div class="press-item">
+        <div class="pub-name">The Gentlewoman</div>
+        <div class="pub-quote">"Eight artisans, fourteen years, one unwavering commitment to the unhurried. A masterclass in refusal."</div>
+        <div class="pub-date">N°31</div>
+      </div>
+
+      <div class="press-item">
+        <div class="pub-name">Architectural Digest</div>
+        <div class="pub-quote">"Their atelier operates less like a fashion house and more like a monastic scriptorium — every seam a meditation."</div>
+        <div class="pub-date">February 2026</div>
+      </div>
+
+      <div class="press-item">
+        <div class="pub-name">Monocle</div>
+        <div class="pub-quote">"The quietest room in Paris, and the most persuasive argument for slow luxury currently being made anywhere in Europe."</div>
+        <div class="pub-date">Issue 182</div>
+      </div>
+    </div>
+
+    <div class="press-pullquote reveal">
+      <p class="pq-text">"In a world screaming for <em>attention</em>, Maison whispers — and the industry leans in to listen."</p>
+      <div class="pq-attr">— System Magazine, N°22</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VII — OBJECTS ============ -->
+<section class="panel" id="objects">
+  <div class="objects-wrap">
+    <div class="objects-header reveal">
+      <div>
+        <div class="section-index">VII — Objects</div>
+        <h2 class="section-title">Small <em>permanences</em>.</h2>
+      </div>
+      <div class="obj-meta">
+        <span>04 Objets</span>
+        <span>Limited</span>
+        <span>Numbered</span>
+      </div>
+    </div>
+
+    <div class="objects-stage reveal">
+      <div class="obj-card obj-1" data-parallax="0.18">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/192894f11-67a9-4fb3-a1b7-a8420ba5a104.png" alt="Ceramic Vessel">
+        <div class="obj-meta-tag">
+          <span class="obj-name">Vessel N°07</span>
+          <span class="obj-cat">Ceramic — Handthrown</span>
+        </div>
+      </div>
+
+      <div class="obj-card obj-2" data-parallax="0.24">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/116c52b30-b36f-40d3-826f-c993afbe6c94.png" alt="Linen Scarf">
+        <div class="obj-meta-tag">
+          <span class="obj-name">Écharpe Albatre</span>
+          <span class="obj-cat">Linen — Handstitched</span>
+        </div>
+      </div>
+
+      <div class="obj-card obj-3" data-parallax="0.20">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/12a4b3664-9ffa-4cd2-8246-bdcac660a7b3.png" alt="Journal Book">
+        <div class="obj-meta-tag">
+          <span class="obj-name">Cahier N°26</span>
+          <span class="obj-cat">Leather — Bound</span>
+        </div>
+      </div>
+
+      <div class="obj-card obj-4" data-parallax="0.15">
+        <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/19befbda0-b115-4ac4-a5b1-94e0ca51fc12.png" alt="Vessel N°4">
+        <div class="obj-meta-tag">
+          <span class="obj-name">Vessel N°04</span>
+          <span class="obj-cat">Stoneware — Matte</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="objects-footer reveal">
+      <p class="obj-note">Each objet is produced in small seasonal editions of twelve, hand-numbered by the artisan. Once an edition closes, it does not reopen. These are not products; they are quiet companions for the long life of a room.</p>
+      <span class="obj-cta">
+        View Full Catalogue
+        <svg width="20" height="10" viewBox="0 0 24 12" fill="none">
+          <path d="M0 6H22M22 6L17 1M22 6L17 11" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VIII — PRIVATE APPOINTMENTS ============ -->
+<section class="panel" id="appointments" style="padding: 0;">
+  <div class="reveal">
+    <div class="section-index" style="margin-bottom: 32px; padding-left: 48px;">VIII — Private Appointments</div>
+  </div>
+  <div class="appointments">
+    <div class="apt-visual reveal">
+      <img src="https://image.qwenlm.ai/public_source/fa9c6426-83c9-42d8-8d7e-f7a228ee9ec8/1120a1f65-2cbf-4a7a-8ab3-294cc51a67b1.png" alt="Parisian Atelier">
+      <span class="apt-tag">Rue de Sévigné — Paris IIIe</span>
+      <span class="apt-coord">48.8566° N — 2.3522° E</span>
+    </div>
+
+    <div class="apt-content reveal">
+      <h2 class="apt-title">Visit the <em>atelier</em>.</h2>
+      <p class="apt-desc">
+        Our studio opens its doors by appointment only — a two-hour encounter with the garments, the artisans, and the unhurried rhythm that shapes every piece. No selling. No pressure. Only conversation.
+      </p>
+
+      <div class="apt-details">
+        <div class="apt-detail">
+          <div class="apt-d-label">Location</div>
+          <div class="apt-d-value">14 Rue de Sévigné<br>75003 Paris</div>
+        </div>
+        <div class="apt-detail">
+          <div class="apt-d-label">Availability</div>
+          <div class="apt-d-value">Tuesday — Saturday<br>10h00 — 18h00</div>
+        </div>
+        <div class="apt-detail">
+          <div class="apt-d-label">Duration</div>
+          <div class="apt-d-value">Two hours<br>Unhurried</div>
+        </div>
+        <div class="apt-detail">
+          <div class="apt-d-label">Guests</div>
+          <div class="apt-d-value">Solo or two<br>By invitation</div>
+        </div>
+      </div>
+
+      <div class="apt-actions">
+        <button class="cta-btn">
+          <span>Request Appointment</span>
+          <span class="arrow"></span>
+        </button>
+        <button class="cta-btn outline">
+          <span>Correspondence</span>
+          <span class="arrow"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="foot">
+  <div class="foot-top">
+    <div class="foot-brand">
+      <div class="foot-logo">MAISON</div>
+      <p class="foot-tag">An independent house of quiet luxury, founded in Paris. Dedicated to the patient craft of garments, objects, and the written word.</p>
+    </div>
+    <div class="foot-col">
+      <h5>House</h5>
+      <ul>
+        <li>Atelier</li>
+        <li>Artisans</li>
+        <li>Heritage</li>
+        <li>Press</li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h5>Collection</h5>
+      <ul>
+        <li>SS26</li>
+        <li>AW25</li>
+        <li>Archive</li>
+        <li>Objets</li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h5>Contact</h5>
+      <ul>
+        <li>Enquiries</li>
+        <li>Stockists</li>
+        <li>Care Guide</li>
+        <li>Shipping</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span class="copyright">© MMXXVI Maison — All Rights Reserved</span>
+    <div class="foot-meta">
+      <span>Paris — 48.8566°N</span>
+      <span>Édition Limitée</span>
+      <span>N°26 / ∞</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ============ HERO PARALLAX ============
+  const hero = document.getElementById('hero');
+  const parallaxElements = hero.querySelectorAll('[data-parallax]');
+
+  let targetX = 0, targetY = 0;
+  let currentX = 0, currentY = 0;
+
+  hero.addEventListener('mousemove', (e) => {
+    const rect = hero.getBoundingClientRect();
+    targetX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+    targetY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+  });
+
+  hero.addEventListener('mouseleave', () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  function animateHero() {
+    currentX += (targetX - currentX) * 0.06;
+    currentY += (targetY - currentY) * 0.06;
+
+    parallaxElements.forEach(el => {
+      const depth = parseFloat(el.dataset.parallax) || 0.1;
+      const moveX = currentX * depth * 80;
+      const moveY = currentY * depth * 60;
+      const rotateX = -currentY * depth * 4;
+      const rotateY = currentX * depth * 4;
+
+      if (el.classList.contains('headline-container')) {
+        el.style.transform = `translateY(-55%) translate3d(${moveX}px, ${moveY}px, 0)`;
+      } else {
+        el.style.transform = `translate3d(${moveX}px, ${moveY}px, ${depth * 40}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      }
+    });
+
+    requestAnimationFrame(animateHero);
+  }
+  animateHero();
+
+  // ============ OBJECTS STAGE PARALLAX ============
+  const objectsStage = document.querySelector('.objects-stage');
+  if (objectsStage) {
+    const objCards = objectsStage.querySelectorAll('.obj-card');
+    let oTargetX = 0, oTargetY = 0;
+    let oCurrentX = 0, oCurrentY = 0;
+
+    objectsStage.addEventListener('mousemove', (e) => {
+      const rect = objectsStage.getBoundingClientRect();
+      oTargetX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+      oTargetY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+    });
+
+    objectsStage.addEventListener('mouseleave', () => {
+      oTargetX = 0;
+      oTargetY = 0;
+    });
+
+    function animateObjects() {
+      oCurrentX += (oTargetX - oCurrentX) * 0.05;
+      oCurrentY += (oTargetY - oCurrentY) * 0.05;
+
+      objCards.forEach(card => {
+        const depth = parseFloat(card.dataset.parallax) || 0.1;
+        const moveX = oCurrentX * depth * 60;
+        const moveY = oCurrentY * depth * 50;
+        const rotateX = -oCurrentY * depth * 3;
+        const rotateY = oCurrentX * depth * 3;
+        card.style.transform = `translate3d(${moveX}px, ${moveY}px, ${depth * 30}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      });
+
+      requestAnimationFrame(animateObjects);
+    }
+    animateObjects();
+  }
+
+  // ============ SCROLL REVEAL ============
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // ============ ATELIER STACK PARALLAX (scroll based) ============
+  const atImgs = document.querySelectorAll('.atelier-image-stack .at-img');
+  window.addEventListener('scroll', () => {
+    atImgs.forEach((img) => {
+      const depth = parseFloat(img.dataset.parallax) || 0.1;
+      const rect = img.getBoundingClientRect();
+      const centerY = rect.top + rect.height / 2;
+      const viewCenter = window.innerHeight / 2;
+      const diff = (centerY - viewCenter) * depth * 0.3;
+      img.style.transform = `translate3d(0, ${-diff}px, 0)`;
+    });
+  }, { passive: true });
+
+  // ============ LOOK CARD 3D HOVER ============
+  document.querySelectorAll('.look-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
+      const y = (e.clientY - rect.top - rect.height / 2) / rect.height;
+      card.style.transform = `translateY(-8px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'translateY(0) rotateX(0) rotateY(0)';
+    });
+  });
+
+  // ============ PRESS ITEM STAGGER REVEAL ============
+  const pressItems = document.querySelectorAll('.press-item');
+  const pressObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }, i * 80);
+        pressObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  pressItems.forEach(item => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(20px)';
+    item.style.transition = 'opacity 1s cubic-bezier(0.22, 1, 0.36, 1), transform 1s cubic-bezier(0.22, 1, 0.36, 1)';
+    pressObserver.observe(item);
+  });
+
+  // ============ MOBILE NAV TOGGLE ============
+  const navToggle = document.getElementById('navToggle');
+  const navMobile = document.getElementById('navMobile');
+  if (navToggle && navMobile) {
+    navToggle.addEventListener('click', () => {
+      navToggle.classList.toggle('active');
+      navMobile.classList.toggle('open');
+      document.body.style.overflow = navMobile.classList.contains('open') ? 'hidden' : '';
+    });
+    navMobile.querySelectorAll('li').forEach(li => {
+      li.addEventListener('click', () => {
+        navToggle.classList.remove('active');
+        navMobile.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

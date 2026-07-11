@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Monolith | WebGL Experience</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #050505;
+      --text: #F2F2F2;
+      --accent: #FF3300;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      cursor: none;
+    }
+
+    canvas#webgl {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
+
+    .cursor {
+      position: fixed;
+      width: 24px; height: 24px;
+      border: 1px solid var(--text);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 100;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                  height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.3s;
+      mix-blend-mode: difference;
+    }
+
+    .hero-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      mix-blend-mode: difference; 
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2.5rem 4vw;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      opacity: 0.8;
+    }
+
+    .center-text {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      perspective: 1000px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .title {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(4.5rem, 18vw, 20rem);
+      font-weight: 400;
+      line-height: 0.8;
+      display: flex;
+      justify-content: center;
+      gap: 2vw;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      will-change: transform;
+    }
+
+    .word {
+      display: inline-block;
+      overflow: hidden;
+      padding: 0.1em 0;
+      transform-origin: center;
+    }
+
+    .char {
+      display: inline-block;
+      transform: translateY(100%);
+      opacity: 0;
+    }
+
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .scroll-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .scroll-hint .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .scroll-spacer { height: 400vh; position: relative; z-index: 0; }
+    
+    @media (prefers-reduced-motion: reduce) {
+      .title { transform: none !important; }
+      .char { transform: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor"></div>
+  <canvas id="webgl"></canvas>
+  
+  <div class="hero-overlay">
+    <nav>
+      <div class="logo">MONOLITH® / 03</div>
+      <div class="menu">INDEX — 2026</div>
+    </nav>
+    
+    <div class="center-text">
+      <h1 class="title">
+        <span class="word left" data-word="LIQUID">LIQUID</span>
+        <span class="word right" data-word="CHROME">CHROME</span>
+      </h1>
+    </div>
+    
+    <div class="bottom-bar">
+      <div class="meta">ARCHITECTURAL MATRIX</div>
+      <div class="scroll-hint">
+        <span class="dot"></span>
+        <span>SCROLL TO CRYSTALLIZE</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <section class="hero-section"></section>
+    <div class="scroll-spacer"></div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ==========================================
+    // 1. STATE & ARCHITECTURE
+    // ==========================================
+    const lenis = new Lenis({
+      duration: 1.5,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+    lenis.on('scroll', ScrollTrigger.update);
+
+    const cursor = document.querySelector('.cursor');
+    const mouseTarget = new THREE.Vector2(0, 0);
+    const mouseCurrent = new THREE.Vector2(0, 0);
+
+    window.addEventListener('mousemove', (e) => {
+      mouseTarget.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseTarget.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+
+    let scrollVelocity = 0;
+    lenis.on('scroll', ({ velocity }) => {
+      scrollVelocity = velocity;
+    });
+
+    // ==========================================
+    // 2. TYPOGRAPHY KINETICS
+    // ==========================================
+    document.querySelectorAll('.word').forEach(word => {
+      const text = word.innerText;
+      word.innerHTML = ''; 
+      text.split('').forEach((char, i) => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.innerText = char === ' ' ? '\u00A0' : char;
+        span.style.transitionDelay = `${i * 0.05}s`;
+        word.appendChild(span);
+      });
+    });
+
+    gsap.to('.char', {
+      y: 0,
+      opacity: 1,
+      duration: 1.2,
+      ease: 'expo.out',
+      stagger: 0.05,
+      delay: 0.5
+    });
+
+    const titleEl = document.querySelector('.title');
+    let currentSkew = 0;
+    
+    const skewLoop = () => {
+      const targetSkew = Math.max(-10, Math.min(10, scrollVelocity * 0.5));
+      currentSkew += (targetSkew - currentSkew) * 0.1;
+      titleEl.style.transform = `skewY(${currentSkew}deg)`;
+      requestAnimationFrame(skewLoop);
+    };
+    requestAnimationFrame(skewLoop);
+
+    // ==========================================
+    // 3. THREE.JS SCENE SETUP
+    // ==========================================
+    const canvas = document.querySelector('#webgl');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 8;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // ==========================================
+    // 4. GPU PARTICLE SYSTEM
+    // ==========================================
+    const PARTICLE_COUNT = 35000;
+    const baseGeometry = new THREE.IcosahedronGeometry(0.04, 0); 
+    const instancedGeometry = new THREE.InstancedBufferGeometry();
+    
+    instancedGeometry.index = baseGeometry.index;
+    instancedGeometry.attributes.position = baseGeometry.attributes.position;
+    instancedGeometry.attributes.normal = baseGeometry.attributes.normal;
+    instancedGeometry.instanceCount = PARTICLE_COUNT;
+
+    const offsets = new Float32Array(PARTICLE_COUNT * 3);
+    const randoms = new Float32Array(PARTICLE_COUNT);
+    const scales = new Float32Array(PARTICLE_COUNT);
+
+    for(let i = 0; i < PARTICLE_COUNT; i++) {
+      const y = 1 - (i / (PARTICLE_COUNT - 1)) * 2; 
+      const radiusAtY = Math.sqrt(1 - y * y);
+      const theta = ((1 + Math.sqrt(5)) / 2) * i * Math.PI * 2;
+      
+      const baseRadius = 2.2;
+      offsets[i*3] = Math.cos(theta) * radiusAtY * baseRadius;
+      offsets[i*3+1] = y * baseRadius;
+      offsets[i*3+2] = Math.sin(theta) * radiusAtY * baseRadius;
+      
+      randoms[i] = Math.random();
+      scales[i] = 0.6 + Math.random() * 1.8;
+    }
+
+    instancedGeometry.setAttribute('aOffset', new THREE.InstancedBufferAttribute(offsets, 3));
+    instancedGeometry.setAttribute('aRandom', new THREE.InstancedBufferAttribute(randoms, 1));
+    instancedGeometry.setAttribute('aScale', new THREE.InstancedBufferAttribute(scales, 1));
+
+    // ==========================================
+    // 5. SHADERS (THE CRYSTALLIZATION)
+    // ==========================================
+    const vertexShader = `
+      attribute vec3 aOffset;
+      attribute float aRandom;
+      attribute float aScale;
+
+      uniform float uTime;
+      uniform vec2 uMouse;
+      uniform float uProgress;
+
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      varying float vElevation;
+      varying float vArchitectural;
+
+      vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+      vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+      float snoise(vec3 v){
+        const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+        const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i  = floor(v + dot(v, C.yyy) );
+        vec3 x0 =   v - i + dot(i, C.xxx) ;
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min( g.xyz, l.zxy );
+        vec3 i2 = max( g.xyz, l.zxy );
+        vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+        vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+        vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+        i = mod(i, 289.0 );
+        vec4 p = permute( permute( permute(
+                   i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                 + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
+                 + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+        float n_ = 1.0/7.0;
+        vec3  ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z *ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_ );
+        vec4 x = x_ *ns.x + ns.yyyy;
+        vec4 y = y_ *ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4( x.xy, y.xy );
+        vec4 b1 = vec4( x.zw, y.zw );
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+        vec3 p0 = vec3(a0.xy,h.x);
+        vec3 p1 = vec3(a0.zw,h.y);
+        vec3 p2 = vec3(a1.xy,h.z);
+        vec3 p3 = vec3(a1.zw,h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+      }
+
+      void main() {
+        vec3 pos = position * aScale;
+        
+        float angle = uTime * (0.3 + aRandom * 0.4);
+        float s = sin(angle); float c = cos(angle);
+        mat3 rot = mat3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
+        pos = rot * pos;
+        vec3 n = rot * normal;
+        
+        vec3 offset = aOffset;
+        
+        // STATE 1: Liquid Sphere
+        float breathe = sin(uTime * 1.5 + aRandom * 6.28) * 0.15;
+        vec3 dir = normalize(offset);
+        vec3 spherePos = offset + dir * breathe;
+        spherePos += dir * snoise(vec3(offset.xy * 0.8, uTime * 0.2 + aRandom * 5.0)) * 0.4;
+        
+        // Mouse Vortex (Only affects early states)
+        vec3 mouseWorld = vec3(uMouse.x * 4.0, uMouse.y * 4.0, 0.0);
+        vec3 toMouse = mouseWorld - spherePos;
+        float dist = length(toMouse);
+        float pull = smoothstep(4.0, 0.0, dist) * 1.5 * (1.0 - uProgress);
+        spherePos += normalize(toMouse) * pull;
+        vec3 tangent = normalize(cross(toMouse, vec3(0.0, 0.0, 1.0)));
+        float swirlStrength = smoothstep(3.5, 0.5, dist) * 2.5 * (1.0 - uProgress);
+        spherePos += tangent * swirlStrength * sin(uTime * 2.0 + dist);
+
+        // STATE 2: The Helix
+        float h = (aRandom - 0.5) * 10.0; 
+        float helixAngle = h * 1.5 + uTime * 0.5;
+        vec3 helixPos = vec3(cos(helixAngle) * 1.8, h, sin(helixAngle) * 1.8);
+
+        // STATE 3: The Brutalist Monolith (Architectural Grid)
+        float gridX = 8.0; float gridY = 24.0; float gridZ = 8.0;
+        float totalCells = gridX * gridY * gridZ;
+        float id = floor(aRandom * totalCells);
+        
+        float zCell = mod(id, gridZ);
+        float yCell = mod(floor(id / gridZ), gridY);
+        float xCell = mod(floor(id / (gridZ * gridY)), gridX);
+        
+        vec3 monolithPos = vec3(
+          (xCell / gridX - 0.5) * 3.5,
+          (yCell / gridY - 0.5) * 14.0,
+          (zCell / gridZ - 0.5) * 3.5
+        );
+        
+        // Fill the cell volume slightly to make it look solid
+        vec3 cellOffset = vec3(
+          fract(sin(dot(vec2(aRandom, 1.0), vec2(12.9898, 78.233))) * 43758.5453),
+          fract(sin(dot(vec2(aRandom, 2.0), vec2(12.9898, 78.233))) * 43758.5453),
+          fract(sin(dot(vec2(aRandom, 3.0), vec2(12.9898, 78.233))) * 43758.5453)
+        );
+        monolithPos += (cellOffset - 0.5) * (1.0 / gridX) * 1.5;
+
+        // BLENDING STATES
+        float p1 = smoothstep(0.0, 0.4, uProgress); // Sphere -> Helix
+        float p2 = smoothstep(0.6, 0.95, uProgress); // Helix -> Monolith (Sharp snap)
+        
+        vec3 state1 = mix(spherePos, helixPos, p1);
+        vec3 finalPos = mix(state1, monolithPos, p2);
+        
+        vElevation = finalPos.y; 
+        vArchitectural = p2; // Pass to fragment to change material properties
+        
+        // Align normals to the grid when crystallized
+        vec3 gridNormal = normalize(finalPos - vec3(0.0, finalPos.y, 0.0));
+        n = mix(n, gridNormal, p2 * 0.5);
+
+        vec4 mvPosition = modelViewMatrix * vec4(pos + finalPos, 1.0);
+        
+        vNormal = normalize(normalMatrix * n);
+        vViewPosition = -mvPosition.xyz;
+        
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `;
+
+    const fragmentShader = `
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      varying float vElevation;
+      varying float vArchitectural;
+      uniform float uTime;
+
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+        
+        vec3 lightDir1 = normalize(vec3(1.0, 2.0, 1.5)); 
+        vec3 lightDir2 = normalize(vec3(-1.5, -0.5, -1.0)); 
+        
+        float diff1 = max(dot(normal, lightDir1), 0.0);
+        float diff2 = max(dot(normal, lightDir2), 0.0);
+        
+        vec3 halfDir1 = normalize(lightDir1 + viewDir);
+        float spec1 = pow(max(dot(normal, halfDir1), 0.0), 128.0);
+        
+        float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 4.0);
+        
+        vec3 baseColor = vec3(0.02, 0.02, 0.03);
+        
+        // Iridescence fades out as it becomes architectural
+        float iriMix = dot(normal, viewDir) * 0.5 + 0.5;
+        iriMix += smoothstep(-2.0, 2.0, vElevation) * 0.3;
+        vec3 iridescentColor = mix(vec3(0.1, 0.4, 0.8), vec3(0.8, 0.1, 0.5), iriMix);
+        vec3 starkChrome = vec3(0.9, 0.95, 1.0);
+        
+        vec3 rimColor = mix(iridescentColor, starkChrome, vArchitectural);
+        
+        vec3 finalColor = baseColor;
+        finalColor += diff1 * 0.2; 
+        finalColor += diff2 * vec3(0.2, 0.3, 0.5) * 0.3; 
+        
+        finalColor += spec1 * vec3(1.0, 0.95, 0.9) * 4.0; 
+        finalColor += pow(spec1, 4.0) * vec3(1.0, 0.8, 0.9) * 2.0;
+        
+        finalColor += fresnel * rimColor * 3.0; 
+        
+        // Data flow pulse on the monolith
+        float dataPulse = sin(vElevation * 2.0 - uTime * 3.0) * 0.5 + 0.5;
+        finalColor += dataPulse * vArchitectural * vec3(1.0, 0.2, 0.1) * 0.4;
+
+        float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        finalColor += (grain - 0.5) * 0.08;
+        
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `;
+
+    const uniforms = {
+      uTime: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+      uProgress: { value: 0 }
+    };
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(instancedGeometry, material);
+    const group = new THREE.Group();
+    group.add(mesh);
+    scene.add(group);
+
+    // ==========================================
+    // 6. LIFECYCLE
+    // ==========================================
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    canvas.addEventListener('webglcontextlost', (e) => e.preventDefault());
+
+    // ==========================================
+    // 7. UNIFIED RENDER LOOP
+    // ==========================================
+    const clock = new THREE.Clock();
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+      
+      uniforms.uTime.value = clock.getElapsedTime();
+      
+      mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.06;
+      mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.06;
+      uniforms.uMouse.value.copy(mouseCurrent);
+      
+      // Apply parallax to the group, keeping camera free for GSAP
+      group.rotation.y += (mouseCurrent.x * 0.3 - group.rotation.y) * 0.03;
+      group.rotation.x += (mouseCurrent.y * 0.15 - group.rotation.x) * 0.03;
+      
+      renderer.render(scene, camera);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    // ==========================================
+    // 8. SCROLL NARRATIVE & CAMERA
+    // ==========================================
+    gsap.to(uniforms.uProgress, {
+      value: 1,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".hero-section",
+        start: "top top",
+        end: "+=3500", 
+        scrub: 2, 
+        pin: true,
+      }
+    });
+
+    // Cinematic Camera Tilt & Push
+    gsap.to(camera.position, {
+      y: -3,   // Drop camera to look UP
+      z: 6,    // Push in closer
+      ease: "power2.inOut",
+      scrollTrigger: {
+        trigger: ".hero-section",
+        start: "top top",
+        end: "+=3500",
+        scrub: 2,
+      }
+    });
+
+    gsap.to(camera.rotation, {
+      x: 0.4, // Tilt up
+      ease: "power2.inOut",
+      scrollTrigger: {
+        trigger: ".hero-section",
+        start: "top top",
+        end: "+=3500",
+        scrub: 2,
+      }
+    });
+
+    // Editorial Typography Docking
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".hero-section",
+        start: "top top",
+        end: "+=1500", // Happens in the first half of the scroll
+        scrub: 1.5,
+      }
+    });
+
+    tl.to('.word.left', { 
+      x: '-42vw', 
+      y: '-15vh',
+      rotation: -90, 
+      ease: "power4.inOut" 
+    }, 0);
+    
+    tl.to('.word.right', { 
+      x: '42vw', 
+      y: '15vh',
+      rotation: 90, 
+      ease: "power4.inOut" 
+    }, 0);
+
+    tl.to('.bottom-bar', {
+      opacity: 0,
+      y: 20,
+      ease: "power2.in"
+    }, 0);
+
+  </script>
+</body>
+</html>

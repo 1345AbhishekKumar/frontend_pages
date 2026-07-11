@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES V - Mars Observation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Manrope:wght@300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505; /* Deep void space */
+            font-family: 'Manrope', sans-serif;
+            color: #d1d5db;
+        }
+
+        /* Cinematic Film Grain */
+        .bg-noise {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+        }
+
+        /* Ambient Glow */
+        .bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(184, 69, 25, 0.08) 0%, rgba(5, 5, 5, 0) 65%);
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+            transition: transform 0.1s ease-out; /* For parallax smooth follow */
+        }
+
+        /* Holographic Scanline */
+        @keyframes scanline {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+        .scanline {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 10vh;
+            background: linear-gradient(to bottom, transparent, rgba(224, 82, 54, 0.04), transparent);
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Globe Entrance Focus */
+        @keyframes globeReveal {
+            0% { opacity: 0; transform: scale(0.9); filter: blur(20px); }
+            100% { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        .animate-globe { animation: globeReveal 3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* System Boot Nav Stagger */
+        @keyframes navReveal {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .nav-item { opacity: 0; animation: navReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .nav-delay-1 { animation-delay: 0.6s; }
+        .nav-delay-2 { animation-delay: 0.75s; }
+        .nav-delay-3 { animation-delay: 0.9s; }
+
+        /* Ambient Floating */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 6s ease-in-out infinite; animation-delay: 3s; }
+
+        /* Continuous Text Glow & Gradient */
+        @keyframes textGlow {
+            0%, 100% { text-shadow: 0 0 10px rgba(224, 82, 54, 0.2); }
+            50% { text-shadow: 0 0 25px rgba(224, 82, 54, 0.7); }
+        }
+        .text-glow { 
+            animation: textGlow 4s ease-in-out infinite;
+            background: linear-gradient(135deg, #ff8a66, #e05236);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Futuristic Button Targeting Brackets */
+        .btn-bracket {
+            position: relative;
+        }
+        .btn-bracket::before {
+            content: ''; position: absolute; top: -4px; left: -4px; width: 10px; height: 10px;
+            border-top: 1px solid #e05236; border-left: 1px solid #e05236;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+        }
+        .btn-bracket::after {
+            content: ''; position: absolute; bottom: -4px; right: -4px; width: 10px; height: 10px;
+            border-bottom: 1px solid #e05236; border-right: 1px solid #e05236;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+        }
+        .btn-bracket:hover::before, .btn-bracket:hover::after {
+            width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0.4;
+        }
+
+        /* Button Shimmer Sweep */
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent);
+            transform: skewX(-20deg);
+            animation: shimmer 4s infinite cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        /* Elegant Marker Pulse */
+        .marker-pulse {
+            position: absolute; width: 8px; height: 8px; background-color: #e05236;
+            border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 8px rgba(224, 82, 54, 0.8);
+        }
+        .marker-pulse::after {
+            content: ''; position: absolute; width: 100%; height: 100%; border: 1px solid #e05236;
+            border-radius: 50%; z-index: -1; animation: pulse-ring 3s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        /* High-End Glassmorphism Tooltip */
+        .marker-label {
+            position: absolute; left: 15px; top: -12px; width: max-content;
+            pointer-events: auto; cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .marker-label-content {
+            background: rgba(15, 10, 8, 0.65); border: 1px solid rgba(224, 82, 54, 0.2);
+            padding: 8px 16px; border-radius: 2px; font-family: 'Space Mono', monospace; font-size: 0.7rem;
+            color: #d1d5db; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            letter-spacing: 0.05em; position: relative; overflow: hidden;
+        }
+        .marker-label-content::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 2px; height: 100%; background-color: #e05236;
+        }
+        .marker-label:hover .marker-label-content {
+            background: rgba(224, 82, 54, 0.1); border-color: rgba(224, 82, 54, 0.5); color: #fff; transform: translateX(8px);
+        }
+
+        /* Refined Typography Elements */
+        .font-classic { font-family: 'Cinzel', serif; }
+        .font-mono-tech { font-family: 'Space Mono', monospace; }
+
+        /* Sophisticated Reveal Animations */
+        .reveal-up {
+            animation: revealUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: translateY(30px);
+        }
+        .delay-100 { animation-delay: 200ms; }
+        .delay-200 { animation-delay: 400ms; }
+        .delay-300 { animation-delay: 600ms; }
+
+        @keyframes revealUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Crosshair Decorators */
+        @keyframes crosshairSpin {
+            0% { transform: rotate(0deg) scale(0.8); opacity: 0; }
+            100% { transform: rotate(90deg) scale(1); opacity: 0.3; }
+        }
+        .crosshair {
+            position: absolute; width: 20px; height: 20px; pointer-events: none; opacity: 0;
+            animation: crosshairSpin 2s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 1s;
+        }
+        .crosshair::before, .crosshair::after { content: ''; position: absolute; background: #fff; }
+        .crosshair::before { top: 9px; left: 0; width: 100%; height: 1px; }
+        .crosshair::after { top: 0; left: 9px; width: 1px; height: 100%; }
+
+        /* Telemetry Ticker */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee { display: flex; width: 200%; animation: marquee 30s linear infinite; }
+        .hero-content-wrapper { transition: transform 0.1s ease-out; }
+    </style>
+</head>
+<body class="relative w-screen h-screen selection:bg-orange-900 selection:text-white">
+
+    <!-- Texture & Lighting -->
+    <div class="bg-noise"></div>
+    <div class="bg-glow" id="ambient-glow"></div>
+    
+    <!-- Holographic Scanline Layer -->
+    <div class="scanline"></div>
+
+    <!-- Interactive Canvas Layer -->
+    <div id="globe-container" class="absolute inset-0 cursor-grab active:cursor-grabbing z-0 animate-globe">
+        <canvas id="globe-canvas" class="block w-full h-full"></canvas>
+    </div>
+
+    <!-- HTML Markers Layer -->
+    <div id="markers-container" class="absolute inset-0 pointer-events-none z-10"></div>
+
+    <!-- UI Overlay -->
+    <div class="absolute inset-0 z-20 flex flex-col pointer-events-none">
+        
+        <!-- Premium Navigation -->
+        <nav class="w-full flex justify-between items-center px-8 py-8 md:px-16 pointer-events-auto border-b border-white/5 relative z-30">
+            <div class="flex items-center gap-4 reveal-up">
+                <div class="font-classic text-2xl tracking-[0.2em] text-white">ARES<span class="text-[#e05236] ml-1">V</span></div>
+            </div>
+            
+            <div class="hidden md:flex gap-12 text-xs font-mono-tech tracking-widest text-gray-500 uppercase">
+                <a href="#" class="nav-item nav-delay-1 hover:text-white transition-colors duration-500">Cartography</a>
+                <a href="#" class="nav-item nav-delay-2 hover:text-white transition-colors duration-500">Telemetry</a>
+                <a href="#" class="nav-item nav-delay-3 hover:text-white transition-colors duration-500">Archive</a>
+            </div>
+
+            <button class="nav-item nav-delay-3 group relative px-6 py-2.5 text-xs font-mono-tech tracking-widest text-[#e05236] uppercase overflow-hidden border border-[#e05236]/30 transition-all duration-500 hover:border-[#e05236]">
+                <span class="relative z-10 group-hover:text-black transition-colors duration-500">Initialize</span>
+                <div class="absolute inset-0 bg-[#e05236] transform scale-x-0 origin-left transition-transform duration-500 ease-in-out group-hover:scale-x-100"></div>
+            </button>
+        </nav>
+
+        <!-- Main Hero Layout -->
+        <main class="flex-grow flex items-center px-8 md:px-16 w-full max-w-[1400px] mx-auto relative hero-content-wrapper" id="hero-content">
+            
+            <!-- Content Container -->
+            <div class="w-full md:w-[55%] pointer-events-auto mt-[-5vh] md:mt-0 relative z-10">
+                
+                <div class="reveal-up flex items-center gap-4 mb-8">
+                    <span class="h-[1px] w-12 bg-[#e05236] relative overflow-hidden">
+                        <span class="absolute inset-0 bg-white opacity-50 transform -translate-x-full animate-[shimmer_2s_infinite]"></span>
+                    </span>
+                    <span class="font-mono-tech text-[10px] text-[#e05236] uppercase tracking-[0.3em]">Live Planetary Scan</span>
+                </div>
+                
+                <h1 class="reveal-up delay-100 font-classic text-5xl md:text-7xl lg:text-[5.5rem] text-white mb-6 leading-[1.05] tracking-tight drop-shadow-lg">
+                    The <span class="italic text-glow relative">Red</span><br> Frontier.
+                </h1>
+                
+                <p class="reveal-up delay-200 text-base md:text-lg text-gray-400 mb-12 max-w-md leading-relaxed font-light">
+                    An elegant, high-fidelity topographical visualization of Martian surface data. Discover monumental canyons, ancient impact basins, and the history written in dust.
+                </p>
+                
+                <div class="reveal-up delay-300 flex flex-col sm:flex-row gap-8">
+                    <div class="btn-bracket">
+                        <button class="w-full relative overflow-hidden px-8 py-4 font-mono-tech text-xs uppercase tracking-[0.2em] text-white bg-[#e05236] hover:bg-[#c44329] transition-all duration-500 group btn-shimmer shadow-[0_0_20px_rgba(224,82,54,0.15)]">
+                            <span class="relative z-10">Engage Surface View</span>
+                            <div class="absolute inset-0 ring-1 ring-[#e05236] ring-offset-2 ring-offset-[#050505] scale-100 opacity-0 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500"></div>
+                        </button>
+                    </div>
+                    
+                    <button class="px-8 py-4 font-mono-tech text-xs uppercase tracking-[0.2em] text-gray-300 hover:text-white border border-white/10 hover:border-white/40 transition-all duration-500 relative overflow-hidden group">
+                        <span class="relative z-10">View Coordinates</span>
+                        <div class="absolute inset-0 bg-white/5 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Classic Decorators & Personalized Data Readout -->
+        <div class="absolute bottom-16 left-8 md:left-16 font-mono-tech text-[9px] text-gray-600 uppercase tracking-[0.25em] space-y-1.5 pointer-events-none animate-float">
+            <div class="text-gray-400">SYS.ADMIN // ABHISHEK KUMAR</div>
+            <div>Projection: Orthographic WebGL</div>
+            <div class="flex items-center gap-2 text-[#e05236]/80">
+                <span class="w-1.5 h-1.5 bg-[#e05236] rounded-full animate-pulse"></span>
+                Connection Stable
+            </div>
+        </div>
+
+        <div class="absolute bottom-16 right-8 md:right-16 font-mono-tech text-[9px] text-gray-500 uppercase tracking-[0.25em] text-right pointer-events-none animate-float-delayed">
+            <div>Hold & Drag to Rotate</div>
+        </div>
+
+        <!-- Corner Accents -->
+        <div class="crosshair top-8 left-8 hidden md:block"></div>
+        <div class="crosshair top-8 right-8 hidden md:block"></div>
+        
+        <!-- Live Telemetry Ticker (Absolute Bottom) -->
+        <div class="absolute bottom-0 left-0 w-full bg-[#e05236]/[0.02] border-t border-[#e05236]/10 text-[#e05236]/70 font-mono-tech text-[8px] tracking-[0.3em] py-2 overflow-hidden pointer-events-none backdrop-blur-sm">
+            <div class="animate-marquee whitespace-nowrap">
+                <!-- Group 1 -->
+                <span class="mx-6">SYS.STATUS: NOMINAL</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">ORBITAL INSERTION: COMPLETE</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">SURFACE TEMP: -63°C</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">WIND SPEED: 14.2 M/S</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">UPLINK: 4.2 MBPS</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">LAT: 18.65° N / LON: 133.8° W</span><span class="mx-6 opacity-50">///</span>
+                <!-- Group 2 (Duplicate for smooth infinite scroll) -->
+                <span class="mx-6">SYS.STATUS: NOMINAL</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">ORBITAL INSERTION: COMPLETE</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">SURFACE TEMP: -63°C</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">WIND SPEED: 14.2 M/S</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">UPLINK: 4.2 MBPS</span><span class="mx-6 opacity-50">///</span>
+                <span class="mx-6">LAT: 18.65° N / LON: 133.8° W</span><span class="mx-6 opacity-50">///</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Variables & Setup ---
+        const container = document.getElementById('globe-container');
+        const canvas = document.getElementById('globe-canvas');
+        const ctx = canvas.getContext('2d');
+        const markersContainer = document.getElementById('markers-container');
+
+        let width, height;
+        let scale = 1;
+        let isDragging = false;
+        let bootProgress = 0; 
+
+        // Dynamics & State
+        let config = {
+            numPoints: 12000, 
+            autoRotateSpeed: 0.12, 
+            graticuleOpacity: 0.08, 
+            baseScale: 0
+        };
+
+        // Initialize with a dramatic entry angle
+        let rotation = [50, -30, 0]; 
+        let velocity = [0, 0];      
+        const friction = 0.94;    
+
+        // D3 Geometries
+        let projection = d3.geoOrthographic().clipAngle(90);
+        let path = d3.geoPath(projection, ctx);
+        let graticule = d3.geoGraticule10();
+        let terrainPoints = [];
+
+        // Markers Data
+        const markersData = [
+            { id: 'm1', name: "Olympus Mons", type: "Shield Volcano", coords: [-133.8, 18.65], info: "Tallest planetary mountain." },
+            { id: 'm2', name: "Valles Marineris", type: "Rift System", coords: [-70.0, -14.0], info: "Massive canyon system." },
+            { id: 'm3', name: "Jezero Crater", type: "Delta Deposit", coords: [77.58, 18.38], info: "Perseverance landing site." },
+            { id: 'm4', name: "Hellas Planitia", type: "Impact Basin", coords: [70.0, -42.4], info: "Deepest visible crater." }
+        ];
+
+        // --- Initialization ---
+        function init() {
+            resize();
+            window.addEventListener('resize', resize);
+            generateMarsTerrain(config.numPoints);
+            createMarkersHTML();
+            setupInteractions();
+            setupParallax();
+            
+            velocity[0] = 3.5; 
+            velocity[1] = -0.5;
+
+            requestAnimationFrame(render);
+        }
+
+        // --- Mouse Parallax Effect ---
+        function setupParallax() {
+            const glow = document.getElementById('ambient-glow');
+            const heroContent = document.getElementById('hero-content');
+            
+            document.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth - 0.5);
+                const y = (e.clientY / window.innerHeight - 0.5);
+                
+                // Subtle shifts in opposite directions for depth
+                heroContent.style.transform = `translate(${x * -20}px, ${y * -20}px)`;
+                glow.style.transform = `translate(calc(-50% + ${x * 60}px), calc(-50% + ${y * 60}px))`;
+            });
+        }
+
+        // --- Responsive Canvas & Projection Setup ---
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.scale(dpr, dpr);
+
+            const isMobile = width < 768;
+            config.baseScale = Math.min(width, height) * (isMobile ? 0.5 : 0.65);
+
+            const centerX = isMobile ? width / 2 : width * 0.78;
+            const centerY = isMobile ? height * 0.75 : height / 2;
+
+            projection
+                .translate([centerX, centerY])
+                .scale(config.baseScale * scale);
+        }
+
+        // --- Procedural Topography Generation ---
+        function generateMarsTerrain(numPoints) {
+            terrainPoints = [];
+            const phi = Math.PI * (3 - Math.sqrt(5)); 
+
+            for (let i = 0; i < numPoints; i++) {
+                const y = 1 - (i / (numPoints - 1)) * 2; 
+                const radius = Math.sqrt(1 - y * y);
+                const theta = phi * i;
+                
+                const x = Math.cos(theta) * radius;
+                const z = Math.sin(theta) * radius;
+
+                const lat = Math.asin(y) * 180 / Math.PI;
+                const lon = Math.atan2(z, x) * 180 / Math.PI;
+
+                const noise = evaluateMarsNoise(lat, lon);
+
+                terrainPoints.push({
+                    coords: [lon, lat],
+                    terrainValue: noise, 
+                    isIceCap: Math.abs(lat) > 82 
+                });
+            }
+        }
+
+        function evaluateMarsNoise(lat, lon) {
+            const latR = lat * Math.PI / 180;
+            const lonR = lon * Math.PI / 180;
+            const x = Math.cos(latR) * Math.cos(lonR);
+            const y = Math.sin(latR);
+            const z = Math.cos(latR) * Math.sin(lonR);
+
+            let v = Math.sin(x*4 + y*2) * Math.cos(z*3 + x*2);
+            v += 0.5 * Math.sin(y*10 - z*7);
+            v += 0.25 * Math.cos(x*20 + y*20);
+            
+            return Math.max(0, Math.min(1, (v + 1.8) / 3.6));
+        }
+
+        function getMartianColor(val, isIce) {
+            if (isIce) return 'rgba(235, 225, 220, 0.85)'; 
+            if (val < 0.3) return 'rgba(84, 34, 20, 0.6)';   
+            if (val < 0.6) return 'rgba(145, 56, 30, 0.75)';  
+            if (val < 0.8) return 'rgba(184, 75, 38, 0.8)';  
+            return 'rgba(224, 102, 60, 0.9)';                 
+        }
+
+        // --- HTML Marker Generation ---
+        function createMarkersHTML() {
+            markersContainer.innerHTML = '';
+            markersData.forEach((marker, index) => {
+                const el = document.createElement('div');
+                el.id = `marker-${index}`;
+                el.className = 'absolute top-0 left-0 hidden';
+                
+                el.innerHTML = `
+                    <div class="marker-pulse"></div>
+                    <div class="marker-label">
+                        <div class="marker-label-content">
+                            <strong class="block text-white mb-0.5 tracking-wider">${marker.name}</strong>
+                            <span class="text-[#e05236] text-[9px] block">${marker.type}</span>
+                        </div>
+                    </div>
+                `;
+                markersContainer.appendChild(el);
+            });
+        }
+
+        // --- Interaction Handlers ---
+        function setupInteractions() {
+            const drag = d3.drag()
+                .on('start', () => { isDragging = true; })
+                .on('drag', (event) => {
+                    const sensitivity = 0.15; 
+                    velocity[0] = event.dx * sensitivity;
+                    velocity[1] = -event.dy * sensitivity;
+                    rotation[0] += velocity[0];
+                    rotation[1] += velocity[1];
+                })
+                .on('end', () => { isDragging = false; });
+
+            d3.select(container).call(drag);
+        }
+
+        // --- Render Loop ---
+        function render() {
+            ctx.clearRect(0, 0, width, height);
+
+            if (bootProgress < 1) bootProgress += 0.005; 
+
+            if (!isDragging) {
+                velocity[0] += config.autoRotateSpeed * 0.1;
+                rotation[0] += velocity[0];
+                rotation[1] += velocity[1];
+                
+                velocity[0] *= friction;
+                velocity[1] *= friction;
+            }
+
+            rotation[1] = Math.max(-90, Math.min(90, rotation[1]));
+            projection.rotate(rotation);
+
+            // 1. Draw Graticule
+            const currentGraticuleOpacity = config.graticuleOpacity * bootProgress;
+            if (currentGraticuleOpacity > 0) {
+                ctx.beginPath();
+                path(graticule);
+                ctx.strokeStyle = `rgba(224, 82, 54, ${currentGraticuleOpacity})`;
+                ctx.lineWidth = 0.4 * scale;
+                ctx.stroke();
+            }
+
+            // 2. Draw Halftone Land Dots
+            const baseDotSize = 1.0 * scale; 
+            
+            terrainPoints.forEach(p => {
+                const projected = projection(p.coords);
+                if (projected) {
+                    const sizeMod = p.isIceCap ? 1.4 : (p.terrainValue * 1.5 + 0.4);
+                    const finalSize = baseDotSize * sizeMod;
+                    
+                    ctx.beginPath();
+                    ctx.arc(projected[0], projected[1], finalSize, 0, 2 * Math.PI);
+                    
+                    ctx.globalAlpha = bootProgress; 
+                    ctx.fillStyle = getMartianColor(p.terrainValue, p.isIceCap);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0; 
+                }
+            });
+
+            // 3. Update HTML Markers
+            if (bootProgress > 0.6) {
+                markersData.forEach((marker, index) => {
+                    const el = document.getElementById(`marker-${index}`);
+                    const projected = projection(marker.coords);
+                    
+                    if (projected) {
+                        el.style.display = 'block';
+                        el.style.transform = `translate(${projected[0]}px, ${projected[1]}px)`;
+                        
+                        const isMobile = width < 768;
+                        const centerX = isMobile ? width / 2 : width * 0.78;
+                        const centerY = isMobile ? height * 0.75 : height / 2;
+                        
+                        const centerCoords = projection.invert([centerX, centerY]);
+                        if(centerCoords) {
+                            const dist = d3.geoDistance(marker.coords, centerCoords);
+                            const baseOpacity = Math.max(0.1, 1 - (dist / (Math.PI / 2.2)));
+                            
+                            const finalOpacity = baseOpacity * ((bootProgress - 0.6) / 0.4); 
+                            el.style.opacity = finalOpacity;
+                            el.style.pointerEvents = finalOpacity < 0.4 ? 'none' : 'auto'; 
+                        }
+                    } else {
+                        el.style.display = 'none';
+                    }
+                });
+            } else {
+                markersData.forEach((marker, index) => {
+                    document.getElementById(`marker-${index}`).style.display = 'none';
+                });
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>

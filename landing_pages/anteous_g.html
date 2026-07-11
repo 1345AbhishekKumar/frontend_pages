@@ -1,0 +1,1299 @@
+import React, { useState, useEffect, useRef, createContext, useContext, useMemo, useCallback } from 'react';
+import { Menu, X, ArrowUpRight, Globe, Plus, Minus, ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate, animate as framerAnimate, LayoutGroup } from 'framer-motion';
+
+// --- ERROR BOUNDARY ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {}
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] text-white p-6 text-center">
+          <h2 className="text-3xl font-bold mb-4 uppercase tracking-widest">Something went wrong</h2>
+          <p className="text-white/60 mb-8">We are having trouble loading this experience. Please try again.</p>
+          <button onClick={() => window.location.reload()} className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest text-sm hover:bg-white/90 active:scale-95 transition-all">Refresh Page</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// --- SAFE IMAGE COMPONENT ---
+const SafeImage = React.memo(({ src, alt, className, style, ...props }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt || ""}
+      className={`${className} ${hasError ? 'bg-[#1a1a1a] object-contain p-8' : ''}`}
+      style={style}
+      onError={() => {
+        if (!hasError) {
+          setHasError(true);
+          setImgSrc('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxYTFhMWEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYWlsYWJsZTwvdGV4dD48L3N2Zz4=');
+        }
+      }}
+      {...props}
+    />
+  );
+});
+
+// --- TRANSLATION ENGINE ---
+const translations = {
+  EN: {
+    nav_about: "About Us", nav_services: "Services", nav_tech: "Synopsis App", nav_menu: "Menu",
+    hero_1: "ON BOARD", hero_2: "ON TIME.", hero_3: "ANYTIME", hero_4: "WORLDWIDE.", hero_scroll: "— Scroll to Explore —",
+    btn_marine: "Marine & Offshore", btn_corp: "Corporate & MICE", btn_leisure: "Leisure & DMC", btn_learn: "Learn More", btn_explore: "Explore Fleet", btn_contact: "Contact Us",
+    sec1_title: "What we do", sec1_sub: "Marine & Corporate Travel Management", sec2_title: "Our Services",
+    sec3_title1: "Why we do", sec3_title2: "it better", sec4_title: "Why Antaeus", sec4_sub: "Traveling to go higher",
+    sec5_title: "Technology", sec5_sub: "Travel Management Software", fleet_title: "The Fleet", fleet_sub: "Multi-Modal Transit",
+    spotlight_1: "See The", spotlight_2: "Unseen", spotlight_sub: "A shift in perspective.", reach_title: "Global Reach",
+    editorial_title1: "Editorial", editorial_title2: "Insights", horizon_1: "Horizon", horizon_2: "Limitless", horizon_3: "Boundaries redefined."
+  },
+  ES: {
+    nav_about: "Nosotros", nav_services: "Servicios", nav_tech: "App Synopsis", nav_menu: "Menú",
+    hero_1: "A BORDO", hero_2: "A TIEMPO.", hero_3: "SIEMPRE", hero_4: "MUNDIAL.", hero_scroll: "— Desplácese para Explorar —",
+    btn_marine: "Marítimo y Costa", btn_corp: "Corporativo y MICE", btn_leisure: "Ocio y DMC", btn_learn: "Saber Más", btn_explore: "Explorar Flota", btn_contact: "Contáctenos",
+    sec1_title: "Lo que hacemos", sec1_sub: "Gestión de Viajes Marítimos", sec2_title: "Nuestros Servicios",
+    sec3_title1: "Por qué lo", sec3_title2: "hacemos mejor", sec4_title: "Por qué Antaeus", sec4_sub: "Viajando para ir más alto",
+    sec5_title: "Tecnología", sec5_sub: "Software de Viajes", fleet_title: "La Flota", fleet_sub: "Tránsito Multimodal",
+    spotlight_1: "Ver lo", spotlight_2: "Invisible", spotlight_sub: "Un cambio de perspectiva.", reach_title: "Alcance Global",
+    editorial_title1: "Perspectivas", editorial_title2: "Editoriales", horizon_1: "Horizonte", horizon_2: "Sin Límites", horizon_3: "Límites redefinidos."
+  },
+  FR: {
+    nav_about: "À Propos", nav_services: "Services", nav_tech: "Appli Synopsis", nav_menu: "Menu",
+    hero_1: "À BORD", hero_2: "À L'HEURE.", hero_3: "TOUJOURS", hero_4: "MONDIAL.", hero_scroll: "— Défilez pour Explorer —",
+    btn_marine: "Maritime et Offshore", btn_corp: "Affaires et MICE", btn_leisure: "Loisirs et DMC", btn_learn: "En Savoir Plus", btn_explore: "Explorer Flotte", btn_contact: "Contactez-nous",
+    sec1_title: "Ce que nous faisons", sec1_sub: "Gestion de Voyages Maritimes", sec2_title: "Nos Services",
+    sec3_title1: "Pourquoi nous", sec3_title2: "sommes meilleurs", sec4_title: "Pourquoi Antaeus", sec4_sub: "Voyager pour aller plus haut",
+    sec5_title: "Technologie", sec5_sub: "Logiciel de Gestion", fleet_title: "La Flotte", fleet_sub: "Transit Multimodal",
+    spotlight_1: "Voir", spotlight_2: "L'invisible", spotlight_sub: "Changement de perspective.", reach_title: "Portée Mondiale",
+    editorial_title1: "Aperçus", editorial_title2: "Éditoriaux", horizon_1: "Horizon", horizon_2: "Sans Limites", horizon_3: "Frontières redéfinies."
+  },
+  GR: {
+    nav_about: "Σχετικά", nav_services: "Υπηρεσίες", nav_tech: "Εφαρμογή", nav_menu: "Μενού",
+    hero_1: "ΕΠΙΒΙΒΑΣΗ", hero_2: "ΣΤΗΝ ΩΡΑ.", hero_3: "ΠΑΝΤΑ", hero_4: "ΠΑΓΚΟΣΜΙΑ.", hero_scroll: "— Κάντε κύλιση —",
+    btn_marine: "Ναυτιλία & Offshore", btn_corp: "Εταιρικά & MICE", btn_leisure: "Αναψυχή & DMC", btn_learn: "Περισσότερα", btn_explore: "Εξερευνήστε", btn_contact: "Επικοινωνία",
+    sec1_title: "Τι κάνουμε", sec1_sub: "Διαχείριση Ταξιδιών", sec2_title: "Οι Υπηρεσίες μας",
+    sec3_title1: "Γιατί το", sec3_title2: "κάνουμε καλύτερα", sec4_title: "Γιατί Antaeus", sec4_sub: "Ταξιδεύοντας ψηλότερα",
+    sec5_title: "Τεχνολογία", sec5_sub: "Λογισμικό Διαχείρισης", fleet_title: "Ο Στόλος", fleet_sub: "Πολυτροπική Μεταφορά",
+    spotlight_1: "Δείτε το", spotlight_2: "Αόρατο", spotlight_sub: "Μια αλλαγή προοπτικής.", reach_title: "Εμβέλεια",
+    editorial_title1: "Συντακτικές", editorial_title2: "Απόψεις", horizon_1: "Ορίζοντας", horizon_2: "Απεριόριστο", horizon_3: "Νέα όρια."
+  },
+  CH: {
+    nav_about: "Über Uns", nav_services: "Dienste", nav_tech: "Synopsis App", nav_menu: "Menü",
+    hero_1: "AN BORD", hero_2: "PÜNKTLICH.", hero_3: "JEDERZEIT", hero_4: "WELTWEIT.", hero_scroll: "— Scrollen zum Erkunden —",
+    btn_marine: "Marine & Offshore", btn_corp: "Corporate & MICE", btn_leisure: "Freizeit & DMC", btn_learn: "Mehr Erfahren", btn_explore: "Flotte Erkunden", btn_contact: "Kontakt",
+    sec1_title: "Was wir tun", sec1_sub: "Marine & Corporate Travel", sec2_title: "Unsere Dienste",
+    sec3_title1: "Warum wir", sec3_title2: "es besser machen", sec4_title: "Warum Antaeus", sec4_sub: "Reisen, um höher zu kommen",
+    sec5_title: "Technologie", sec5_sub: "Reise-Software", fleet_title: "Die Flotte", fleet_sub: "Multimodaler Transit",
+    spotlight_1: "Sehe das", spotlight_2: "Unsichtbare", spotlight_sub: "Ein Perspektivenwechsel.", reach_title: "Reichweite",
+    editorial_title1: "Redaktionelle", editorial_title2: "Einblicke", horizon_1: "Horizont", horizon_2: "Grenzenlos", horizon_3: "Grenzen neu definiert."
+  }
+};
+
+const LanguageContext = createContext();
+const useTranslation = () => useContext(LanguageContext);
+
+// --- Custom Hooks for Animations ---
+
+const useInView = (options = { threshold: 0.1, triggerOnce: true }) => {
+  const [ref, setRef] = useState(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    if (!ref) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setInView(true);
+        if (options.triggerOnce) observer.unobserve(ref);
+      } else if (!options.triggerOnce) {
+        setInView(false);
+      }
+    }, options);
+    observer.observe(ref);
+    return () => observer.disconnect();
+  }, [ref, options.threshold, options.triggerOnce]);
+
+  return [setRef, inView];
+};
+
+const AnimatedNumber = React.memo(({ end, suffix = "", duration = 2 }) => {
+  const nodeRef = useRef(null);
+
+  const startAnimation = () => {
+    framerAnimate(0, end, {
+      duration: duration,
+      ease: "easeOut",
+      onUpdate(value) {
+        if (nodeRef.current) {
+          nodeRef.current.textContent = Math.floor(value) + suffix;
+        }
+      }
+    });
+  };
+
+  return (
+    <motion.span 
+      ref={nodeRef} 
+      whileInView={startAnimation} 
+      viewport={{ once: true }} 
+    />
+  );
+});
+
+// --- HERO EXCLUSIVE ANIMATION COMPONENTS ---
+
+const KineticChar = React.memo(({ char, mousePos }) => {
+  const charRef = useRef(null);
+  const [dist, setDist] = useState(0);
+
+  useEffect(() => {
+    if (!charRef.current) return;
+    const rect = charRef.current.getBoundingClientRect();
+    const charX = rect.left + rect.width / 2;
+    const charY = rect.top + rect.height / 2;
+    const d = Math.sqrt(Math.pow(mousePos.x - charX, 2) + Math.pow(mousePos.y - charY, 2));
+    setDist(Math.max(0, 1 - d / 400));
+  }, [mousePos]);
+
+  return (
+    <span 
+      ref={charRef}
+      className="inline-block transition-all duration-300 ease-out"
+      style={{ 
+        fontWeight: 700 + (dist * 200),
+        letterSpacing: `${(dist * -0.05)}em`,
+        transform: `translateY(${dist * -10}px)`,
+        color: dist > 0.5 ? '#233C7F' : 'inherit'
+      }}
+    >
+      {char === " " ? "\u00A0" : char}
+    </span>
+  );
+});
+
+const KineticLine = React.memo(({ text, delay, direction = "left" }) => {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const lineRef = useRef(null);
+
+  const handleMove = useCallback((e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, [handleMove]);
+
+  return (
+    <div className="overflow-hidden py-1">
+      <motion.div 
+        ref={lineRef}
+        initial={{ x: direction === "left" ? "-100%" : "100%" }}
+        animate={{ x: "0%" }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: delay / 1000 }}
+        className="flex whitespace-nowrap"
+      >
+        {text.split("").map((char, i) => (
+          <KineticChar key={i} char={char} mousePos={mousePos} />
+        ))}
+      </motion.div>
+    </div>
+  );
+});
+
+// --- Shared UI Components with Animations ---
+
+const MagneticButton = React.memo(({ children, href = "#", theme = "light", ariaLabel }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const buttonRef = useRef(null);
+  const isDark = theme === "dark";
+
+  const handleMouseMove = useCallback((e) => {
+    if (!buttonRef.current) return;
+    const { left, top, width, height } = buttonRef.current.getBoundingClientRect();
+    const x = (e.clientX - left - width / 2) * 0.4;
+    const y = (e.clientY - top - height / 2) * 0.4;
+    setPosition({ x, y });
+  }, []);
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  return (
+    <a 
+      ref={buttonRef}
+      href={href} 
+      aria-label={ariaLabel}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+      className={`group relative inline-flex items-center justify-center w-32 h-32 md:w-40 md:h-40 rounded-full border overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 ${isHovered ? 'transition-none' : 'transition-transform duration-700 ease-out'} ${isDark ? 'border-white/20 hover:border-white focus-visible:ring-white/50' : 'border-black/20 hover:border-black focus-visible:ring-[#233C7F]'}`}
+    >
+      <div className={`absolute inset-0 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] origin-center ${isDark ? 'bg-white' : 'bg-black'}`}></div>
+      <span className={`relative z-10 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-colors duration-500 text-center px-6 leading-relaxed ${isDark ? 'text-white group-hover:text-black' : 'text-black group-hover:text-white'}`}>
+        {children}
+      </span>
+    </a>
+  );
+});
+
+const RevealLine = React.memo(() => {
+  const [setRef, inView] = useInView({ threshold: 0.1 });
+  return (
+    <div ref={setRef} className="w-full h-[1px] bg-black/10 origin-left overflow-hidden">
+      <div className={`w-full h-full bg-black/40 transition-transform duration-1000 ease-[cubic-bezier(0.65,0,0.35,1)] ${inView ? 'scale-x-100' : 'scale-x-0'} origin-left`} />
+    </div>
+  );
+});
+
+const RevealText = React.memo(({ children, delay = 0, as: Component = "span", className = "" }) => {
+  const [setRef, inView] = useInView({ threshold: 0.2 });
+  return (
+    <span ref={setRef} className="overflow-hidden inline-block align-bottom w-full">
+      <Component 
+        className={`block transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${inView ? 'translate-y-0' : 'translate-y-[110%]'} ${className}`}
+        style={{ transitionDelay: `${delay}ms` }}
+      >
+        {children}
+      </Component>
+    </span>
+  );
+});
+
+const SectionHeader = React.memo(({ index, title, subtitle, description }) => (
+  <header className="flex flex-col md:flex-row items-start justify-between w-full pb-12 mb-12 relative">
+    <div className="absolute bottom-0 left-0 w-full"><RevealLine /></div>
+    <div className="w-full md:w-2/3 pr-0 md:pr-12">
+      <div className="flex items-baseline gap-4 mb-4">
+        <RevealText delay={0} as="span" className="text-sm font-medium text-black/40 block md:hidden">{index}</RevealText>
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight uppercase leading-tight">
+          <RevealText delay={100}>{title}</RevealText>
+        </h2>
+      </div>
+      {subtitle && (
+        <h3 className="text-sm md:text-base font-semibold tracking-widest uppercase text-black/60 mb-6">
+          <RevealText delay={200}>{subtitle}</RevealText>
+        </h3>
+      )}
+      {description && (
+        <p className="text-lg md:text-2xl text-black/80 max-w-2xl leading-relaxed font-serif">
+          <RevealText delay={300}>{description}</RevealText>
+        </p>
+      )}
+    </div>
+    <div className="hidden md:block w-1/3 text-right">
+      <RevealText as="span" delay={100} className="text-sm font-medium text-black/40 inline-block">{index}</RevealText>
+    </div>
+  </header>
+));
+
+const Marquee = React.memo(() => {
+  const { t } = useTranslation();
+  return (
+    <div className="w-full overflow-hidden bg-[#233C7F] text-white py-4 md:py-6 flex border-y border-white/10" aria-hidden="true">
+      <div className="animate-marquee whitespace-nowrap flex items-center gap-8">
+        {[...Array(4)].map((_, i) => (
+          <React.Fragment key={i}>
+            <span className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase">{t('btn_marine')}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+            <span className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase">{t('btn_corp')}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+            <span className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase">{t('btn_leisure')}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+            <span className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase">{t('nav_tech')}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+// --- EXPERIMENTAL SECTIONS ---
+
+const SpotlightSection = React.memo(() => {
+  const { t } = useTranslation();
+  const [isHovered, setIsHovered] = useState(false);
+  const containerRef = useRef(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 20 });
+  const size = useSpring(0, { stiffness: 50, damping: 20 });
+
+  const handleMouseMove = useCallback((e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  }, [mouseX, mouseY]);
+
+  useEffect(() => { size.set(isHovered ? 250 : 0); }, [isHovered, size]);
+
+  const clipPath = useMotionTemplate`circle(${size}px at ${springX}px ${springY}px)`;
+
+  return (
+    <section 
+      ref={containerRef} 
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      aria-label="Spotlight Section"
+      className="relative h-screen w-full bg-[#111] overflow-hidden flex items-center justify-center cursor-crosshair border-b border-white/10"
+    >
+      <div className="text-center z-10 text-white/10 select-none">
+        <h2 className="text-[12vw] 2xl:text-[170px] font-bold leading-none uppercase tracking-tighter">{t('spotlight_1')}<br/>{t('spotlight_2')}</h2>
+      </div>
+      <motion.div 
+        className="absolute inset-0 z-20 bg-[#233C7F] flex items-center justify-center pointer-events-none"
+        style={{ clipPath }}
+      >
+        <div className="text-center text-white select-none">
+          <h2 className="text-[12vw] 2xl:text-[170px] font-bold leading-none uppercase tracking-tighter">{t('spotlight_1')}<br/>{t('spotlight_2')}</h2>
+          <p className="mt-8 font-serif text-2xl lg:text-3xl italic text-white/80">{t('spotlight_sub')}</p>
+        </div>
+      </motion.div>
+    </section>
+  );
+});
+
+const FloatingDestinations = React.memo(() => {
+  const { t } = useTranslation();
+  const [hoveredIdx, setHoveredIdx] = useState(null);
+  const containerRef = useRef(null);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 70, damping: 15 });
+  const springY = useSpring(mouseY, { stiffness: 70, damping: 15 });
+
+  const handleMouseMove = useCallback((e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) - 160); // Offset by half image width
+    mouseY.set((e.clientY - rect.top) - 200); // Offset by half image height
+  }, [mouseX, mouseY]);
+
+  const destinations = useMemo(() => [
+    { name: "Tokyo", img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80&w=800&h=1000" },
+    { name: "New York", img: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&q=80&w=800&h=1000" },
+    { name: "Paris", img: "https://images.unsplash.com/photo-1502602898657-3e90761138a0?auto=format&fit=crop&q=80&w=800&h=1000" },
+    { name: "Dubai", img: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&q=80&w=800&h=1000" },
+  ], []);
+
+  return (
+    <section ref={containerRef} onMouseMove={handleMouseMove} aria-label="Destinations" className="relative py-32 px-6 md:px-12 max-w-[1400px] mx-auto w-full overflow-hidden">
+      <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+      
+      <motion.div 
+        className="pointer-events-none absolute z-0 w-64 h-80 md:w-80 md:h-96 overflow-hidden rounded-lg"
+        style={{ 
+          x: springX, 
+          y: springY, 
+          opacity: hoveredIdx !== null ? 1 : 0 
+        }}
+        transition={{ opacity: { duration: 0.5 } }}
+      >
+        {destinations.map((d, i) => (
+          <SafeImage 
+            key={i} 
+            src={d.img} 
+            alt={d.name} 
+            loading="lazy" 
+            decoding="async" 
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${hoveredIdx === i ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`} 
+          />
+        ))}
+      </motion.div>
+
+      <div className="relative z-10 flex flex-col items-center py-12">
+        <h3 className="text-sm font-semibold tracking-widest uppercase mb-16 text-black/40">{t('reach_title')}</h3>
+        {destinations.map((d, i) => (
+          <div key={i} onMouseEnter={() => setHoveredIdx(i)} onMouseLeave={() => setHoveredIdx(null)} className="group cursor-pointer mb-4 md:mb-8 transition-all duration-500">
+            <span 
+              className="block text-[12vw] md:text-[8vw] 2xl:text-[115px] font-bold uppercase leading-[0.85] tracking-tighter transition-all duration-500 origin-center"
+              style={{
+                WebkitTextStroke: hoveredIdx === i ? '0px black' : '1px black',
+                color: hoveredIdx === i ? 'black' : 'transparent',
+                transform: hoveredIdx === i ? 'scale(1.05) rotate(-2deg)' : 'scale(1) rotate(0deg)'
+              }}
+            >
+              <span className={hoveredIdx === i ? 'italic' : ''}>{d.name}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+const EditorialGrid = React.memo(() => {
+  const { t } = useTranslation();
+  const [activePanel, setActivePanel] = useState(0);
+  const panels = useMemo(() => [
+    { title: "The Journey", subtitle: "Crafting experiences", img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1000&h=1500" },
+    { title: "The Mindset", subtitle: "Corporate focus", img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000&h=1500" },
+    { title: "The Culture", subtitle: "Local immersion", img: "https://images.unsplash.com/photo-1533604128543-fa888195a6db?auto=format&fit=crop&q=80&w=1000&h=1500" },
+    { title: "The Future", subtitle: "Sustainable transit", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1000&h=1500" },
+  ], []);
+
+  return (
+    <section aria-label="Editorial Insights" className="py-20 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+       <div className="mb-12 flex justify-between items-end">
+         <h2 className="text-3xl md:text-5xl font-bold tracking-tight uppercase">{t('editorial_title1')}<br/>{t('editorial_title2')}</h2>
+         <p className="text-sm font-semibold tracking-widest uppercase text-black/40">Our Vision</p>
+       </div>
+       <LayoutGroup>
+         <div className="flex w-full h-[60vh] md:h-[75vh] gap-2 md:gap-4 overflow-hidden">
+           {panels.map((p, i) => (
+             <motion.article 
+               layout
+               transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+               key={i} 
+               onMouseEnter={() => setActivePanel(i)} 
+               className={`relative rounded-xl overflow-hidden cursor-pointer ${activePanel === i ? 'flex-[4] md:flex-[5]' : 'flex-[1]'}`}
+             >
+               <SafeImage loading="lazy" decoding="async" src={p.img} alt={p.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] ease-out group-hover:scale-105" style={{ transform: activePanel === i ? 'scale(1)' : 'scale(1.15)' }} />
+               <div className={`absolute inset-0 transition-colors duration-700 ${activePanel === i ? 'bg-black/20' : 'bg-black/60'}`}></div>
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
+               <div className="absolute bottom-6 left-6 right-6 overflow-hidden">
+                  <p className={`text-white/80 text-xs md:text-sm tracking-widest uppercase font-semibold mb-2 transition-all duration-700 delay-100 ${activePanel === i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>{p.subtitle}</p>
+                  <h3 className={`text-white font-bold uppercase tracking-tight transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${activePanel === i ? 'text-3xl md:text-5xl opacity-100 rotate-0 translate-y-0' : 'text-xl opacity-0 rotate-12 translate-y-12'}`}>{p.title}</h3>
+               </div>
+               <div className={`hidden md:flex absolute inset-0 items-center justify-center transition-opacity duration-700 ${activePanel === i ? 'opacity-0' : 'opacity-100 delay-300'}`}>
+                  <span className="text-white font-bold tracking-widest uppercase whitespace-nowrap -rotate-90 text-sm">{p.title}</span>
+               </div>
+             </motion.article>
+           ))}
+         </div>
+       </LayoutGroup>
+    </section>
+  );
+});
+
+const ShutterGallery = React.memo(() => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const items = useMemo(() => [
+    { id: "01", title: "BEYOND", img: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=2000&h=1500" },
+    { id: "02", title: "HORIZONS", img: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&q=80&w=2000&h=1500" },
+    { id: "03", title: "BOUNDARIES", img: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&q=80&w=2000&h=1500" }
+  ], []);
+
+  return (
+    <section aria-label="Image Gallery" className="relative w-full h-[90vh] md:h-[100vh] bg-[#050505] flex flex-col md:flex-row border-y border-white/10 overflow-hidden">
+      <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col justify-center pl-6 md:pl-20 z-20 relative">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-white/20 pointer-events-none"></div>
+        {items.map((item, i) => (
+          <button
+            key={i}
+            onMouseEnter={() => setActiveIndex(i)}
+            onClick={() => setActiveIndex(i)}
+            aria-label={`View ${item.title} image`}
+            className="group cursor-pointer py-4 md:py-8 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#233C7F] bg-transparent text-left border-none"
+          >
+            <div className="flex items-center gap-4 md:gap-8">
+              <span className={`font-mono text-xs md:text-sm transition-colors duration-500 ${activeIndex === i ? 'text-[#233C7F]' : 'text-white/20'}`}>
+                {item.id}
+              </span>
+              <div className="relative">
+                <h2
+                  className="text-[12vw] md:text-[7vw] 2xl:text-[100px] font-bold tracking-tighter uppercase transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{
+                    color: activeIndex === i ? 'white' : 'transparent',
+                    WebkitTextStroke: activeIndex === i ? '0px white' : '1px rgba(255,255,255,0.2)',
+                    transform: activeIndex === i ? 'translateX(20px)' : 'translateX(0px)'
+                  }}
+                >
+                  {item.title}
+                </h2>
+                <div 
+                  className={`absolute -bottom-2 left-0 h-[2px] bg-[#233C7F] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeIndex === i ? 'w-full opacity-100 translate-x-5' : 'w-0 opacity-0 translate-x-0'}`}
+                ></div>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="w-full md:w-1/2 h-1/2 md:h-full relative overflow-hidden bg-[#111]" aria-hidden="true">
+        {items.map((item, imgIndex) => {
+          const isActive = activeIndex === imgIndex;
+          return (
+            <div key={imgIndex} className="absolute inset-0 w-full h-full pointer-events-none">
+              {[...Array(5)].map((_, sliceIndex) => {
+                const left = sliceIndex * 20;
+                const right = 100 - (sliceIndex + 1) * 20;
+                const isEven = sliceIndex % 2 === 0;
+
+                return (
+                  <motion.div
+                    key={sliceIndex}
+                    className="absolute inset-0 w-full h-full overflow-hidden"
+                    initial={false}
+                    animate={{ y: isActive ? "0%" : (isEven ? "-100%" : "100%") }}
+                    transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: isActive ? sliceIndex * 0.075 : 0 }}
+                    style={{ clipPath: `inset(0 ${right}% 0 ${left}%)`, zIndex: isActive ? 10 : 1 }}
+                  >
+                    <SafeImage
+                      loading="lazy"
+                      decoding="async"
+                      src={item.img}
+                      alt=""
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] ease-out ${isActive ? 'scale-100' : 'scale-110'}`}
+                    />
+                    <div className="absolute top-0 bottom-0 w-[1px] bg-white/10" style={{ left: `${left}%` }}></div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          );
+        })}
+        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/20 mix-blend-overlay pointer-events-none z-30"></div>
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/20 mix-blend-overlay pointer-events-none z-30"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border border-white/30 rounded-full pointer-events-none z-30 flex items-center justify-center">
+          <div className="w-1 h-1 bg-white rounded-full"></div>
+        </div>
+      </div>
+    </section>
+  );
+});
+
+const ExperimentalFleet = React.memo(() => {
+  const { t } = useTranslation();
+  const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [setListRef, listInView] = useInView({ threshold: 0.2 });
+
+  const fleetData = useMemo(() => [
+    {
+      id: "01",
+      title: "Aviation",
+      subtitle: "Private & Commercial",
+      desc: "Bespoke aerial transit and private charter solutions tailored for absolute discretion, security, and global speed.",
+      img: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&q=80&w=2000&h=1000",
+      stats: ["24/7 Dispatch", "Global Airspace", "Premium Fleet"]
+    },
+    {
+      id: "02",
+      title: "Maritime",
+      subtitle: "Yachting & Cruises",
+      desc: "Elite nautical vessels engineered for supreme luxury cruising and comprehensive remote offshore marine operations.",
+      img: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&q=80&w=2000&h=1000",
+      stats: ["Deep Sea Access", "Luxury Interiors", "Expert Crew"]
+    },
+    {
+      id: "03",
+      title: "Overland",
+      subtitle: "Chauffeur & Rail",
+      desc: "Ground transportation entirely redefined through uncompromising safety protocols and unparalleled passenger comfort.",
+      img: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=2000&h=1000",
+      stats: ["Armored Options", "Zero-Emission", "Seamless Transfers"]
+    }
+  ], []);
+
+  return (
+    <section ref={setListRef} aria-label="Fleet" className="relative w-full h-[100vh] bg-[#0a0a0a] flex flex-col overflow-hidden border-t border-white/10 mt-20">
+      <header className="absolute top-8 left-6 md:left-12 z-40 pointer-events-none mix-blend-difference">
+         <h2 className="text-sm font-semibold tracking-widest uppercase text-white/50 mb-2">{t('fleet_title')}</h2>
+         <h3 className="text-2xl md:text-3xl font-bold tracking-tight uppercase text-white">{t('fleet_sub')}</h3>
+      </header>
+
+      <LayoutGroup>
+        {fleetData.map((item, i) => {
+          const isHovered = hoveredIdx === i;
+          const isDimmed = hoveredIdx !== null && hoveredIdx !== i;
+
+          return (
+            <motion.article
+              layout
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              key={i}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+              tabIndex={0}
+              onFocus={() => setHoveredIdx(i)}
+              onBlur={() => setHoveredIdx(null)}
+              className={`relative flex items-center justify-center border-b border-white/10 overflow-hidden cursor-pointer group focus-visible:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-white/50 ${
+                isHovered ? 'flex-[4] md:flex-[5]' : (hoveredIdx === null ? 'flex-1' : 'flex-[0.5]')
+              }`}
+            >
+              <div 
+                className={`absolute inset-0 w-full h-full transition-all duration-[1500ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  isHovered ? 'scale-100 opacity-100 blur-0' : 'scale-110 opacity-40 blur-[4px]'
+                } ${isDimmed ? 'opacity-10 blur-[10px] scale-125' : ''}`}
+              >
+                <SafeImage loading="lazy" decoding="async" src={item.img} alt={item.title} className="w-full h-full object-cover" />
+                <div className={`absolute inset-0 bg-black/50 transition-opacity duration-1000 ${isHovered ? 'opacity-0' : 'opacity-100'}`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-opacity duration-1000 ${isHovered ? 'opacity-100' : 'opacity-0'}`}></div>
+              </div>
+
+              <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-700 ease-out z-10 ${
+                isHovered ? 'opacity-0 scale-150 blur-2xl translate-y-10' : 'opacity-100 scale-100 blur-0 translate-y-0'
+              } ${isDimmed ? 'opacity-0' : ''}`}>
+                <h2 className="text-[8vw] 2xl:text-[115px] font-bold text-white uppercase tracking-tighter mix-blend-overlay">
+                  {item.title}
+                </h2>
+              </div>
+
+              <div className={`absolute inset-0 p-6 md:p-12 flex flex-col justify-between pointer-events-none transition-all duration-1000 z-20 ${
+                isHovered ? 'opacity-100 translate-y-0 delay-100' : 'opacity-0 translate-y-16 delay-0'
+              }`}>
+                <div className="self-end overflow-hidden">
+                  <span className={`block font-mono text-white/50 text-xl transition-transform duration-700 ${isHovered ? 'translate-y-0 delay-300' : '-translate-y-full delay-0'}`}>
+                    {item.id}
+                  </span>
+                </div>
+                <div className="flex flex-col md:flex-row justify-between items-end gap-8 w-full">
+                  <div className="max-w-xl">
+                    <div className="overflow-hidden mb-2">
+                       <h3 className={`text-4xl md:text-6xl font-bold uppercase text-white tracking-tight transition-transform duration-700 ${isHovered ? 'translate-y-0 delay-200' : 'translate-y-[120%] delay-0'}`}>
+                         {item.title}
+                       </h3>
+                    </div>
+                    <div className="overflow-hidden mb-6">
+                       <p className={`text-xl md:text-2xl font-serif italic text-white/80 transition-transform duration-700 ${isHovered ? 'translate-y-0 delay-300' : 'translate-y-[120%] delay-0'}`}>
+                         {item.subtitle}
+                       </p>
+                    </div>
+                    <p className={`text-white/60 text-sm md:text-base leading-relaxed transition-all duration-700 ${isHovered ? 'opacity-100 translate-y-0 delay-400' : 'opacity-0 translate-y-4 delay-0'}`}>
+                      {item.desc}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-6 w-full md:w-auto">
+                    <ul className="flex flex-col items-end gap-2">
+                      {item.stats.map((stat, idx) => (
+                        <li key={idx} className="overflow-hidden">
+                          <span 
+                            className={`block text-xs md:text-sm font-semibold uppercase tracking-widest text-white transition-transform duration-700 ${isHovered ? 'translate-y-0' : 'translate-y-full'}`} 
+                            style={{ transitionDelay: isHovered ? `${400 + (idx * 100)}ms` : '0ms' }}
+                          >
+                            {stat} <span className="text-[#233C7F] ml-2">/</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className={`transition-all duration-1000 pointer-events-auto ${isHovered ? 'opacity-100 scale-100 delay-700' : 'opacity-0 scale-50 delay-0'}`}>
+                      <MagneticButton ariaLabel={`Explore ${item.title} fleet`} theme="dark" href="#explore">{t('btn_explore')}</MagneticButton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.article>
+          );
+        })}
+      </LayoutGroup>
+    </section>
+  );
+});
+
+const LimitlessHorizon = React.memo(() => {
+  const { t } = useTranslation();
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <section
+      aria-label="Horizon"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative w-full h-[90vh] bg-[#050505] flex items-center justify-center cursor-pointer border-y border-white/10 overflow-hidden"
+    >
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none select-none">
+         <h2 
+           className="text-[15vw] 2xl:text-[216px] font-bold uppercase text-[#233C7F]/30 transition-all duration-[1500ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+           style={{
+             letterSpacing: isHovered ? '0.1em' : '-0.05em',
+             transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+           }}
+         >
+           {t('horizon_1')}
+         </h2>
+      </div>
+      <motion.div
+        animate={{
+          width: isHovered ? '100%' : '300px',
+          height: isHovered ? '100%' : '450px',
+          borderRadius: isHovered ? '0px' : '250px'
+        }}
+        transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
+        className="relative z-20 overflow-hidden flex items-center justify-center"
+      >
+        <div className="absolute w-[100vw] h-[90vh] flex items-center justify-center">
+            <SafeImage
+              loading="lazy"
+              decoding="async"
+              src="https://images.unsplash.com/photo-1499678329028-101435549a4e?auto=format&fit=crop&q=80&w=2000&h=1200"
+              alt="Premium Horizon view"
+              className={`w-full h-full object-cover transition-transform duration-[2000ms] ease-out ${isHovered ? 'scale-100' : 'scale-110'}`}
+            />
+            <div className="absolute inset-0 bg-black/20 mix-blend-overlay"></div>
+            <div className={`absolute inset-0 bg-black/40 transition-opacity duration-1000 ${isHovered ? 'opacity-100' : 'opacity-0'}`}></div>
+        </div>
+         <div className={`absolute inset-0 flex flex-col items-center justify-center z-30 transition-all duration-1000 delay-200 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
+            <h2 className="text-white text-5xl md:text-8xl font-bold uppercase tracking-tighter drop-shadow-2xl">
+              {t('horizon_2')}
+            </h2>
+            <p className="text-white/90 font-serif text-xl md:text-3xl italic mt-6 drop-shadow-lg">
+              {t('horizon_3')}
+            </p>
+         </div>
+      </motion.div>
+      <div className={`absolute z-30 transition-opacity duration-500 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
+         <div className="w-24 h-24 rounded-full border border-white/30 flex items-center justify-center backdrop-blur-md bg-white/5">
+            <span className="text-white uppercase tracking-widest text-[10px] font-semibold">Hover</span>
+         </div>
+      </div>
+    </section>
+  );
+});
+
+// --- MAIN PAGE STRUCTURE ---
+
+const FullscreenMenu = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [formStatus, setFormStatus] = useState('idle'); 
+  const [formError, setFormError] = useState('');
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setFormError('Please enter a valid email address.');
+      return;
+    }
+    if (!isAgreed) {
+      setFormError('You must agree to the privacy policy.');
+      return;
+    }
+    
+    setFormError('');
+    setFormStatus('loading');
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFormStatus('success');
+      setEmail('');
+      setIsAgreed(false);
+    } catch (err) {
+      setFormStatus('error');
+      setFormError('Failed to subscribe. Please try again later.');
+    }
+  };
+
+  const menuItems = useMemo(() => [
+    { name: t('nav_about'), id: 'about' },
+    { name: t('nav_services'), id: 'services' },
+    { name: t('nav_tech'), id: 'technology' },
+    { name: 'More', id: 'more' },
+    { name: t('btn_contact'), id: 'contact' }
+  ], [t]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ clipPath: 'circle(0% at 100% 0%)', opacity: 0 }}
+          animate={{ clipPath: 'circle(150% at 100% 0%)', opacity: 1 }}
+          exit={{ clipPath: 'circle(0% at 100% 0%)', opacity: 0 }}
+          transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
+          className="fixed inset-0 z-50 bg-white pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Main Navigation Menu"
+        >
+          <div className="h-full flex flex-col justify-between p-6 md:p-12">
+            <div className="flex justify-between items-center pb-6 relative">
+              <div className="absolute bottom-0 left-0 w-full h-[1px] bg-black/10"></div>
+              <span className="text-sm font-semibold tracking-widest uppercase">{t('nav_menu')}</span>
+              <button 
+                onClick={onClose} 
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-full transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]"
+                aria-label="Close Menu"
+              >
+                <X size={24} className="group-hover:rotate-90 transition-transform duration-500" />
+              </button>
+            </div>
+            <div className="flex flex-col md:flex-row flex-grow pt-12 gap-12 md:gap-24 overflow-y-auto">
+              <nav className="flex flex-col gap-6 md:gap-8 w-full md:w-1/2">
+                {menuItems.map((item, i) => (
+                  <div key={i} className="overflow-hidden">
+                    <motion.a 
+                      initial={{ y: "100%", opacity: 0 }}
+                      animate={{ y: "0%", opacity: 1 }}
+                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.3 + (i * 0.1) }}
+                      href={`#${item.id}`} 
+                      className="block text-4xl md:text-6xl font-bold tracking-tight uppercase hover:text-[#233C7F] flex items-center justify-between group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]" 
+                      onClick={onClose}
+                    >
+                      <span className="group-hover:translate-x-4 transition-transform duration-500">{item.name}</span>
+                      <ArrowUpRight className="opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0" size={32} />
+                    </motion.a>
+                  </div>
+                ))}
+              </nav>
+              <motion.div 
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, ease: "easeOut", delay: 0.7 }}
+                className="flex flex-col justify-between w-full md:w-1/2 gap-12"
+              >
+                <div>
+                  <h4 className="text-sm font-semibold tracking-widest uppercase mb-6">Offices</h4>
+                  <ul className="space-y-4 text-lg">
+                    {['GR Athens', 'CH Basel', 'CY Limassol', 'PH Manila', 'US Miami'].map(o => (
+                      <li key={o} className="flex gap-4 group cursor-default uppercase">
+                        <span className="text-black/40 font-mono group-hover:text-[#233C7F] transition-colors">{o?.split(' ')?.[0]}</span> {o?.split(' ')?.[1]}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="bg-gray-50 p-8 rounded-sm">
+                  <h4 className="text-sm font-semibold tracking-widest uppercase mb-4">Stay Informed</h4>
+                  <form className="flex flex-col gap-4 group/form" onSubmit={handleSubscribe} noValidate>
+                    <label htmlFor="email-input" className="sr-only">Email Address</label>
+                    <input 
+                      type="email" 
+                      id="email-input"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
+                      disabled={formStatus === 'loading' || formStatus === 'success'}
+                      placeholder="Email Address" 
+                      className="bg-transparent border-b border-black/20 pb-2 focus:outline-none focus:border-[#233C7F] transition-colors rounded-none w-full text-lg disabled:opacity-50" 
+                    />
+                    <label htmlFor="privacy-policy" className="flex items-center gap-3 text-sm cursor-pointer mt-2">
+                      <input 
+                        type="checkbox" 
+                        id="privacy-policy" 
+                        checked={isAgreed}
+                        onChange={(e) => { setIsAgreed(e.target.checked); setFormError(''); }}
+                        disabled={formStatus === 'loading' || formStatus === 'success'}
+                        className="w-4 h-4 accent-[#233C7F] disabled:opacity-50" 
+                      /> 
+                      <span className={formStatus === 'loading' || formStatus === 'success' ? 'opacity-50' : ''}>I agree to the privacy policy</span>
+                    </label>
+                    
+                    {formError && <p className="text-red-500 text-xs font-semibold tracking-wide animate-[fadeIn_0.3s_ease-out]">{formError}</p>}
+                    {formStatus === 'success' && <p className="text-green-600 text-xs font-semibold tracking-wide animate-[fadeIn_0.3s_ease-out]">Successfully subscribed!</p>}
+                    
+                    <button 
+                      type="submit" 
+                      disabled={formStatus === 'loading' || formStatus === 'success'}
+                      className="self-start mt-4 text-sm font-semibold tracking-widest uppercase flex items-center gap-2 group/btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F] disabled:opacity-50 active:scale-95 transition-transform"
+                    >
+                      {formStatus === 'loading' ? (
+                        <><Loader2 className="animate-spin" size={16} /> Processing</>
+                      ) : formStatus === 'success' ? (
+                        'Subscribed'
+                      ) : (
+                        <>Subscribe <ArrowRight className="group-hover/btn:translate-x-2 transition-transform duration-300" size={16} /></>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default function AntaeusLanding() {
+  const [lang, setLang] = useState('EN');
+  const t = useCallback((key) => translations[lang]?.[key] || translations['EN'][key] || key, [lang]);
+
+  return (
+    <LanguageContext.Provider value={{ lang, setLang, t }}>
+      <ErrorBoundary>
+        <AntaeusLandingContent />
+      </ErrorBoundary>
+    </LanguageContext.Provider>
+  );
+}
+
+function AntaeusLandingContent() {
+  const { lang, setLang, t } = useTranslation();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeServiceIdx, setActiveServiceIdx] = useState(0);
+  const [activeAccordion, setActiveAccordion] = useState(0);
+  const [setListRef, listInView] = useInView({ threshold: 0.2 });
+
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const langMenuRef = useRef(null);
+
+  useEffect(() => {
+    document.title = "Antaeus Travel Group | Premium Corporate & Marine Travel";
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.name = "description";
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.content = "Global travel management company specializing in marine, corporate, and leisure travel since 1989. Redefining transit with unmatched precision.";
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const services = useMemo(() => [
+    { title: t('btn_marine'), image: "https://images.unsplash.com/photo-1518873890627-d4b177c06e51?auto=format&fit=crop&q=80&w=1000&h=1500" },
+    { title: t('btn_corp'), image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1000&h=1500" },
+    { title: t('btn_leisure'), image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=1000&h=1500" }
+  ], [t]);
+
+  const technologies = useMemo(() => [
+    { title: "Digital Travel Management Platform", desc: "Find everything you need for your business trip in one place. Select the location, add travelers, ask for hotel or transfer quotations. Just as simple as that." },
+    { title: "Real-Time Communication", desc: "Antaeus travel advisors are omnipresent and always available to chat with you online, replying to your questions before, during or after your trip." },
+    { title: "Advanced Reporting Tool", desc: "You have access to accurate, transparent and fully consolidated data about your itineraries, thanks to our specialized reporting software." }
+  ], []);
+
+  const navLinks = useMemo(() => [
+    { name: t('nav_about'), id: 'about' },
+    { name: t('nav_services'), id: 'services' },
+    { name: t('nav_tech'), id: 'technology' }
+  ], [t]);
+
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
+    return () => document.body.style.overflow = 'unset';
+  }, [isMenuOpen]);
+
+  return (
+    <div className="font-sans text-[#111] bg-white selection:bg-[#233C7F] selection:text-white min-h-screen flex flex-col overflow-x-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:text-black focus:p-4">Skip to main content</a>
+      
+      {/* Navigation */}
+      <header className="fixed w-full top-0 z-40 bg-white/90 backdrop-blur-md">
+        <div className="absolute bottom-0 left-0 w-full"><RevealLine /></div>
+        <nav className="max-w-[1400px] mx-auto px-6 md:px-12 h-20 md:h-24 flex items-center justify-between" aria-label="Main Navigation">
+          <a href="#" className="font-bold text-2xl tracking-tighter uppercase flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]">
+            <svg width="32" height="32" viewBox="0 0 49.35 50.314" className="fill-current group-hover:rotate-180 transition-transform duration-1000" aria-hidden="true">
+              <path d="M24.688,49.315h0A24.907,24.907,0,0,1,20.731,49a24.656,24.656,0,0,1,3.9-49,24.921,24.921,0,0,1,3.957.319,24.656,24.656,0,0,1-3.9,49ZM20.817,32.408l-1.462,3.373H35.9l-1.5-3.373Zm3.266-20.8L12.839,35.781h4.431l7.223-16.407,3.646,8.247H22.9l-1.471,3.373H34.06L25.038,11.606h-.955Z" />
+            </svg>
+            <span className="hidden sm:block">Antaeus</span>
+          </a>
+          <div className="hidden md:flex items-center gap-10">
+            {navLinks.map((l, i) => (
+              <a key={i} href={`#${l.id}`} className="text-sm font-semibold tracking-widest uppercase hover:text-[#233C7F] relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]">
+                {l.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-px bg-[#233C7F] group-hover:w-full transition-all duration-300"></span>
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="relative hidden sm:block" ref={langMenuRef}>
+              <button 
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                className="flex items-center gap-2 text-sm font-semibold cursor-pointer group p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]"
+                aria-haspopup="true"
+                aria-expanded={isLangMenuOpen}
+                aria-label="Select Language"
+              >
+                <Globe size={16} className="group-hover:animate-pulse" /> 
+                <span className="uppercase">{lang}</span>
+              </button>
+              
+              {/* Language Dropdown */}
+              <div 
+                className={`absolute top-full right-0 mt-6 w-32 bg-white border border-black/10 shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top-right ${isLangMenuOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-4 pointer-events-none'}`}
+                role="menu"
+              >
+                {Object.keys(translations).map((l) => (
+                  <button
+                    key={l}
+                    role="menuitem"
+                    onClick={() => { setLang(l); setIsLangMenuOpen(false); }}
+                    className={`w-full text-left px-6 py-4 text-xs font-semibold tracking-widest uppercase hover:bg-[#233C7F] hover:text-white transition-colors duration-300 focus-visible:outline-none focus-visible:bg-[#233C7F] focus-visible:text-white ${lang === l ? 'bg-black/5 text-[#233C7F]' : 'text-black/70'}`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button 
+              onClick={() => setIsMenuOpen(true)} 
+              className="flex flex-col gap-1.5 p-2 min-w-[44px] min-h-[44px] items-center justify-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]" 
+              aria-label="Open Menu"
+              aria-expanded={isMenuOpen}
+            >
+              <span className="w-8 h-0.5 bg-black block group-hover:w-6 transition-all duration-300"></span>
+              <span className="w-6 h-0.5 bg-black block group-hover:w-8 transition-all duration-300"></span>
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      <main id="main-content">
+        {/* RE-IMAGINED HERO SECTION */}
+        <section className="relative pt-32 md:pt-48 pb-20 px-6 md:px-12 max-w-[1400px] mx-auto w-full min-h-[90vh] flex flex-col justify-between group/hero">
+          <div className="relative z-10 select-none">
+            <h1 className="text-[12vw] md:text-[8vw] 2xl:text-[115px] leading-[0.9] tracking-tighter uppercase flex flex-col">
+              <KineticLine text={t('hero_1')} delay={100} direction="left" />
+              <KineticLine text={t('hero_2')} delay={300} direction="right" />
+              <KineticLine text={t('hero_3')} delay={500} direction="left" />
+              <KineticLine text={t('hero_4')} delay={700} direction="right" />
+            </h1>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-12 pt-12 mt-auto relative">
+            <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+            
+            <div className="flex flex-wrap gap-4 md:gap-8 animate-[fadeIn_2s_ease-out_1.2s_both]">
+              <MagneticButton href="#services">{t('btn_marine')}</MagneticButton>
+              <MagneticButton href="#services">{t('btn_corp')}</MagneticButton>
+              <MagneticButton href="#services">{t('btn_leisure')}</MagneticButton>
+            </div>
+            
+            <div className="hidden lg:flex flex-col items-end gap-2 animate-[fadeIn_2s_ease-out_1.8s_both] text-xs font-bold tracking-[0.2em] uppercase text-black/40">
+              <p className="mb-4 text-[#233C7F]">{t('hero_scroll')}</p>
+              <div className="flex gap-8">
+                {['ATHENS', 'BASEL', 'MIAMI'].map(city => (
+                  <span key={city} className="hover:text-black hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-1">
+                    {city} <ArrowUpRight size={12} aria-hidden="true" />
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Marquee />
+
+        <section id="about" className="py-20 md:py-32 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+          <SectionHeader index="01" title={t('sec1_title')} subtitle={t('sec1_sub')} description="A family-run global travel management company with a 35-year long presence and expertise. Traveling to go higher." />
+        </section>
+
+        <section id="services" className="py-12 md:py-24 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+          <div className="mb-12"><h2 className="text-sm font-semibold tracking-widest uppercase mb-12"><RevealText>{t('sec2_title')}</RevealText></h2></div>
+          <div className="flex flex-col md:flex-row gap-12 lg:gap-24">
+            <div className="w-full md:w-1/2 flex flex-col justify-center relative">
+              <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+              {services.map((svc, i) => (
+                <div key={i} className="relative">
+                  <a 
+                    href="#" 
+                    className="group flex items-center justify-between py-8 md:py-12 transition-colors relative z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F] p-2" 
+                    onMouseEnter={() => setActiveServiceIdx(i)}
+                    onFocus={() => setActiveServiceIdx(i)}
+                  >
+                    <span className={`text-3xl md:text-5xl font-bold tracking-tight uppercase transition-colors duration-500 ${activeServiceIdx === i ? 'text-black' : 'text-black/30 group-hover:text-black/60'}`}>{svc.title}</span>
+                    <ArrowUpRight className={`transition-transform duration-500 ${activeServiceIdx === i ? 'rotate-45 scale-110 text-black' : 'text-black/30'}`} size={32} aria-hidden="true" />
+                  </a>
+                  <div className="absolute bottom-0 left-0 w-full"><RevealLine /></div>
+                </div>
+              ))}
+            </div>
+            <div className="w-full md:w-1/2 relative h-[400px] md:h-[600px] bg-gray-100 overflow-hidden group">
+              {services.map((svc, i) => (
+                <SafeImage 
+                  key={i} 
+                  loading="lazy" 
+                  decoding="async" 
+                  src={svc.image} 
+                  alt={svc.title} 
+                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-[1200ms] ${activeServiceIdx === i ? 'opacity-100 scale-100 group-hover:scale-105' : 'opacity-0 scale-110'}`} 
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 md:py-32 px-6 md:px-12 max-w-[1400px] mx-auto w-full bg-[#F9F9F9] mt-20">
+          <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
+            <div className="w-full lg:w-1/3">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight uppercase mb-8"><RevealText>{t('sec3_title1')}</RevealText><br/><RevealText delay={100}>{t('sec3_title2')}</RevealText></h2>
+              <p className="text-lg text-black/60 font-serif leading-relaxed mb-12"><RevealText delay={200}>Antaeus Travel Group provides holistic travel services for almost any place in the world.</RevealText></p>
+              <MagneticButton href="#more">{t('btn_learn')}</MagneticButton>
+            </div>
+            <div className="w-full lg:w-2/3">
+              <ul ref={setListRef} className="relative">
+                <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+                {["International physical office network", "24/7 support all year round", "Global availability & supplier management", "Tailor-made travel service", "Cost control management", "New digital travel management platform"].map((item, i) => (
+                  <li key={i} className={`relative flex items-start gap-6 py-6 group overflow-hidden transition-all duration-700 ${listInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`} style={{ transitionDelay: `${i * 100}ms` }}>
+                    <span className="text-sm font-mono text-black/40 mt-1.5 w-6">0{i+1}</span>
+                    <span className="text-xl md:text-2xl font-medium tracking-tight uppercase group-hover:text-[#233C7F] transition-all duration-300">{item}</span>
+                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-black/10 origin-left scale-x-100"></div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 md:py-32 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+          <SectionHeader index="02" title={t('sec4_title')} subtitle={t('sec4_sub')} description="Sit back & relax; Antaeus will do the rest." />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-16 mt-16 relative">
+            <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+            {[{e:35, s:"Years of expertise", suf:"+"}, {e:5, s:"Locations globally", suf:""}, {e:97, s:"Retention rate", suf:"%"}, {e:280, s:"Corporate customers", suf:"+"}].map((st, i) => (
+              <div key={i} className="flex flex-col pl-4 pt-8 relative group">
+                <span className="absolute left-0 top-0 w-[1px] h-full bg-black/20 group-hover:bg-[#233C7F] transition-colors"></span>
+                <span className="text-6xl md:text-8xl font-bold tracking-tighter mb-2 group-hover:-translate-y-2 transition-transform duration-500"><AnimatedNumber end={st.e} suffix={st.suf} /></span>
+                <span className="text-sm font-semibold tracking-widest uppercase text-black/60">{st.s}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="technology" className="py-20 md:py-32 px-6 md:px-12 max-w-[1400px] mx-auto w-full">
+          <SectionHeader index="03" title={t('sec5_title')} subtitle={t('sec5_sub')} description="Tech enthusiasts bringing travel coordinators and advisors together." />
+          <div className="flex flex-col lg:flex-row gap-16 mt-12">
+            <div className="w-full lg:w-1/3 flex items-center justify-center bg-[#F9F9F9] p-12 overflow-hidden group">
+              <div className="w-32 h-32 border-4 border-[#233C7F]/20 rounded-full flex items-center justify-center animate-[spin_15s_linear_infinite]" aria-hidden="true">
+                <div className="w-24 h-24 border-2 border-dashed border-[#233C7F]/40 rounded-full animate-[spin_10s_linear_infinite_reverse]"></div>
+                <div className="absolute w-12 h-12 bg-[#233C7F] rounded-full animate-[pulse_3s_infinite]"></div>
+              </div>
+            </div>
+            <div className="w-full lg:w-2/3 relative">
+              <div className="absolute top-0 left-0 w-full"><RevealLine /></div>
+              {technologies.map((tech, i) => (
+                <div key={i} className="relative">
+                  <button 
+                    onClick={() => setActiveAccordion(activeAccordion === i ? null : i)} 
+                    className="w-full flex items-center justify-between py-8 text-left hover:text-[#233C7F] transition-colors group z-10 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#233C7F]"
+                    aria-expanded={activeAccordion === i}
+                  >
+                    <span className="text-xl md:text-2xl font-bold tracking-tight uppercase pr-8 group-hover:translate-x-2 transition-transform">{tech.title}</span>
+                    <span className={`p-2 border rounded-full bg-white transition-all duration-500 ${activeAccordion === i ? 'rotate-180 border-[#233C7F] text-[#233C7F]' : ''}`} aria-hidden="true">{activeAccordion === i ? <Minus size={20} /> : <Plus size={20} />}</span>
+                  </button>
+                  <motion.div 
+                    initial={false}
+                    animate={{ height: activeAccordion === i ? 'auto' : 0, opacity: activeAccordion === i ? 1 : 0 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pb-8">
+                      <p className="text-black/60 font-serif text-lg leading-relaxed max-w-2xl">{tech.desc}</p>
+                    </div>
+                  </motion.div>
+                  <div className="absolute bottom-0 left-0 w-full"><RevealLine /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* THE EXPERIMENTAL FLEET SECTION */}
+        <ExperimentalFleet />
+
+        {/* ADDITIONAL EXPERIMENTAL SECTIONS */}
+        <div id="more">
+          <ShutterGallery />
+          <FloatingDestinations />
+          <EditorialGrid />
+          <SpotlightSection />
+          <LimitlessHorizon />
+        </div>
+      </main>
+
+      <footer id="contact" className="bg-[#111] text-white pt-24 pb-12 px-6 md:px-12 mt-auto relative overflow-hidden">
+        <div className="absolute -top-[50%] -right-[10%] w-[100vw] h-[100vw] rounded-full bg-[#1a1a1a] pointer-events-none opacity-50 blur-3xl" aria-hidden="true"></div>
+        <div className="max-w-[1400px] mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row justify-between border-b border-white/20 pb-16 mb-16 gap-12">
+            <div>
+               <h3 className="text-3xl md:text-4xl font-bold tracking-tight uppercase mb-8"><RevealText>Antaeus Travel</RevealText><br/><RevealText delay={100}>Group</RevealText></h3>
+               <p className="text-white/60 max-w-sm mb-8">Global travel management since 1989.</p>
+               <MagneticButton href="mailto:sales@antaeustravel.com" theme="dark" ariaLabel="Contact Us Email Link">{t('btn_contact')}</MagneticButton>
+            </div>
+            <div className="flex flex-wrap gap-16 md:gap-24">
+              <div>
+                <h4 className="text-xs font-semibold tracking-widest uppercase mb-6 text-white/40">Quick Links</h4>
+                <ul className="space-y-4">
+                  {['Who we are', 'Services', 'Technology', 'Careers'].map(l => (
+                    <li key={l}>
+                      <a href={`#${l.toLowerCase().split(' ')[0]}`} className="hover:text-white text-white/60 text-sm uppercase flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                        <span className="w-0 h-px bg-white group-hover:w-4 transition-all duration-300"></span>{l}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold tracking-widest uppercase mb-6 text-white/40">Socials</h4>
+                <ul className="space-y-4">
+                  {['LinkedIn', 'Instagram', 'Facebook'].map(l => (
+                    <li key={l}>
+                      <a href="#" className="hover:text-white text-white/60 text-sm uppercase flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                        <span className="w-0 h-px bg-white group-hover:w-4 transition-all duration-300"></span>{l}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-white/40 font-semibold tracking-widest uppercase">
+            <p>© {new Date().getFullYear()} Antaeus Travel Group. All Rights Reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Terms</a>
+              <a href="#" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Privacy</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes slideInRight {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInLeft {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes marquee-reverse {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        .animate-marquee { animation: marquee 20s linear infinite; }
+        .animate-marquee-reverse { animation: marquee-reverse 20s linear infinite; }
+        .clip-path-open { clip-path: circle(150% at 100% 0%); }
+        .clip-path-closed { clip-path: circle(0% at 100% 0%); }
+        html { scroll-behavior: smooth; }
+
+        /* Respects user accessibility preferences for motion, removing heavy processing */
+        @media (prefers-reduced-motion: reduce) {
+          *, ::before, ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+          }
+        }
+      `}} />
+    </div>
+  );
+}

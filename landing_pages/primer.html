@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Primer — The Global Science Acceleration Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #F6F1E8;
+      --color-secondary: #EAE3D6;
+      --color-accent: #EE4D37;
+      --color-accent-deep: #C83A28;
+      --color-text: #1B1916;
+      --color-muted: #8B8478;
+      --color-border: #D9D2C5;
+      --color-border-light: rgba(27, 25, 22, 0.08);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'IBM Plex Sans', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --nav-height: 68px;
+      --max-width: 1280px;
+      --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      background-color: var(--color-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      background-color: var(--color-primary);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      opacity: 0.5;
+      mix-blend-mode: multiply;
+    }
+
+    /* Subtle lab grid lines */
+    .geo-lines {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.03;
+    }
+    .geo-lines .line { position: absolute; background: var(--color-text); }
+    .geo-lines .line--h1 { top: 22%; left: 0; width: 100%; height: 1px; }
+    .geo-lines .line--h2 { top: 64%; left: 0; width: 100%; height: 1px; }
+    .geo-lines .line--v1 { left: 30%; top: 0; width: 1px; height: 100%; }
+    .geo-lines .line--v2 { left: 70%; top: 0; width: 1px; height: 100%; }
+
+    /* Navigation */
+    .nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: var(--nav-height);
+      padding: 0 max(28px, 5vw);
+      max-width: var(--max-width);
+      margin: 0 auto;
+      background: transparent;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: 0.06em;
+      color: var(--color-text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      line-height: 1;
+      transition: opacity 0.2s ease;
+    }
+    .nav-logo:hover { opacity: 0.7; }
+    .nav-logo .accent-block {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--color-accent);
+      transform: rotate(45deg);
+      transition: transform 0.3s ease;
+    }
+    .nav-logo:hover .accent-block { transform: rotate(135deg); }
+
+    .nav-links {
+      display: flex;
+      gap: 2.2rem;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--color-muted);
+      text-decoration: none;
+      font-weight: 400;
+      font-size: 0.85rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--color-text);
+      transition: width 0.25s var(--ease-out);
+    }
+    .nav-links a:hover { color: var(--color-text); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      background: var(--color-text);
+      color: var(--color-primary) !important;
+      padding: 0.55rem 1.3rem;
+      font-weight: 500;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease, color 0.2s ease !important;
+      text-decoration: none;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: var(--color-accent); color: #fff !important; }
+
+    /* Hero — exact viewport height, no scrolling */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      height: calc(100vh - var(--nav-height));
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 max(28px, 5vw);
+      position: relative;
+      z-index: 1;
+      align-items: center;
+      gap: 2rem;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.5s var(--ease-out) forwards;
+      animation-delay: 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .hero-eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background: var(--color-accent);
+      opacity: 0.6;
+    }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(3.2rem, 7vw, 5.6rem);
+      line-height: 0.9;
+      letter-spacing: 0.01em;
+      color: var(--color-text);
+      margin-bottom: 1.8rem;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) forwards;
+      animation-delay: 0.2s;
+      text-wrap: balance;
+    }
+
+    .accent-word-wrap {
+      display: inline-block;
+      position: relative;
+    }
+    .accent-word-wrap .highlight-bar {
+      position: absolute;
+      bottom: 0.06em;
+      left: -0.02em;
+      width: calc(100% + 0.04em);
+      height: 0.1em;
+      background: var(--color-accent);
+      opacity: 0.3;
+      z-index: -1;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: revealBar 0.8s var(--ease-out) forwards;
+      animation-delay: 0.9s;
+    }
+    .accent-word {
+      color: var(--color-accent);
+      display: inline-block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-subhead {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--color-muted);
+      max-width: 440px;
+      margin-bottom: 2.2rem;
+      opacity: 0;
+      animation: fadeUp 0.65s var(--ease-out) forwards;
+      animation-delay: 0.4s;
+      font-weight: 400;
+    }
+    .hero-subhead em {
+      font-style: italic;
+      color: var(--color-text);
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.65s var(--ease-out) forwards;
+      animation-delay: 0.55s;
+    }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.85rem 2.2rem;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: background 0.2s ease, transform 0.2s var(--ease-out), box-shadow 0.2s ease;
+      box-shadow: 6px 6px 0px rgba(27,25,22,0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--color-accent-deep);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .btn-primary:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 4px 4px 0px rgba(27,25,22,0.18);
+    }
+    .btn-primary:hover::after { opacity: 1; }
+    .btn-primary span { position: relative; z-index: 1; }
+    .btn-primary .arrow {
+      position: relative;
+      z-index: 1;
+      transition: transform 0.25s var(--ease-out);
+    }
+    .btn-primary:hover .arrow { transform: translateX(4px); }
+
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid var(--color-text);
+      color: var(--color-text);
+      padding: 0.75rem 1.8rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      position: relative;
+    }
+    .btn-secondary:hover {
+      background: var(--color-text);
+      color: var(--color-primary);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      border-top: 1px solid var(--color-border);
+      padding-top: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.65s var(--ease-out) forwards;
+      animation-delay: 0.7s;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.04em;
+      color: var(--color-text);
+      line-height: 1;
+      font-feature-settings: "tnum";
+    }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    /* Right visual */
+    .hero-visual {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      opacity: 0;
+      animation: fadeUp 1s var(--ease-out) forwards;
+      animation-delay: 0.45s;
+    }
+
+    .organic-form {
+      position: relative;
+      width: 100%;
+      max-width: 460px;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .orbit-ring {
+      position: absolute;
+      width: 88%;
+      height: 88%;
+      border: 1px solid var(--color-border);
+      border-radius: 50%;
+      z-index: 0;
+      opacity: 0.5;
+      animation: orbitPulse 12s ease-in-out infinite;
+    }
+    .orbit-ring::after {
+      content: "";
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: var(--color-accent);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      opacity: 0.7;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 63% 37% 54% 46% / 42% 58% 42% 58%;
+      background: var(--color-accent);
+      animation: blobMorph 10s ease-in-out infinite;
+    }
+    .blob--shadow {
+      width: 68%; height: 68%;
+      background: var(--color-border);
+      z-index: 1;
+      transform: translate(5%, 5%);
+      animation-delay: 1s;
+      border-radius: 60% 40% 50% 50% / 45% 55% 45% 55%;
+    }
+    .blob--main {
+      width: 72%; height: 72%;
+      z-index: 2;
+      box-shadow: 14px 14px 0px rgba(27,25,22,0.16);
+    }
+    .blob--inner {
+      width: 38%; height: 38%;
+      background: var(--color-secondary);
+      z-index: 3;
+      transform: translate(-28%, -22%);
+      animation-delay: 2s;
+      border-radius: 58% 42% 63% 37% / 46% 52% 48% 54%;
+      box-shadow: inset 0 0 40px rgba(27,25,22,0.06);
+    }
+
+    .blob-dots {
+      position: absolute;
+      width: 88%; height: 88%;
+      z-index: 4;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(27,25,22,0.12) 1.2px, transparent 1.2px);
+      background-size: 16px 16px;
+      border-radius: inherit;
+      mask-image: radial-gradient(circle at 50% 50%, black 45%, transparent 68%);
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, black 45%, transparent 68%);
+    }
+
+    .accent-particle { position: absolute; z-index: 5; pointer-events: none; }
+    .accent-particle::before { content: ""; display: block; background: var(--color-text); }
+    .particle--1 { top: 5%; right: 10%; animation: particleFloat 7s ease-in-out infinite; }
+    .particle--1::before { width: 7px; height: 7px; opacity: 0.6; }
+    .particle--2 { bottom: 12%; left: 6%; animation: particleFloat 8s ease-in-out infinite 1.5s; }
+    .particle--2::before { width: 12px; height: 12px; background: var(--color-accent); opacity: 0.35; }
+    .particle--3 { top: 45%; right: 3%; animation: particleFloat 6.5s ease-in-out infinite 2.5s; }
+    .particle--3::before { width: 5px; height: 5px; background: var(--color-muted); opacity: 0.5; }
+
+    @keyframes blobMorph {
+      0% { border-radius: 63% 37% 54% 46% / 42% 58% 42% 58%; }
+      20% { border-radius: 48% 52% 61% 39% / 56% 44% 56% 44%; }
+      40% { border-radius: 55% 45% 43% 57% / 49% 51% 49% 51%; }
+      60% { border-radius: 42% 58% 58% 42% / 53% 47% 53% 47%; }
+      80% { border-radius: 57% 43% 48% 52% / 44% 56% 44% 56%; }
+      100% { border-radius: 63% 37% 54% 46% / 42% 58% 42% 58%; }
+    }
+    @keyframes particleFloat {
+      0% { transform: translateY(0px) translateX(0px); }
+      33% { transform: translateY(-18px) translateX(10px); }
+      66% { transform: translateY(-6px) translateX(-6px); }
+      100% { transform: translateY(0px) translateX(0px); }
+    }
+    @keyframes orbitPulse {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.04); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes revealBar {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    /* Responsive — mobile stacking, still fits viewport */
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+        height: calc(100vh - var(--nav-height));
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        gap: 0.5rem;
+      }
+      .hero-content { order: 1; }
+      .hero-visual {
+        order: 2;
+        height: 30vh;
+        min-height: 200px;
+        margin-top: -0.5rem;
+      }
+      .hero-headline {
+        font-size: 2.8rem;
+        line-height: 0.92;
+      }
+      .hero-subhead {
+        font-size: 0.85rem;
+        max-width: 100%;
+        margin-bottom: 1.8rem;
+      }
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+      }
+      .hero-stats {
+        gap: 1.8rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+      }
+      .stat-value { font-size: 1.6rem; }
+      .nav-links { display: none; }
+      .organic-form { max-width: 220px; }
+      .geo-lines { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="geo-lines">
+    <div class="line line--h1"></div>
+    <div class="line line--h2"></div>
+    <div class="line line--v1"></div>
+    <div class="line line--v2"></div>
+  </div>
+
+  <nav class="nav">
+    <a href="#" class="nav-logo">
+      PRIMER<span class="accent-block"></span>
+    </a>
+    <div class="nav-links">
+      <a href="#">Research</a>
+      <a href="#">Lab</a>
+      <a href="#">Network</a>
+      <a href="#" class="nav-cta">Launch App</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-eyebrow">The Global Science Acceleration Engine</p>
+      <h1 class="hero-headline">
+        Discover what <span class="accent-word-wrap"><span class="highlight-bar"></span><span class="accent-word">humanity</span></span> has missed
+      </h1>
+      <p class="hero-subhead">
+        Primer ingests the world's research to surface hidden connections, generate <em>falsifiable hypotheses</em>, and run high-throughput validation — compressing decades of discovery into months.
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary">
+          <span>Start Exploring</span>
+          <span class="arrow">→</span>
+        </a>
+        <a href="#" class="btn-secondary">Watch Demo</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-value" id="papers-count">0</span>
+          <span class="stat-label">Papers indexed</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="hypotheses-count">0</span>
+          <span class="stat-label">Hypotheses tested</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="collabs-count">0</span>
+          <span class="stat-label">Active collaborations</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="organic-form">
+        <div class="orbit-ring"></div>
+        <div class="blob blob--shadow"></div>
+        <div class="blob blob--main">
+          <div class="blob-dots"></div>
+        </div>
+        <div class="blob blob--inner"></div>
+        <div class="accent-particle particle--1"></div>
+        <div class="accent-particle particle--2"></div>
+        <div class="accent-particle particle--3"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function() {
+      function animateCounter(id, target, duration) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const step = target / (duration / 16);
+        let current = 0;
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= target) {
+            el.textContent = target.toLocaleString();
+            clearInterval(timer);
+          } else {
+            el.textContent = Math.floor(current).toLocaleString();
+          }
+        }, 16);
+      }
+      window.addEventListener('load', () => {
+        animateCounter('papers-count', 247000000, 2200);
+        animateCounter('hypotheses-count', 12800000, 2400);
+        animateCounter('collabs-count', 34000, 2600);
+      });
+    })();
+  </script>
+</body>
+</html>

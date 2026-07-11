@@ -1,0 +1,2451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terroir — Vol. VII · The Summer Harvest</title>
+<meta name="description" content="A sensory journal of slow food, heirloom ingredients, and the land that grows them.">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/source-sans-3@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/source-sans-3@latest/latin-300.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/caveat@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-400-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-400.css">
+
+<style>
+:root {
+  --paper:           #FDF6E8;
+  --paper-deep:      #F3E8D0;
+  --paper-aged:      #EAD9B8;
+  --heirloom:        #8B2C3D;
+  --heirloom-ink:    #6B1F2E;
+  --chlorophyll:     #4A6B3C;
+  --chlorophyll-soft:#8BA676;
+  --ochre:           #A8763A;
+  --ink:             #2A1F1A;
+  --ink-soft:        #4A3D34;
+  --warm-gray:       #8C7B6B;
+  --line:            rgba(42, 31, 26, 0.18);
+  --line-soft:       rgba(42, 31, 26, 0.10);
+
+  --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --gutter: clamp(2rem, 5vw, 4rem);
+  --max-w:  1400px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 300;
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.grain-overlay {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.16;
+  mix-blend-mode: multiply;
+}
+
+.paper-fiber {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(ellipse at 12% 18%, rgba(139,44,61,0.05) 0%, transparent 45%),
+    radial-gradient(ellipse at 88% 82%, rgba(74,107,60,0.045) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(168,118,58,0.03) 0%, transparent 70%);
+}
+
+.paper-age {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(234, 217, 184, 0.35) 100%);
+  z-index: 2;
+}
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--gutter);
+  z-index: 1000;
+  background: linear-gradient(180deg,
+    rgba(253,246,232,0.94) 0%,
+    rgba(253,246,232,0) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.4s var(--ease);
+}
+
+.navbar.is-scrolled { border-bottom-color: var(--line-soft); }
+
+.navbar__group {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.25rem, 2.5vw, 2.25rem);
+}
+
+.navbar__brand {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--heirloom);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar__brand::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--heirloom);
+  border-radius: 50%;
+}
+
+.navbar__link {
+  font-size: 10pt;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  position: relative;
+  padding: 4px 0;
+  transition: color 0.3s var(--ease);
+}
+
+.navbar__link:hover { color: var(--heirloom); }
+
+.navbar__link::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  width: 0; height: 1px;
+  background: var(--heirloom);
+  transition: all 0.4s var(--ease-spring);
+  transform: translateX(-50%);
+}
+.navbar__link:hover::after { width: 100%; }
+
+.navbar__sep {
+  color: var(--warm-gray);
+  opacity: 0.35;
+  font-size: 6px;
+  display: inline-block;
+}
+
+/* ═════════════════════════════════════════════════
+   HERO (PRESERVED — UNCHANGED)
+   ═════════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  padding: calc(64px + 4rem) var(--gutter) 4rem;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+}
+
+.hero__stage {
+  position: relative;
+  width: 100%;
+  max-width: var(--max-w);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.hero .corner { animation: fade-in 800ms var(--ease) 200ms forwards; }
+.hero .corner--tr,
+.hero .corner--bl { animation-delay: 300ms; }
+
+.hero__reading {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.hero__issue {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 9pt;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  opacity: 0;
+  animation: fade-up 800ms var(--ease) 300ms forwards;
+}
+
+.hero__issue::before {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--warm-gray);
+  opacity: 0.6;
+}
+
+.hero__issue em {
+  font-style: normal;
+  color: var(--heirloom);
+  letter-spacing: 0.28em;
+}
+
+.hero__chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 9pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--chlorophyll);
+  opacity: 0;
+  animation: fade-up 900ms var(--ease) 500ms forwards;
+}
+
+.hero__chapter__numeral {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18pt;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--heirloom);
+  line-height: 1;
+}
+
+.hero__chapter__rule {
+  width: 24px; height: 1px;
+  background: var(--chlorophyll);
+  opacity: 0.6;
+}
+
+.hero__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(88px, 11.5vw, 200px);
+  line-height: 0.85;
+  letter-spacing: -0.035em;
+  color: var(--heirloom);
+  position: relative;
+  opacity: 0;
+  transform: translateY(40px);
+  animation: hero-title-in 1400ms var(--ease) 650ms forwards;
+}
+
+.hero__title-rule {
+  display: block;
+  margin-top: 0.5rem;
+  width: 65%;
+  height: 12px;
+  overflow: visible;
+  opacity: 0;
+  animation: fade-in 800ms var(--ease) 1700ms forwards;
+}
+
+.hero__title-rule path {
+  stroke: var(--heirloom);
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0.4;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: draw-line 1600ms var(--ease) 1700ms forwards;
+}
+
+.hero__subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(16px, 1.2vw, 19px);
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 480px;
+  opacity: 0;
+  animation: fade-up 900ms var(--ease) 1100ms forwards;
+}
+
+.hero__subtitle em { color: var(--chlorophyll); }
+
+.hero__subtitle::before {
+  content: '❦';
+  display: block;
+  font-size: 14px;
+  color: var(--heirloom);
+  opacity: 0.55;
+  margin-bottom: 0.75rem;
+  font-style: normal;
+}
+
+.hero__visual {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 520px;
+}
+
+.hero__companions {
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  max-width: 500px;
+  opacity: 0;
+  animation: fade-up 900ms var(--ease) 2100ms forwards;
+}
+
+.hero__folio {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: var(--warm-gray);
+  letter-spacing: 0.15em;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  opacity: 0;
+  animation: fade-in 800ms var(--ease) 2200ms forwards;
+}
+
+.hero__folio::before,
+.hero__folio::after {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--warm-gray);
+  opacity: 0.5;
+}
+
+/* ═════════════════════════════════════════════════
+   SHARED ELEMENTS (all chapters use these)
+   ═════════════════════════════════════════════════ */
+.specimen-card {
+  position: relative;
+  padding: 1.25rem 1.5rem;
+  max-width: 500px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg,
+      rgba(243, 232, 208, 0.4) 0%,
+      rgba(253, 246, 232, 0) 100%);
+}
+
+.specimen-card::before,
+.specimen-card::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--heirloom);
+  opacity: 0.6;
+  background: var(--paper);
+}
+.specimen-card::before {
+  top: -1px; left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+.specimen-card::after {
+  bottom: -1px; right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+.specimen-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line-soft);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.specimen-card__title {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--heirloom);
+}
+
+.specimen-card__no {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 11pt;
+  color: var(--warm-gray);
+  letter-spacing: 0.05em;
+}
+
+.specimen-card__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem 1.25rem;
+}
+
+.specimen-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.specimen-field__label {
+  font-size: 7.5pt;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+}
+
+.specimen-field__value {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 13pt;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.specimen-field__value em {
+  font-style: italic;
+  color: var(--heirloom);
+  font-weight: 400;
+}
+
+.companions__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 0.75rem;
+}
+
+.companions__eyebrow::before,
+.companions__eyebrow::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 18px; height: 1px;
+  background: var(--warm-gray);
+  opacity: 0.5;
+}
+.companions__eyebrow::after { flex: 1; max-width: 40px; }
+
+.companions__list {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15pt;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  align-items: baseline;
+  line-height: 1.4;
+}
+
+.companions__item {
+  font-weight: 500;
+  font-style: italic;
+  cursor: pointer;
+  color: var(--ink);
+  position: relative;
+  text-decoration: none;
+  transition: color 0.3s var(--ease);
+}
+
+.companions__item::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--chlorophyll);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-spring);
+}
+
+.companions__item:hover { color: var(--chlorophyll); }
+.companions__item:hover::after { transform: scaleX(1); }
+
+.companions__sep {
+  color: var(--warm-gray);
+  margin: 0 0.7rem;
+  opacity: 0.5;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 10pt;
+}
+
+.companions__arrow {
+  color: var(--heirloom);
+  margin-left: 0.75rem;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 14pt;
+  display: inline-block;
+  transition: transform 0.4s var(--ease-spring);
+}
+
+.companions__list:hover .companions__arrow {
+  transform: translateX(4px);
+}
+
+.plate {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 4 / 5;
+}
+
+.plate__frame {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--heirloom-ink);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.plate__frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--heirloom-ink);
+  opacity: 0.5;
+}
+
+.plate__image {
+  position: absolute;
+  inset: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(234, 217, 184, 0.4) 0%,
+      rgba(253, 246, 232, 0) 70%);
+  z-index: 1;
+}
+
+.plate__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: sepia(0.3) saturate(0.55) contrast(0.88) brightness(0.98);
+  mix-blend-mode: multiply;
+  transform: scale(0.92);
+}
+
+.plate__number {
+  position: absolute;
+  top: -0.5rem;
+  left: 1rem;
+  background: var(--paper);
+  padding: 0 0.6rem;
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--heirloom);
+  z-index: 3;
+}
+
+.plate__number em {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 12pt;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  margin-left: 0.4rem;
+  font-weight: 500;
+}
+
+.plate__caption {
+  position: absolute;
+  bottom: -2.5rem;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 12pt;
+  color: var(--ink-soft);
+  letter-spacing: 0.08em;
+  z-index: 3;
+}
+
+.plate__caption::before { content: '— '; color: var(--heirloom); opacity: 0.6; }
+.plate__caption::after  { content: ' —'; color: var(--heirloom); opacity: 0.6; }
+
+.object-3d {
+  position: absolute;
+  pointer-events: auto;
+  filter:
+    drop-shadow(2px  4px  8px rgba(42, 31, 26, 0.20))
+    drop-shadow(6px 10px 20px rgba(42, 31, 26, 0.08));
+  transition: transform 0.8s var(--ease-spring);
+  cursor: pointer;
+  z-index: 20;
+}
+
+.object-3d:hover {
+  transform: translateY(-8px) rotate(calc(var(--base-rot, 0deg) + 3deg)) scale(1.05) !important;
+}
+
+.hero .object-3d--spoon {
+  top: 4%;
+  right: 0;
+  width: clamp(110px, 9vw, 145px);
+  max-width: 22%;
+  --base-rot: 22deg;
+  transform: rotate(22deg);
+  animation: object-in 1200ms var(--ease-spring) 1600ms forwards,
+             drift 8s ease-in-out 2800ms infinite;
+}
+.hero .object-3d--beeswax {
+  bottom: 28%;
+  right: 2%;
+  width: clamp(95px, 8vw, 125px);
+  max-width: 20%;
+  --base-rot: -10deg;
+  transform: rotate(-10deg);
+  animation: object-in 1200ms var(--ease-spring) 1800ms forwards,
+             drift 9.5s ease-in-out 3600ms infinite;
+}
+.hero .object-3d--peppercorn {
+  bottom: 8%;
+  right: 14%;
+  width: clamp(65px, 5.5vw, 85px);
+  max-width: 14%;
+  --base-rot: 14deg;
+  transform: rotate(14deg);
+  animation: object-in 1200ms var(--ease-spring) 2000ms forwards,
+             drift 11s ease-in-out 4400ms infinite;
+}
+
+/* ═════════════════════════════════════════════════
+   CHAPTER II · OLIVE OIL — REVERSED LAYOUT
+   Reading on the RIGHT, plate on the LEFT
+   (opposite of the hero for rhythmic variation)
+   ═════════════════════════════════════════════════ */
+.stage {
+  position: relative;
+  padding: 6rem var(--gutter) 5rem;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+}
+
+.stage__inner {
+  position: relative;
+  width: 100%;
+  max-width: var(--max-w);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.stage__inner--reverse {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.stage__inner--reverse .stage__reading { order: 2; }
+.stage__inner--reverse .stage__visual  { order: 1; }
+
+.stage .corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--heirloom);
+  opacity: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.stage .corner--tl { top: 2rem;    left: 0;  border-right: none; border-bottom: none; }
+.stage .corner--tr { top: 2rem;    right: 0; border-left: none;  border-bottom: none; }
+.stage .corner--bl { bottom: 2rem; left: 0;  border-right: none; border-top: none; }
+.stage .corner--br { bottom: 2rem; right: 0; border-left: none;  border-top: none; }
+
+.is-revealed .stage .corner { animation: fade-in 800ms var(--ease) forwards; }
+.is-revealed .stage .corner--tr,
+.is-revealed .stage .corner--bl { animation-delay: 100ms; }
+
+.is-revealed .stage__issue      { animation: fade-up 800ms var(--ease) 100ms forwards; }
+.is-revealed .stage__chapter    { animation: fade-up 900ms var(--ease) 300ms forwards; }
+.is-revealed .stage__title      { animation: hero-title-in 1400ms var(--ease) 450ms forwards; }
+.is-revealed .stage__title-rule { animation: fade-in 800ms var(--ease) 1500ms forwards; }
+.is-revealed .stage__title-rule path { animation: draw-line 1600ms var(--ease) 1500ms forwards; }
+.is-revealed .stage__subtitle   { animation: fade-up 900ms var(--ease) 900ms forwards; }
+.is-revealed .stage .specimen-card     { animation: fade-up 900ms var(--ease) 1200ms forwards; }
+.is-revealed .stage__companions { animation: fade-up 900ms var(--ease) 1900ms forwards; }
+.is-revealed .stage .plate      { animation: plate-in 1600ms var(--ease) 600ms forwards; }
+.is-revealed .stage .prose      { animation: fade-up 900ms var(--ease) 1500ms forwards; }
+.is-revealed .stage .aside-note { animation: fade-in 900ms var(--ease) 1700ms forwards; }
+
+.stage .stage__issue,
+.stage .stage__chapter,
+.stage .stage__title,
+.stage .stage__title-rule,
+.stage .stage__subtitle,
+.stage .specimen-card,
+.stage .stage__companions,
+.stage .plate,
+.stage .prose,
+.stage .aside-note { opacity: 0; }
+
+.stage__reading {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.stage__issue {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 9pt;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+}
+
+.stage__issue::before {
+  content: '';
+  width: 32px; height: 1px;
+  background: var(--warm-gray);
+  opacity: 0.6;
+}
+
+.stage__issue em {
+  font-style: normal;
+  color: var(--heirloom);
+  letter-spacing: 0.28em;
+}
+
+.stage__chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 9pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--chlorophyll);
+}
+
+.stage__chapter__numeral {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18pt;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--heirloom);
+  line-height: 1;
+}
+
+.stage__chapter__rule {
+  width: 24px; height: 1px;
+  background: var(--chlorophyll);
+  opacity: 0.6;
+}
+
+.stage__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(80px, 10vw, 180px);
+  line-height: 0.85;
+  letter-spacing: -0.035em;
+  color: var(--heirloom);
+  position: relative;
+}
+
+.stage__title--chlorophyll { color: var(--chlorophyll); }
+.stage__title--ochre       { color: var(--ochre); }
+
+.stage__title-rule {
+  display: block;
+  margin-top: 0.5rem;
+  width: 65%;
+  height: 12px;
+  overflow: visible;
+}
+
+.stage__title-rule path {
+  stroke: var(--heirloom);
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0.4;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+}
+
+.stage__subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(16px, 1.2vw, 19px);
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+.stage__subtitle em { color: var(--chlorophyll); }
+
+.stage__subtitle::before {
+  content: '❦';
+  display: block;
+  font-size: 14px;
+  color: var(--heirloom);
+  opacity: 0.55;
+  margin-bottom: 0.75rem;
+  font-style: normal;
+}
+
+.stage__visual {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 520px;
+}
+
+/* ── Aside note (editorial marginalia for chapters) ── */
+.aside-note {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13pt;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 420px;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--heirloom);
+  position: relative;
+}
+
+.aside-note::before {
+  content: '';
+  position: absolute;
+  left: -3px; top: 4px;
+  width: 5px; height: 5px;
+  background: var(--heirloom);
+  border-radius: 50%;
+}
+
+.aside-note em {
+  color: var(--chlorophyll);
+}
+
+.aside-note--ochre {
+  border-left-color: var(--ochre);
+}
+
+.aside-note--ochre::before {
+  background: var(--ochre);
+}
+
+.aside-note--ochre em {
+  color: var(--ochre);
+}
+
+/* ═════════════════════════════════════════════════
+   CHAPTER II · OLIVE OIL — objects
+   Positioned in LEFT half (visual column)
+   Triangle: oil-bottle top-left, beeswax mid-right, spoon bottom-left
+   ═════════════════════════════════════════════════ */
+.stage--olive .object-3d--oil-bottle {
+  top: 4%;
+  left: 2%;
+  width: clamp(95px, 8vw, 130px);
+  max-width: 18%;
+  --base-rot: -14deg;
+  transform: rotate(-14deg);
+}
+
+.stage--olive .object-3d--beeswax {
+  top: 44%;
+  right: 4%;
+  width: clamp(90px, 7.5vw, 120px);
+  max-width: 17%;
+  --base-rot: 10deg;
+  transform: rotate(10deg);
+}
+
+.stage--olive .object-3d--spoon {
+  bottom: 6%;
+  left: 8%;
+  width: clamp(65px, 5.5vw, 90px);
+  max-width: 13%;
+  --base-rot: -22deg;
+  transform: rotate(-22deg);
+}
+
+/* ═════════════════════════════════════════════════
+   CHAPTER III · GARLIC — standard layout
+   Reading left, plate right, ochre accents
+   ═════════════════════════════════════════════════ */
+.stage--garlic .object-3d--garlic {
+  top: 6%;
+  right: 2%;
+  width: clamp(95px, 8vw, 125px);
+  max-width: 17%;
+  --base-rot: 14deg;
+  transform: rotate(14deg);
+}
+
+.stage--garlic .object-3d--peppercorn {
+  bottom: 32%;
+  right: 4%;
+  width: clamp(65px, 5.5vw, 85px);
+  max-width: 12%;
+  --base-rot: -12deg;
+  transform: rotate(-12deg);
+}
+
+.stage--garlic .object-3d--spoon {
+  bottom: 6%;
+  right: 18%;
+  width: clamp(60px, 5vw, 85px);
+  max-width: 12%;
+  --base-rot: 22deg;
+  transform: rotate(22deg);
+}
+
+/* Chapter objects reveal */
+.stage .object-3d { opacity: 0; }
+
+.is-revealed .stage .object-3d {
+  animation-name: object-in, drift;
+  animation-duration: 1200ms, 8s;
+  animation-timing-function: var(--ease-spring), ease-in-out;
+  animation-fill-mode: forwards, none;
+  animation-iteration-count: 1, infinite;
+}
+
+.is-revealed .stage .object-3d:nth-of-type(1) {
+  animation-delay: 1600ms, 2800ms;
+}
+.is-revealed .stage .object-3d:nth-of-type(2) {
+  animation-delay: 1800ms, 3600ms;
+  animation-duration: 1200ms, 9.5s;
+}
+.is-revealed .stage .object-3d:nth-of-type(3) {
+  animation-delay: 2000ms, 4400ms;
+  animation-duration: 1200ms, 11s;
+}
+
+/* ── Curing Log (garlic chapter) ─────────────── */
+.curing-log {
+  margin-top: 1rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  background: rgba(253, 246, 232, 0.4);
+  max-width: 500px;
+  opacity: 0;
+}
+
+.is-revealed .curing-log {
+  animation: fade-up 900ms var(--ease) 1700ms forwards;
+}
+
+.curing-log__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--line-soft);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.curing-log__title {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+
+.curing-log__folio {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: var(--warm-gray);
+}
+
+.curing-log__entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  list-style: none;
+}
+
+.curing-log__entry {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 1rem;
+  align-items: baseline;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+.curing-log__day {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 11pt;
+  color: var(--ochre);
+  letter-spacing: 0.05em;
+}
+
+.curing-log__note {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11pt;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+/* ── Prose block (garlic chapter) ────────────── */
+.prose {
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  max-width: 500px;
+}
+
+.prose__body {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13pt;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.prose__body::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 3.6rem;
+  float: left;
+  line-height: 0.9;
+  padding: 6px 12px 0 0;
+  color: var(--ochre);
+}
+
+/* ═════════════════════════════════════════════════
+   INTERLUDE — centered broadside plate
+   ═════════════════════════════════════════════════ */
+.interlude {
+  position: relative;
+  padding: 9rem var(--gutter);
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.interlude__card {
+  position: relative;
+  max-width: 780px;
+  width: 100%;
+  padding: 4.5rem 3rem;
+  border: 1px solid var(--heirloom);
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(243, 232, 208, 0.5) 0%,
+      rgba(253, 246, 232, 0) 70%);
+  opacity: 0;
+}
+
+.is-revealed .interlude__card {
+  animation: spring-reveal 1100ms var(--ease) 200ms forwards;
+}
+
+/* Double-rule inner frame */
+.interlude__card::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--heirloom);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Corner ornaments */
+.interlude__card::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 14px; height: 14px;
+  background: var(--paper);
+  border-right: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+  box-shadow:
+    calc(100% + 2px - 14px) 0 0 0 var(--paper),
+    calc(100% + 2px - 14px) 0 0 1px var(--heirloom);
+}
+
+.interlude__corner-ornament {
+  position: absolute;
+  width: 14px; height: 14px;
+  background: var(--paper);
+  pointer-events: none;
+}
+
+.interlude__corner-ornament--tr {
+  top: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+}
+
+.interlude__corner-ornament--bl {
+  bottom: -1px; left: -1px;
+  border-right: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+
+.interlude__corner-ornament--br {
+  bottom: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+
+.interlude__eyebrow {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 2rem;
+}
+
+.interlude__ornament-top {
+  display: block;
+  color: var(--chlorophyll-soft);
+  font-size: 18px;
+  opacity: 0.6;
+  margin-bottom: 2rem;
+}
+
+.interlude__quote {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(22px, 3vw, 40px);
+  color: var(--heirloom);
+  line-height: 1.35;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.interlude__ornament-bottom {
+  display: block;
+  color: var(--chlorophyll-soft);
+  font-size: 18px;
+  opacity: 0.6;
+  margin-top: 2rem;
+}
+
+.interlude__attribution {
+  display: block;
+  font-family: 'Source Sans 3', sans-serif;
+  font-style: normal;
+  font-size: 9pt;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-top: 2rem;
+}
+
+.interlude__attribution em {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 12pt;
+  text-transform: none;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  display: block;
+  margin-top: 0.4rem;
+  font-weight: 500;
+}
+
+/* ═════════════════════════════════════════════════
+   TASTING SECTION — framed kitchen card
+   ═════════════════════════════════════════════════ */
+.tasting {
+  padding: 6rem var(--gutter);
+  display: flex;
+  justify-content: center;
+}
+
+.tasting__wrapper {
+  max-width: 720px;
+  width: 100%;
+}
+
+.tasting__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  opacity: 0;
+}
+
+.is-revealed .tasting__head {
+  animation: fade-up 800ms var(--ease) 200ms forwards;
+}
+
+.tasting__head__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.tasting__head__label {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--heirloom);
+  white-space: nowrap;
+}
+
+.tasting__head__numeral {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13pt;
+  color: var(--warm-gray);
+}
+
+.tasting__card {
+  position: relative;
+  padding: 2.5rem 3rem;
+  border: 1px solid var(--heirloom);
+  background:
+    linear-gradient(180deg,
+      rgba(243, 232, 208, 0.55) 0%,
+      rgba(253, 246, 232, 0.2) 100%);
+  opacity: 0;
+  transform: rotate(-0.5deg);
+}
+
+.is-revealed .tasting__card {
+  animation: spring-reveal 1100ms var(--ease) 400ms forwards;
+}
+
+.tasting__card::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--heirloom);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tasting__card::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 14px; height: 14px;
+  background: var(--paper);
+  border-right: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+}
+
+.tasting__corner {
+  position: absolute;
+  width: 14px; height: 14px;
+  background: var(--paper);
+  pointer-events: none;
+}
+
+.tasting__corner--tr {
+  top: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+}
+
+.tasting__corner--bl {
+  bottom: -1px; left: -1px;
+  border-right: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+
+.tasting__corner--br {
+  bottom: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+
+.tasting__eyebrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line-soft);
+  position: relative;
+  z-index: 2;
+}
+
+.tasting__label {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--heirloom);
+}
+
+.tasting__no {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 11pt;
+  color: var(--warm-gray);
+}
+
+.tasting__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  position: relative;
+  z-index: 2;
+}
+
+.tasting__body {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14pt;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  max-width: 560px;
+  position: relative;
+  z-index: 2;
+}
+
+.tasting__body::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 3rem;
+  float: left;
+  line-height: 0.9;
+  padding: 4px 10px 0 0;
+  color: var(--heirloom);
+}
+
+.tasting__signature {
+  margin-top: 2rem;
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+  color: var(--heirloom);
+  transform: rotate(-2deg);
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+}
+
+.tasting__signature::before {
+  content: '— ';
+  color: var(--warm-gray);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14pt;
+}
+
+/* ═════════════════════════════════════════════════
+   CLOSING CTA — subscription card
+   ═════════════════════════════════════════════════ */
+.closing {
+  position: relative;
+  padding: 8rem var(--gutter) 9rem;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.closing__card {
+  position: relative;
+  max-width: 720px;
+  width: 100%;
+  padding: 5rem 4rem;
+  border: 1px solid var(--heirloom);
+  background:
+    radial-gradient(ellipse at 50% 0%,
+      rgba(139, 44, 61, 0.04) 0%,
+      transparent 60%),
+    linear-gradient(180deg,
+      rgba(243, 232, 208, 0.4) 0%,
+      rgba(253, 246, 232, 0) 100%);
+  text-align: center;
+  opacity: 0;
+}
+
+.is-revealed .closing__card {
+  animation: spring-reveal 1100ms var(--ease) 200ms forwards;
+}
+
+/* Double rule frame */
+.closing__card::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--heirloom);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Corner ornaments */
+.closing__card::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 16px; height: 16px;
+  background: var(--paper);
+  border-right: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+}
+
+.closing__corner {
+  position: absolute;
+  width: 16px; height: 16px;
+  background: var(--paper);
+  pointer-events: none;
+}
+.closing__corner--tr {
+  top: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-bottom: 1px solid var(--heirloom);
+}
+.closing__corner--bl {
+  bottom: -1px; left: -1px;
+  border-right: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+.closing__corner--br {
+  bottom: -1px; right: -1px;
+  border-left: 1px solid var(--heirloom);
+  border-top: 1px solid var(--heirloom);
+}
+
+.closing__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--chlorophyll);
+  margin-bottom: 2rem;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.is-revealed .closing__eyebrow {
+  animation: fade-up 800ms var(--ease) 500ms forwards;
+}
+
+.closing__eyebrow::before,
+.closing__eyebrow::after {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--chlorophyll);
+  opacity: 0.6;
+}
+
+.closing__title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: clamp(38px, 5vw, 68px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--heirloom);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.is-revealed .closing__title {
+  animation: spring-reveal 1100ms var(--ease) 700ms forwards;
+}
+
+.closing__title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--chlorophyll);
+}
+
+.closing__body {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(15px, 1.3vw, 17pt);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 auto 2.5rem;
+  max-width: 520px;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.is-revealed .closing__body {
+  animation: fade-up 900ms var(--ease) 1000ms forwards;
+}
+
+.closing__ornament {
+  display: block;
+  color: var(--heirloom);
+  opacity: 0.5;
+  font-size: 16px;
+  margin-bottom: 2.5rem;
+}
+
+.cta-primary {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 10pt;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--heirloom);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 18px 42px;
+  transition: all 0.4s var(--ease-spring);
+  box-shadow:
+    0 1px 0 rgba(42, 31, 26, 0.1),
+    0 12px 28px -12px rgba(139, 44, 61, 0.35);
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.is-revealed .cta-primary {
+  animation: spring-reveal 900ms var(--ease) 1200ms forwards;
+}
+
+.cta-primary:hover {
+  background: var(--ink);
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 0 rgba(42, 31, 26, 0.1),
+    0 18px 36px -12px rgba(42, 31, 26, 0.4);
+}
+
+.cta-primary:active { transform: translateY(0); }
+
+.cta-primary__arrow {
+  font-size: 16px;
+  display: inline-block;
+  transition: transform 0.5s var(--ease-spring);
+}
+
+.cta-primary:hover .cta-primary__arrow {
+  transform: rotate(360deg) scale(1.15);
+}
+
+.closing__footer-note {
+  margin-top: 2.5rem;
+  font-size: 9pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.is-revealed .closing__footer-note {
+  animation: fade-in 800ms var(--ease) 1500ms forwards;
+}
+
+/* ═════════════════════════════════════════════════
+   COLOPHON FOOTER — bibliographic closing
+   ═════════════════════════════════════════════════ */
+.colophon {
+  position: relative;
+  padding: 4rem var(--gutter) 3rem;
+  border-top: 1px solid var(--line);
+  margin-top: 2rem;
+}
+
+.colophon__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.colophon__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.colophon__brand {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--heirloom);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colophon__brand::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--heirloom);
+  border-radius: 50%;
+}
+
+.colophon__tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 11pt;
+  color: var(--ink-soft);
+  letter-spacing: 0.03em;
+}
+
+.colophon__center {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.colophon__ornament {
+  width: 40px;
+  height: 40px;
+  opacity: 0.7;
+}
+
+.colophon__ornament svg {
+  width: 100%;
+  height: 100%;
+  stroke: var(--heirloom);
+  fill: none;
+}
+
+.colophon__mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: var(--warm-gray);
+  letter-spacing: 0.12em;
+}
+
+.colophon__right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.colophon__edition {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--heirloom);
+}
+
+.colophon__print {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: var(--warm-gray);
+  line-height: 1.6;
+}
+
+.colophon__copyright {
+  font-size: 8pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  opacity: 0.7;
+}
+
+/* ═════════════════════════════════════════════════
+   KEYFRAMES
+   ═════════════════════════════════════════════════ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spring-reveal {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.005); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes hero-title-in {
+  0%   { opacity: 0; transform: translateY(50px) scale(0.96); letter-spacing: -0.01em; }
+  60%  { opacity: 1; transform: translateY(-4px) scale(1.008); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    letter-spacing: -0.035em; }
+}
+
+@keyframes plate-in {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes object-in {
+  0%   { opacity: 0; transform: translateY(30px) scale(0.85) rotate(var(--base-rot, 0deg)); }
+  100% { opacity: 1; transform: translateY(0)    scale(1)   rotate(var(--base-rot, 0deg)); }
+}
+
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0)    rotate(var(--base-rot, 0deg)); }
+  50%      { transform: translateY(-8px) rotate(calc(var(--base-rot, 0deg) + 0.8deg)); }
+}
+
+/* ═════════════════════════════════════════════════
+   RESPONSIVE
+   ═════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .hero__stage,
+  .stage__inner {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .stage__inner--reverse .stage__reading { order: 2; }
+  .stage__inner--reverse .stage__visual  { order: 1; }
+
+  .hero__reading,
+  .stage__reading { order: 2; }
+  .hero__visual,
+  .stage__visual  { order: 1; min-height: 400px; }
+
+  .plate { max-width: 360px; }
+
+  .hero .object-3d--spoon      { width: clamp(100px, 22vw, 140px); top: 2%; right: 4%; }
+  .hero .object-3d--beeswax    { width: clamp(80px,  18vw, 110px); bottom: 8%; right: auto; left: 4%; }
+  .hero .object-3d--peppercorn { width: clamp(55px,  12vw, 75px);  bottom: 4%; right: 10%; }
+
+  .colophon__inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 2rem;
+  }
+  .colophon__left,
+  .colophon__right {
+    align-items: center;
+    text-align: center;
+  }
+
+  .interlude__card,
+  .closing__card {
+    padding: 3rem 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar__link { font-size: 9pt; letter-spacing: 0.12em; }
+  .navbar__sep  { display: none; }
+
+  .corner { width: 28px; height: 28px; }
+
+  .hero__issue,
+  .stage__issue { display: none; }
+
+  .specimen-card__grid,
+  .curing-log__entries { grid-template-columns: 1fr 1fr; }
+
+  .curing-log__entry {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .object-3d { display: none; }
+
+  .plate { max-width: 280px; }
+
+  .hero__folio { font-size: 9pt; }
+  .hero__folio::before,
+  .hero__folio::after { width: 16px; }
+
+  .hero__title,
+  .stage__title {
+    font-size: clamp(64px, 16vw, 110px);
+  }
+
+  .stage { padding: 4rem var(--gutter) 3rem; }
+  .interlude,
+  .closing { padding: 5rem var(--gutter); }
+
+  .interlude__card,
+  .closing__card {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .tasting__card { padding: 2rem 1.75rem; }
+
+  .aside-note { font-size: 12pt; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;">
+  <defs>
+    <filter id="handdrawn">
+      <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2"/>
+    </filter>
+  </defs>
+</svg>
+
+<svg class="grain-overlay" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <filter id="grainFilter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#grainFilter)" opacity="0.35"/>
+</svg>
+
+<div class="paper-fiber" aria-hidden="true"></div>
+
+<nav class="navbar" id="navbar" aria-label="Primary">
+  <div class="navbar__group">
+    <a href="#" class="navbar__brand">Terroir</a>
+  </div>
+  <div class="navbar__group">
+    <a href="#" class="navbar__link">Origin</a>
+    <span class="navbar__sep" aria-hidden="true">◆</span>
+    <a href="#" class="navbar__link">Harvest</a>
+    <span class="navbar__sep" aria-hidden="true">◆</span>
+    <a href="#" class="navbar__link">Terroir</a>
+    <span class="navbar__sep" aria-hidden="true">◆</span>
+    <a href="#" class="navbar__link">Journal</a>
+    <span class="navbar__sep" aria-hidden="true">◆</span>
+    <a href="#" class="navbar__link">Seasons</a>
+  </div>
+</nav>
+
+<!-- HERO · CHAPTER I · TOMATO (PRESERVED) -->
+<section class="hero" aria-labelledby="hero-title">
+
+  <div class="paper-age" aria-hidden="true"></div>
+
+  <div class="hero__stage">
+
+    <span class="corner corner--tl" aria-hidden="true"></span>
+    <span class="corner corner--tr" aria-hidden="true"></span>
+    <span class="corner corner--bl" aria-hidden="true"></span>
+    <span class="corner corner--br" aria-hidden="true"></span>
+
+    <div class="hero__issue" style="grid-column: 1; grid-row: 1; position: absolute; top: 0; left: 0;">
+      <span>Vol. VII · Nº 03</span>
+      <em>Summer MMXXVI</em>
+    </div>
+
+    <header class="hero__reading">
+
+      <span class="hero__chapter">
+        <span class="hero__chapter__numeral">I.</span>
+        <span class="hero__chapter__rule"></span>
+        <span>The Solanaceae</span>
+      </span>
+
+      <h1 class="hero__title" id="hero-title">Tomato</h1>
+
+      <svg class="hero__title-rule" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 2 6 Q 40 2, 80 7 T 160 5 T 240 8 T 320 4 T 398 7" />
+      </svg>
+
+      <p class="hero__subtitle">
+        A sun-drunk fruit of the <em>nightshade</em> family, coaxed from volcanic soil by third-generation hands in the Sonoma folds — picked at dawn on the fourteenth of August.
+      </p>
+
+      <article class="specimen-card" aria-label="Specimen data">
+        <div class="specimen-card__head">
+          <span class="specimen-card__title">Specimen</span>
+          <span class="specimen-card__no">Nº 14 · VIII · MMXXVI</span>
+        </div>
+        <div class="specimen-card__grid">
+          <div class="specimen-field">
+            <span class="specimen-field__label">Varietal</span>
+            <span class="specimen-field__value"><em>Brandywine</em></span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Terroir</span>
+            <span class="specimen-field__value">Volcanic loam</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Soil pH</span>
+            <span class="specimen-field__value">6.4</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Origin</span>
+            <span class="specimen-field__value">Sonoma · N. Slope</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Cultivation</span>
+            <span class="specimen-field__value">Dry-farmed</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Seed Line</span>
+            <span class="specimen-field__value">3<sup style="font-size:8pt;">rd</sup> gen.</span>
+          </div>
+        </div>
+      </article>
+
+      <div class="hero__companions" aria-label="Companion ingredients">
+        <div class="companions__eyebrow">In the pot tonight</div>
+        <div class="companions__list">
+          <a href="#" class="companions__item">Basil</a>
+          <span class="companions__sep">·</span>
+          <a href="#" class="companions__item">Sea Salt</a>
+          <span class="companions__sep">·</span>
+          <a href="#" class="companions__item">Black Pepper</a>
+          <span class="companions__arrow">→</span>
+        </div>
+      </div>
+
+    </header>
+
+    <div class="hero__visual" aria-hidden="true">
+      <figure class="plate">
+        <span class="plate__number">PLATE <em>I</em></span>
+        <div class="plate__frame"></div>
+        <div class="plate__image">
+          <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/14db77be2-1e64-4833-8324-63592562e6b5.png"
+               alt="Heirloom tomato, Brandywine varietal"
+               loading="lazy">
+        </div>
+        <figcaption class="plate__caption">Lycopersicon esculentum</figcaption>
+      </figure>
+    </div>
+
+    <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/150b44d29-2bca-4e96-9293-73fc81106978.png"
+         alt="Weathered wooden spoon"
+         class="object-3d object-3d--spoon" loading="lazy">
+
+    <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1d1644463-5149-48e6-a015-4be2e0cf31fb.png"
+         alt="Torn strip of beeswax wrap"
+         class="object-3d object-3d--beeswax" loading="lazy">
+
+    <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1f68fc33d-99da-4ce0-bf8a-e75b713132ae.png"
+         alt="Cluster of black peppercorns"
+         class="object-3d object-3d--peppercorn" loading="lazy">
+
+  </div>
+
+  <div class="hero__folio" aria-hidden="true">folio 014</div>
+
+</section>
+
+<!-- CHAPTER II · OLIVE OIL — REVERSED LAYOUT -->
+<section class="stage stage--olive reveal" aria-labelledby="title-olive">
+
+  <div class="stage__inner">
+
+    <span class="corner corner--tl" aria-hidden="true"></span>
+    <span class="corner corner--tr" aria-hidden="true"></span>
+    <span class="corner corner--bl" aria-hidden="true"></span>
+    <span class="corner corner--br" aria-hidden="true"></span>
+
+    <div class="stage__issue" style="position: absolute; top: 2rem; left: 0;">
+      <span>Chapter II</span>
+      <em>The Oleaceae</em>
+    </div>
+
+    <div class="stage__visual" aria-hidden="true">
+      <figure class="plate">
+        <span class="plate__number">PLATE <em>II</em></span>
+        <div class="plate__frame"></div>
+        <div class="plate__image">
+          <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1769b07aa-78bb-4dcf-8e9a-55180fbdcbee.png"
+               alt="Botanical illustration of an olive branch"
+               loading="lazy">
+        </div>
+        <figcaption class="plate__caption">Olea europaea</figcaption>
+      </figure>
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1fb6836b0-c215-995f-a5d9-77963661af9f.png"
+           alt="Antique ceramic olive oil cruet"
+           class="object-3d object-3d--oil-bottle" loading="lazy">
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1d1644463-5149-48e6-a015-4be2e0cf31fb.png"
+           alt="Torn strip of beeswax wrap"
+           class="object-3d object-3d--beeswax" loading="lazy">
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/150b44d29-2bca-4e96-9293-73fc81106978.png"
+           alt="Weathered wooden spoon"
+           class="object-3d object-3d--spoon" loading="lazy">
+    </div>
+
+    <header class="stage__reading">
+
+      <span class="stage__chapter">
+        <span class="stage__chapter__numeral">II.</span>
+        <span class="stage__chapter__rule"></span>
+        <span>The Oleaceae</span>
+      </span>
+
+      <h2 class="stage__title stage__title--chlorophyll" id="title-olive">Olive Oil</h2>
+
+      <svg class="stage__title-rule" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 2 6 Q 40 2, 80 7 T 160 5 T 240 8 T 320 4 T 398 7" stroke="#4A6B3C"/>
+      </svg>
+
+      <p class="stage__subtitle">
+        Pressed within four hours of harvest. A liquid the color of <em>new moss</em>, tasting of cut grass and green almonds — bottled under the November moon.
+      </p>
+
+      <article class="specimen-card" aria-label="Specimen data">
+        <div class="specimen-card__head">
+          <span class="specimen-card__title">Specimen</span>
+          <span class="specimen-card__no">Nº 22 · XI · MMXXVI</span>
+        </div>
+        <div class="specimen-card__grid">
+          <div class="specimen-field">
+            <span class="specimen-field__label">Press</span>
+            <span class="specimen-field__value"><em>First cold</em></span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Blend</span>
+            <span class="specimen-field__value">Arbequina · Picual</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Acidity</span>
+            <span class="specimen-field__value">0.18%</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Terroir</span>
+            <span class="specimen-field__value">Limestone terraces</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Altitude</span>
+            <span class="specimen-field__value">340 m</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Filtration</span>
+            <span class="specimen-field__value">Unfiltered</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="aside-note" aria-label="Curator's note">
+        The best oils are never filtered. They arrive <em>cloudy with sediment</em> — a living record of the fruit, settling slowly over weeks into a clear, golden truth.
+      </aside>
+
+      <div class="stage__companions" aria-label="Companion ingredients">
+        <div class="companions__eyebrow">At the table</div>
+        <div class="companions__list">
+          <a href="#" class="companions__item">Rosemary</a>
+          <span class="companions__sep">·</span>
+          <a href="#" class="companions__item">Lemon</a>
+          <span class="companions__sep">·</span>
+          <a href="#" class="companions__item">Sea Salt</a>
+          <span class="companions__arrow">→</span>
+        </div>
+      </div>
+
+    </header>
+
+  </div>
+
+</section>
+
+<!-- INTERLUDE — centered broadside plate -->
+<section class="interlude reveal" aria-label="Grower's reflection">
+
+  <div class="interlude__card">
+
+    <span class="interlude__corner-ornament interlude__corner-ornament--tr" aria-hidden="true"></span>
+    <span class="interlude__corner-ornament interlude__corner-ornament--bl" aria-hidden="true"></span>
+    <span class="interlude__corner-ornament interlude__corner-ornament--br" aria-hidden="true"></span>
+
+    <div class="interlude__eyebrow" aria-hidden="true">A Grower's Note</div>
+
+    <span class="interlude__ornament-top" aria-hidden="true">❦</span>
+
+    <blockquote class="interlude__quote">
+      "Every ingredient is a letter written by the land. Our only task is to read — slowly, and with the whole body."
+    </blockquote>
+
+    <span class="interlude__ornament-bottom" aria-hidden="true">❦</span>
+
+    <cite class="interlude__attribution">
+      Elena Marchetti
+      <em>Third-Generation Grower · Sonoma</em>
+    </cite>
+
+  </div>
+
+</section>
+
+<!-- CHAPTER III · GARLIC — standard layout, ochre accents -->
+<section class="stage stage--garlic reveal" aria-labelledby="title-garlic">
+
+  <div class="stage__inner stage__inner--reverse">
+
+    <span class="corner corner--tl" aria-hidden="true"></span>
+    <span class="corner corner--tr" aria-hidden="true"></span>
+    <span class="corner corner--bl" aria-hidden="true"></span>
+    <span class="corner corner--br" aria-hidden="true"></span>
+
+    <div class="stage__issue" style="position: absolute; top: 2rem; left: 0;">
+      <span>Chapter III</span>
+      <em>The Allium</em>
+    </div>
+
+    <header class="stage__reading">
+
+      <span class="stage__chapter">
+        <span class="stage__chapter__numeral">III.</span>
+        <span class="stage__chapter__rule"></span>
+        <span>The Allium</span>
+      </span>
+
+      <h2 class="stage__title stage__title--ochre" id="title-garlic">Garlic</h2>
+
+      <svg class="stage__title-rule" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 2 6 Q 40 2, 80 7 T 160 5 T 240 8 T 320 4 T 398 7" stroke="#A8763A"/>
+      </svg>
+
+      <p class="stage__subtitle">
+        A head the size of a fist, its papery skins <em>streaked violet</em>. Cured forty days in the barn loft, where swallows nest each spring and time moves by the hour-bell.
+      </p>
+
+      <article class="specimen-card" aria-label="Specimen data">
+        <div class="specimen-card__head">
+          <span class="specimen-card__title">Specimen</span>
+          <span class="specimen-card__no">Nº 37 · VII · MMXXVI</span>
+        </div>
+        <div class="specimen-card__grid">
+          <div class="specimen-field">
+            <span class="specimen-field__label">Varietal</span>
+            <span class="specimen-field__value"><em>Purple Stripe</em></span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Type</span>
+            <span class="specimen-field__value">Hardneck</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Cured</span>
+            <span class="specimen-field__value">40 days</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Planted</span>
+            <span class="specimen-field__value">October</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Harvested</span>
+            <span class="specimen-field__value">July</span>
+          </div>
+          <div class="specimen-field">
+            <span class="specimen-field__label">Terroir</span>
+            <span class="specimen-field__value">Alluvial clay</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Curing Log — diary-style dated entries -->
+      <aside class="curing-log" aria-label="Curing log">
+        <div class="curing-log__head">
+          <span class="curing-log__title">From the Curing Loft</span>
+          <span class="curing-log__folio">a diary, in four entries</span>
+        </div>
+        <ul class="curing-log__entries">
+          <li class="curing-log__entry">
+            <span class="curing-log__day">Day 7</span>
+            <span class="curing-log__note">Necks still green. The barn smells of wet earth and green stems.</span>
+          </li>
+          <li class="curing-log__entry">
+            <span class="curing-log__day">Day 19</span>
+            <span class="curing-log__note">Skins tightening. The outermost layer begins to whisper when touched.</span>
+          </li>
+          <li class="curing-log__entry">
+            <span class="curing-log__day">Day 33</span>
+            <span class="curing-log__note">Violet stripes emerge on the purple-stripe heads. The swallows have returned.</span>
+          </li>
+          <li class="curing-log__entry">
+            <span class="curing-log__day">Day 44</span>
+            <span class="curing-log__note">Ready. The cloves have turned crystalline — heat concentrated, not diminished.</span>
+          </li>
+        </ul>
+      </aside>
+
+      <div class="prose" aria-label="Essay">
+        <p class="prose__body">What we learn from garlic is a lesson about time itself — that slowness is not the absence of transformation, but its deepest expression. Elena will not rush the cure; she has lost whole harvests to impatience, she says, and will not repeat the mistake.</p>
+      </div>
+
+    </header>
+
+    <div class="stage__visual" aria-hidden="true">
+      <figure class="plate">
+        <span class="plate__number">PLATE <em>III</em></span>
+        <div class="plate__frame"></div>
+        <div class="plate__image">
+          <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1d94cd8e7-37e5-4e81-84e6-0de35b50646e.png"
+               alt="Botanical illustration of a garlic head"
+               loading="lazy">
+        </div>
+        <figcaption class="plate__caption">Allium sativum</figcaption>
+      </figure>
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1871150d4-d8cf-4cc9-9c85-bff2cbdd6633.png"
+           alt="Whole garlic bulb"
+           class="object-3d object-3d--garlic" loading="lazy">
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/1f68fc33d-99da-4ce0-bf8a-e75b713132ae.png"
+           alt="Cluster of black peppercorns"
+           class="object-3d object-3d--peppercorn" loading="lazy">
+
+      <img src="https://image.qwenlm.ai/public_source/8e50b5ca-69c7-4014-bb21-cc64e5327c0f/150b44d29-2bca-4e96-9293-73fc81106978.png"
+           alt="Weathered wooden spoon"
+           class="object-3d object-3d--spoon" loading="lazy">
+    </div>
+
+  </div>
+
+</section>
+
+<!-- TASTING SECTION — framed kitchen card -->
+<section class="tasting reveal" aria-label="Tasting notes">
+
+  <div class="tasting__wrapper">
+
+    <div class="tasting__head">
+      <span class="tasting__head__rule"></span>
+      <span class="tasting__head__label">From Elena's Kitchen</span>
+      <span class="tasting__head__numeral">Nº 01</span>
+      <span class="tasting__head__rule"></span>
+    </div>
+
+    <article class="tasting__card">
+
+      <span class="tasting__corner tasting__corner--tr" aria-hidden="true"></span>
+      <span class="tasting__corner tasting__corner--bl" aria-hidden="true"></span>
+      <span class="tasting__corner tasting__corner--br" aria-hidden="true"></span>
+
+      <div class="tasting__eyebrow">
+        <span class="tasting__label">Tasting Notes</span>
+        <span class="tasting__no">The Evening Pan</span>
+      </div>
+      <h3 class="tasting__title">On the table, tonight.</h3>
+      <p class="tasting__body">
+        Crush a single clove beneath the flat of your knife. Listen for the papery crack. Heat the oil slowly — never to smoke. Add the garlic whole, let it whisper, never shout. When the edges turn the color of old gold, the work is done.
+      </p>
+      <span class="tasting__signature">for Nonna, always</span>
+    </article>
+
+  </div>
+
+</section>
+
+<!-- CLOSING CTA — subscription card -->
+<section class="closing reveal" aria-label="Invitation">
+
+  <div class="closing__card">
+
+    <span class="closing__corner closing__corner--tr" aria-hidden="true"></span>
+    <span class="closing__corner closing__corner--bl" aria-hidden="true"></span>
+    <span class="closing__corner closing__corner--br" aria-hidden="true"></span>
+
+    <div class="closing__eyebrow">The Journal Continues</div>
+
+    <h2 class="closing__title">
+      Begin the <em>discovery</em>.
+    </h2>
+
+    <p class="closing__body">
+      Each season, we release a small edition of specimen notes, harvest reports, and handwritten recipes — sent by post, never by algorithm.
+    </p>
+
+    <span class="closing__ornament" aria-hidden="true">❦</span>
+
+    <button class="cta-primary" type="button">
+      <span>Subscribe to the Journal</span>
+      <span class="cta-primary__arrow" aria-hidden="true">↻</span>
+    </button>
+
+    <div class="closing__footer-note">❦ &nbsp; No prices. No pressure. Only origin. &nbsp; ❦</div>
+
+  </div>
+
+</section>
+
+<!-- COLOPHON FOOTER — bibliographic closing -->
+<footer class="colophon" aria-label="Colophon">
+  <div class="colophon__inner">
+
+    <div class="colophon__left">
+      <div class="colophon__brand">Terroir</div>
+      <div class="colophon__tagline">A quarterly of slow food &amp; soil</div>
+    </div>
+
+    <div class="colophon__center">
+      <div class="colophon__ornament" aria-hidden="true">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="18" stroke-width="0.8"/>
+          <circle cx="20" cy="20" r="14" stroke-width="0.5" opacity="0.6"/>
+          <path d="M20 6 L20 34 M6 20 L34 20" stroke-width="0.5" opacity="0.5"/>
+          <path d="M20 12 Q 24 20, 20 28 Q 16 20, 20 12 Z" stroke-width="0.8"/>
+          <circle cx="20" cy="20" r="2" fill="currentColor" stroke="none" opacity="0.6"/>
+        </svg>
+      </div>
+      <div class="colophon__mark">est. MMXIX</div>
+    </div>
+
+    <div class="colophon__right">
+      <div class="colophon__edition">Vol. VII · Nº 03 · MMXXVI</div>
+      <div class="colophon__print">
+        Printed on unbleached stock<br>
+        in an edition of four hundred
+      </div>
+      <div class="colophon__copyright">© Terroir Press</div>
+    </div>
+
+  </div>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const initHeroParallax = () => {
+    const objects = document.querySelectorAll('.hero .object-3d');
+    const plate   = document.querySelector('.hero .plate');
+
+    if (!window.matchMedia('(hover: hover)').matches) return;
+
+    document.addEventListener('mousemove', (e) => {
+      const mx = (e.clientX / window.innerWidth  - 0.5);
+      const my = (e.clientY / window.innerHeight - 0.5);
+
+      objects.forEach((obj, i) => {
+        const depth   = (i + 1) * 2.5;
+        const baseRot = parseFloat(getComputedStyle(obj).getPropertyValue('--base-rot')) || 0;
+        obj.style.transform =
+          `translate(${mx * depth}px, ${my * depth}px) rotate(${baseRot + mx * 1.5}deg)`;
+      });
+
+      if (plate) {
+        plate.style.transform = `translate(${mx * 3}px, ${my * 3}px)`;
+      }
+    });
+  };
+
+  const initNavScroll = () => {
+    const nav = document.getElementById('navbar');
+    if (!nav) return;
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('is-scrolled', window.scrollY > 24);
+    }, { passive: true });
+  };
+
+  const initReveal = () => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+  };
+
+  const init = () => {
+    initHeroParallax();
+    initNavScroll();
+    initReveal();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>

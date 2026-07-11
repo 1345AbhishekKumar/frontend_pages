@@ -1,0 +1,316 @@
+import React, { useRef, useEffect, useState } from 'react';
+import { Aperture, Search, Menu, Play } from 'lucide-react';
+
+// Sample premium video data (using reliable mixkit/pexels placeholder videos)
+const VIDEO_DATA = [
+  {
+    id: 1,
+    title: "Neon City Nights",
+    description: "Cruising through the illuminated downtown avenues.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-driving-in-a-city-at-night-1481-large.mp4",
+    poster: "https://images.unsplash.com/photo-1555617781-692db237190d?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 2,
+    title: "Ocean Breeze",
+    description: "Crystal clear waves crashing on the tropical shore.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4",
+    poster: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 3,
+    title: "Cosmic Journey",
+    description: "A breathtaking view of the galaxy and distant stars.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-1610-large.mp4",
+    poster: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 4,
+    title: "Forest Canopy",
+    description: "Sunlight filtering through the dense woodland leaves.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4",
+    poster: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 5,
+    title: "Amusement Park",
+    description: "Joy and vibrant colors at the local carnival.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-a-girl-blowing-a-bubble-gum-at-an-amusement-park-1226-large.mp4",
+    poster: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 6,
+    title: "Feline Grace",
+    description: "A white cat relaxing peacefully among tall grasses.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-white-cat-lying-among-the-grasses-100-large.mp4",
+    poster: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 7,
+    title: "Into the Unknown",
+    description: "Walking deeper into the mysterious, foggy woods.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-moving-forward-in-a-forest-1200-large.mp4",
+    poster: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 8,
+    title: "Companionship",
+    description: "Two friends hiking together through the wilderness.",
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-two-people-walking-in-the-woods-1199-large.mp4",
+    poster: "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&q=80&w=800",
+  }
+];
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden selection:bg-blue-500/30">
+      {/* Experimental Viewfinder HUD */}
+      <div className="fixed inset-0 pointer-events-none z-50">
+        {/* Crosshairs & Grid Lines */}
+        <div className="absolute top-0 bottom-0 left-12 w-[1px] bg-white/5" />
+        <div className="absolute top-12 left-0 right-0 h-[1px] bg-white/5" />
+        <div className="absolute top-0 bottom-0 right-12 w-[1px] bg-white/5" />
+        <div className="absolute bottom-12 left-0 right-0 h-[1px] bg-white/5" />
+        
+        {/* Viewfinder Corners */}
+        <div className="absolute top-8 left-8 w-4 h-4 border-t border-l border-white/40" />
+        <div className="absolute top-8 right-8 w-4 h-4 border-t border-r border-white/40" />
+        <div className="absolute bottom-8 left-8 w-4 h-4 border-b border-l border-white/40" />
+        <div className="absolute bottom-8 right-8 w-4 h-4 border-b border-r border-white/40" />
+
+        {/* Top Left - Brand */}
+        <div className="absolute top-16 left-16 flex flex-col gap-2 pointer-events-auto group cursor-pointer">
+          <div className="flex items-center gap-3">
+            <Aperture className="w-5 h-5 text-white/80 group-hover:rotate-180 transition-transform duration-1000 ease-in-out" />
+            <span className="text-sm font-bold tracking-[0.4em] text-white">MOTION</span>
+          </div>
+          <div className="text-[9px] text-gray-500 font-mono tracking-[0.3em] uppercase ml-8">
+            EXP.BUILD // 2026
+          </div>
+        </div>
+
+        {/* Top Right - Menu / Action */}
+        <div className="absolute top-16 right-16 flex items-center gap-8 pointer-events-auto">
+          <button className="relative group text-[10px] font-mono tracking-[0.3em] text-white overflow-hidden py-2 px-6 border border-white/20 hover:border-white/60 transition-colors duration-300">
+            <span className="relative z-10 mix-blend-difference">INITIATE</span>
+            <div className="absolute inset-0 bg-white scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-out z-0"></div>
+          </button>
+          <button className="flex flex-col gap-1.5 p-2 group hover:gap-2 transition-all">
+            <span className="w-8 h-[1px] bg-white/60 group-hover:bg-white group-hover:w-6 transition-all duration-300"></span>
+            <span className="w-6 h-[1px] bg-white/60 group-hover:bg-white group-hover:w-8 transition-all duration-300"></span>
+            <span className="w-4 h-[1px] bg-white/60 group-hover:bg-white group-hover:w-6 transition-all duration-300"></span>
+          </button>
+        </div>
+
+        {/* Bottom Left - System Status */}
+        <div className="absolute bottom-16 left-16 flex flex-col gap-1.5 font-mono text-[9px] text-gray-400 tracking-[0.2em] pointer-events-auto">
+          <div className="flex items-center gap-2 text-white mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            REC
+          </div>
+          <div>SYS.USR: ABHISHEK</div>
+          <div>COORD: 40.71°N 74.00°W</div>
+          <div className="opacity-50 mt-1">DRAG TO EXPLORE</div>
+        </div>
+
+        {/* Bottom Right - Nav Links */}
+        <div className="absolute bottom-16 right-16 flex flex-col items-end gap-3 font-mono text-[10px] text-gray-500 tracking-[0.3em] pointer-events-auto">
+          <a href="#" className="hover:text-white hover:-translate-x-2 transition-all duration-300">SHOWCASE</a>
+          <a href="#" className="hover:text-white hover:-translate-x-2 transition-all duration-300">STUDIOS</a>
+          <a href="#" className="hover:text-white hover:-translate-x-2 transition-all duration-300">ARCHIVE</a>
+        </div>
+      </div>
+
+      {/* Main Arch Carousel Section */}
+      <main className="relative w-full h-screen flex flex-col items-center justify-center pt-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(40,40,50,0.1)_0%,transparent_70%)]" />
+        
+        <div className="text-center z-10 mb-12 pointer-events-none opacity-80 mix-blend-plus-lighter">
+          <h1 className="text-4xl md:text-5xl font-light tracking-[0.2em] mb-4">
+            CINEMATIC
+          </h1>
+          <p className="text-gray-500 text-xs font-mono tracking-[0.5em]">PERSPECTIVES</p>
+        </div>
+
+        <ArchCarousel items={VIDEO_DATA} />
+      </main>
+    </div>
+  );
+}
+
+const ArchCarousel = ({ items }) => {
+  const containerRef = useRef(null);
+  const cardRefs = useRef([]);
+  
+  // Physics & Animation State
+  const scrollRef = useRef(0);
+  const targetScrollRef = useRef(0);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startScroll = useRef(0);
+  const isHovering = useRef(false);
+  
+  // Configuration Variables
+  const N = items.length;
+  const SPACING = 240;       // Distance between cards on X axis
+  const CURVE_DROP = 35;     // Parabola strength (how fast they drop on Y)
+  const ROTATION_STRENGTH = 12; // Degrees to tilt per unit of distance
+  const SCALE_DROP = 0.06;   // How much smaller side cards get
+  const AUTO_SPEED = 0.003;  // Passive auto-scroll speed
+  const LERP_FACTOR = 0.08;  // Smoothness of dragging / snapping
+
+  // Main Imperative Animation Loop (bypasses React render for 60fps)
+  useEffect(() => {
+    let animationFrameId;
+
+    const animate = () => {
+      // 1. Handle auto-rotation if not hovering and not dragging
+      if (!isDragging.current && !isHovering.current) {
+        targetScrollRef.current += AUTO_SPEED;
+      }
+
+      // 2. Smoothly interpolate current scroll towards target scroll
+      scrollRef.current += (targetScrollRef.current - scrollRef.current) * LERP_FACTOR;
+
+      // 3. Update all card DOM nodes directly
+      for (let i = 0; i < N; i++) {
+        const card = cardRefs.current[i];
+        if (!card) continue;
+
+        // Calculate distance from current center
+        let rawD = i - scrollRef.current;
+        
+        // Wrap distance into a circular domain: [-N/2, N/2]
+        // This math guarantees continuous infinite looping natively
+        let d = ((rawD + N / 2) % N + N) % N - N / 2;
+
+        // Calculate visual properties based on distance 'd'
+        const x = d * SPACING;
+        
+        // y = x^2 essentially creates the arch. 
+        // We use Math.pow(abs(d), 1.6) to soften the curve slightly
+        const y = Math.pow(Math.abs(d), 1.6) * CURVE_DROP;
+        
+        // Tilt cards inward towards the center
+        const rot = -d * ROTATION_STRENGTH;
+        
+        // Scale down cards as they get further from center
+        const scale = Math.max(0.4, 1 - Math.abs(d) * SCALE_DROP);
+        
+        // Higher Z-index for cards closer to the center
+        const zIndex = Math.round(100 - Math.abs(d) * 10);
+
+        // Fade out cards before they wrap around the back to prevent visual popping
+        let opacity = 1;
+        const fadeThreshold = (N / 2) - 1.5;
+        if (Math.abs(d) > fadeThreshold) {
+          opacity = Math.max(0, 1 - (Math.abs(d) - fadeThreshold));
+        }
+
+        // Apply styles imperatively
+        card.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${rot}deg)`;
+        card.style.zIndex = zIndex;
+        card.style.opacity = opacity;
+        
+        // Subtle brightness drop for side cards
+        card.style.filter = `brightness(${1 - Math.abs(d) * 0.15})`;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [N]);
+
+  // Pointer Event Handlers (Mouse + Touch)
+  const handlePointerDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.clientX || (e.touches && e.touches[0].clientX);
+    startScroll.current = targetScrollRef.current;
+    containerRef.current.style.cursor = 'grabbing';
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging.current) return;
+    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+    const deltaX = currentX - startX.current;
+    
+    // Adjust sensitivity by multiplying deltaX
+    targetScrollRef.current = startScroll.current - deltaX * 0.008;
+  };
+
+  const handlePointerUp = () => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      containerRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const handleWheel = (e) => {
+    // Scroll wheel moves the carousel horizontally
+    targetScrollRef.current += e.deltaY * 0.005 + e.deltaX * 0.005;
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-[500px] flex items-center justify-center cursor-grab select-none touch-none"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      onWheel={handleWheel}
+      style={{ perspective: '1200px' }}
+    >
+      {items.map((item, index) => (
+        <div
+          key={item.id}
+          ref={(el) => (cardRefs.current[index] = el)}
+          className="absolute origin-bottom transition-none will-change-transform"
+          onMouseEnter={() => (isHovering.current = true)}
+          onMouseLeave={() => (isHovering.current = false)}
+        >
+          <CarouselCard item={item} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CarouselCard = ({ item }) => {
+  return (
+    <div className="group relative w-64 h-96 rounded-[2rem] overflow-hidden bg-zinc-900 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out hover:scale-105 hover:-translate-y-4 hover:shadow-[0_30px_60px_rgba(59,130,246,0.2)] cursor-pointer">
+      
+      {/* Video / Poster Background */}
+      <video
+        src={item.videoUrl}
+        poster={item.poster}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+      />
+
+      {/* Persistent soft gradient for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+      
+      {/* Play Button Indicator (Fades out on hover) */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110">
+        <Play className="w-5 h-5 ml-1" fill="currentColor" />
+      </div>
+
+      {/* Title & Description Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+        <h3 className="text-xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
+          {item.title}
+        </h3>
+        <p className="text-sm text-gray-300 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+          {item.description}
+        </p>
+      </div>
+    </div>
+  );
+};

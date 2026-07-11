@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#F4F2EC] scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Nuance of Fluency</title>
+    
+    <!-- Google Fonts: Editorial Serif, Monospace UI, Japanese Serif -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+JP:wght@200;300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#F4F2EC',
+                        ink: '#1A1A1A',
+                        void: '#0A0A0A',
+                        accent: '#FF3333' /* Extracted from the uploaded red dot image */
+                    },
+                    fontFamily: {
+                        serif: ['"DM Serif Display"', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        jp: ['"Noto Serif JP"', 'serif'],
+                        body: ['"Noto Serif JP"', 'serif'],
+                    },
+                    borderWidth: {
+                        '1': '1px',
+                    },
+                    transitionTimingFunction: {
+                        'expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base styles & Utility */
+        :root {
+            cursor: none; /* Hide default cursor for custom cursor */
+        }
+        body {
+            color: #1A1A1A;
+            background-color: #F4F2EC;
+            transition: filter 1s cubic-bezier(0.16, 1, 0.3, 1), background-color 1s ease;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Invert mode activated by CTA */
+        body.inverted {
+            filter: invert(1) hue-rotate(180deg);
+            background-color: #1A1A1A;
+        }
+
+        /* Custom Cursor */
+        #cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 8px;
+            background-color: #FF3333; /* Accent color applied to cursor */
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #cursor-ring {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            border: 1px solid white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+        }
+        body.hovering-interactive #cursor-dot {
+            width: 48px;
+            height: 48px;
+            mix-blend-mode: multiply; /* Ensures the red remains vibrant over light backgrounds */
+        }
+        body.hovering-interactive #cursor-ring {
+            width: 0px;
+            height: 0px;
+            opacity: 0;
+        }
+
+        /* Noise Overlay */
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9000;
+            opacity: 0.25;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Vertical Japanese Text */
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+        }
+
+        /* Draggable UI Elements */
+        .drag-item {
+            cursor: none;
+            user-select: none;
+            transition: box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+        }
+        .drag-item.dragging {
+            box-shadow: 12px 12px 0px rgba(255, 51, 51, 0.15); /* Subtle accent shadow on drag */
+            transform: scale(1.05) rotate(2deg);
+            z-index: 50;
+        }
+
+        /* SVG Spline Connection */
+        #syntax-spline {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .syntax-path {
+            fill: none;
+            stroke: #1A1A1A;
+            stroke-width: 1px;
+            stroke-dasharray: 4 4;
+            opacity: 0.3;
+            animation: dashScroll 20s linear infinite;
+        }
+        @keyframes dashScroll { to { stroke-dashoffset: -1000; } }
+
+        /* Terminal cursor */
+        .cursor-blink::after {
+            content: '█';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Marquee */
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .animate-marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 25s linear infinite;
+        }
+
+        /* Glitch reveal elements */
+        .scramble-text { visibility: hidden; } /* Hidden until JS kicks in */
+        
+        /* Smooth reveal for sections */
+        .reveal-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Circular progress CTA */
+        .cta-progress {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            stroke-dasharray: 283; /* 2 * pi * r (approx for r=45) */
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 3s linear;
+        }
+    </style>
+</head>
+<body class="selection:bg-accent selection:text-paper">
+
+    <!-- Custom Cursor Setup -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Global Grid Overlay -->
+    <div class="fixed inset-0 pointer-events-none z-0 flex mix-blend-multiply opacity-10" style="background-size: 32px 32px; background-image: radial-gradient(#1A1A1A 0.5px, transparent 0.5px);"></div>
+
+    <!-- 1. Hero Section -->
+    <header class="relative w-full h-[100svh] border-b-1 border-ink overflow-hidden flex flex-col justify-end z-10" id="hero-section">
+        
+        <!-- Interactive Vertical Japanese Text Wall (Parallax) -->
+        <div id="jp-wall" class="absolute inset-y-0 right-0 p-8 flex gap-8 text-ink opacity-[0.15] font-jp text-xl md:text-2xl tracking-[0.5em] vertical-text leading-loose select-none pointer-events-none transition-transform duration-100 ease-out">
+            <p>言語は単なる道具ではない。</p>
+            <p>思考の形態であり、世界の認識を形作るレンズである。</p>
+            <p>文脈の中に潜む微細なニュアンスを理解すること。</p>
+            <p>空白の意味を読み取ること。</p>
+            <p>真の共鳴を追求する。</p>
+        </div>
+
+        <!-- Meta info -->
+        <div class="absolute top-0 w-full p-4 flex justify-between font-mono text-[10px] uppercase border-b-1 border-ink z-20 bg-paper/60 backdrop-blur-md text-ink">
+            <span class="scramble-init" data-text="System: v2.0.4">System: v2.0.4</span>
+            <span class="animate-pulse text-accent">Live</span>
+            <span class="scramble-init" data-text="Index: 001">Index: 001</span>
+        </div>
+
+        <!-- Sliding Headline -->
+        <div class="p-8 md:p-16 z-20 w-full mb-12">
+            <h1 class="font-serif text-[15vw] leading-[0.8] tracking-tight uppercase text-ink select-none">
+                <div class="overflow-hidden"><span class="block scramble-heading" data-text="Syntax">Syntax</span></div>
+                <div class="overflow-hidden"><span class="block ml-[15vw] md:ml-[25vw] scramble-heading" data-text="As Form.">As Form.</span></div>
+            </h1>
+            <p class="font-mono text-xs md:text-sm mt-12 max-w-md uppercase tracking-widest border-l-1 border-ink pl-4 scramble-init text-ink" data-text="Deconstructing Japanese language acquisition through structural immersion and absolute minimalism.">
+                Deconstructing Japanese language acquisition through structural immersion and absolute minimalism.
+            </p>
+        </div>
+    </header>
+
+    <!-- 2. Problem Section (Staggered Reveal) -->
+    <section class="border-b-1 border-ink relative z-10 bg-paper">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-0 divide-y md:divide-y-0 md:divide-x border-ink min-h-[50vh]">
+            <div class="p-8 md:p-12 lg:p-16 flex flex-col justify-between reveal-up group">
+                <span class="font-mono text-xs uppercase mb-16 block text-ink/50 group-hover:text-ink transition-colors">01 / The Illusion</span>
+                <p class="font-serif text-3xl leading-tight text-ink">Traditional methods focus on rote memorization, creating a fragmented understanding of isolated symbols.</p>
+            </div>
+            <div class="p-8 md:p-12 lg:p-16 flex flex-col justify-between md:pt-24 lg:pt-32 bg-ink text-paper reveal-up" style="transition-delay: 0.1s;">
+                <span class="font-mono text-xs uppercase mb-16 block text-paper/50">02 / The Friction</span>
+                <p class="font-serif text-3xl leading-tight text-paper">Grammar is taught as math rather than an interconnected system of thought and cultural expression.</p>
+            </div>
+            <div class="p-8 md:p-12 lg:p-16 flex flex-col justify-between md:pb-24 lg:pb-32 reveal-up group" style="transition-delay: 0.2s;">
+                <span class="font-mono text-xs uppercase mb-16 block text-ink/50 group-hover:text-ink transition-colors">03 / The Void</span>
+                <p class="font-serif text-3xl leading-tight text-ink">The unspoken space between words—<span class="font-jp italic font-light">間 (Ma)</span>—is entirely lost in translation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Solution Section (Magnetic Interaction) -->
+    <section class="border-b-1 border-ink py-32 px-8 flex flex-col items-center justify-center min-h-[80vh] relative overflow-hidden bg-paper z-10 text-ink">
+        <span class="absolute top-8 left-8 font-mono text-[10px] uppercase tracking-widest scramble-init" data-text="Resolution Paradigm">Resolution Paradigm</span>
+        
+        <div class="w-full max-w-3xl aspect-square md:aspect-[21/9] border-1 border-ink flex items-center justify-center relative z-10 group overflow-hidden">
+            <!-- Background Fill effect -->
+            <div class="absolute inset-0 bg-ink transform translate-y-full group-hover:translate-y-0 transition-transform duration-[800ms] ease-expo"></div>
+            
+            <!-- The Point (Magnetic Element) -->
+            <div class="magnetic-wrap p-12 z-20">
+                <span class="font-serif text-[15rem] leading-none text-accent group-hover:text-accent transition-colors duration-500 magnetic-element interactive-trigger drop-shadow-[0_0_15px_rgba(255,51,51,0.2)]">.</span>
+            </div>
+            
+            <!-- Corner Accents -->
+            <div class="absolute top-4 left-4 font-mono text-[10px] text-ink group-hover:text-paper transition-colors z-10">Absolute Focus</div>
+            <div class="absolute bottom-4 right-4 font-mono text-[10px] text-ink group-hover:text-paper transition-colors z-10">[ Singular Entry ]</div>
+        </div>
+    </section>
+
+    <!-- 4. Core System (Horizontal Scroll with Skew) -->
+    <section class="border-b-1 border-ink overflow-hidden bg-paper z-10 text-ink">
+        <div class="p-4 border-b-1 border-ink flex justify-between font-mono text-[10px] uppercase tracking-widest">
+            <span>Architecture</span>
+            <span class="animate-pulse text-accent">Scroll Horizon -></span>
+        </div>
+        <div class="flex overflow-x-auto no-scrollbar snap-x snap-mandatory h-[70vh] items-center px-[5vw]" id="horizontal-scroll">
+            
+            <!-- Generate Panels -->
+            <script>
+                const phases = [
+                    { id: 'I', jp: '存在', title: 'Ontology', desc: 'Deconstructing kanji primitives. Origin before assembly.' },
+                    { id: 'II', jp: '配置', title: 'Topology', desc: 'Spatial relationship of radicals altering meaning.' },
+                    { id: 'III', jp: '構文', title: 'Syntax', desc: 'Particle deployment. The invisible network.' },
+                    { id: 'IV', jp: '共鳴', title: 'Resonance', desc: 'Societal distance framing and Keigo calibration.' },
+                    { id: 'V', jp: '無', title: 'Void', desc: 'Kuuki wo yomu. Mastery of implication.' }
+                ];
+                phases.forEach((p, index) => {
+                    document.write(`
+                        <div class="w-[85vw] md:w-[40vw] flex-shrink-0 border-1 border-ink p-8 md:p-12 h-[80%] flex flex-col justify-between relative overflow-hidden snap-center mx-4 group hover:bg-ink hover:text-paper transition-colors duration-500 h-panel">
+                            <span class="absolute -top-16 -right-16 font-serif text-[25rem] leading-none text-ink/5 group-hover:text-paper/10 transition-colors select-none pointer-events-none">${index + 1}</span>
+                            <div class="flex justify-between w-full border-b-1 border-ink group-hover:border-paper pb-4 transition-colors">
+                                <span class="font-mono text-xs uppercase">Phase ${p.id}</span>
+                                <span class="font-jp text-xs opacity-50">${p.jp}</span>
+                            </div>
+                            <div class="z-10 relative">
+                                <h3 class="font-serif text-6xl mb-6 scramble-trigger" data-text="${p.title}">${p.title}</h3>
+                                <p class="max-w-sm font-mono text-xs uppercase leading-relaxed">${p.desc}</p>
+                            </div>
+                        </div>
+                    `);
+                });
+            </script>
+        </div>
+    </section>
+
+    <!-- 5 & 6. How It Works & Feature Showcase -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 border-b-1 border-ink min-h-[90vh] bg-paper z-10 relative text-ink">
+        
+        <!-- Reticle -->
+        <div class="border-b-1 xl:border-b-0 xl:border-r-1 border-ink p-8 md:p-16 flex flex-col items-center justify-center relative overflow-hidden group">
+            <span class="absolute top-8 left-8 font-mono text-[10px] uppercase tracking-widest">Targeting System</span>
+            
+            <div class="absolute inset-0 bg-ink/5 translate-y-full group-hover:translate-y-0 transition-transform duration-1000 ease-expo pointer-events-none"></div>
+
+            <!-- Magnetic Reticle -->
+            <div class="magnetic-wrap p-16">
+                <div class="relative w-64 h-64 rounded-full border-1 border-ink flex items-center justify-center group-hover:border-ink/50 transition-colors magnetic-element interactive-trigger">
+                    <div class="absolute inset-x-0 h-[1px] bg-ink -ml-12 -mr-12 group-hover:rotate-180 transition-transform duration-[1500ms] ease-expo"></div>
+                    <div class="absolute inset-y-0 w-[1px] bg-ink -mt-12 -mb-12 group-hover:rotate-180 transition-transform duration-[1500ms] ease-expo"></div>
+                    <div class="w-3 h-3 rounded-full bg-accent shadow-[0_0_15px_rgba(255,51,51,0.4)] group-hover:scale-150 transition-transform duration-500"></div>
+                    
+                    <!-- Radar Sweep -->
+                    <div class="absolute inset-0 rounded-full border-t-1 border-accent/30 animate-[spin_4s_linear_infinite]"></div>
+                </div>
+            </div>
+
+            <p class="font-mono text-xs text-center uppercase mt-16 max-w-sm reveal-up text-ink">Adaptive algorithms isolate and drill specific grammatical fractures with absolute precision.</p>
+        </div>
+
+        <!-- Draggable UI with SVG Logic Tree -->
+        <div class="p-8 md:p-16 relative overflow-hidden flex items-center justify-center bg-[#EDEDE8]" id="drag-container">
+            <span class="absolute top-8 right-8 font-mono text-[10px] uppercase tracking-widest z-20">Syntax Assembler</span>
+            
+            <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none overflow-hidden mix-blend-multiply">
+                <span class="font-jp text-[40rem] leading-none whitespace-nowrap -ml-32">言語</span>
+            </div>
+
+            <!-- SVG Spline connecting nodes -->
+            <svg id="syntax-spline">
+                <path id="connection-path" class="syntax-path stroke-ink"></path>
+            </svg>
+
+            <!-- Draggable Nodes -->
+            <div class="absolute w-full h-full inset-0 z-10" id="nodes-layer">
+                <div class="drag-item absolute top-[25%] left-[15%] bg-paper border-1 border-ink text-ink hover:text-accent hover:border-accent p-3 font-mono text-[10px] uppercase interactive-trigger" id="node1" data-id="1">
+                    [Subject] 私
+                </div>
+                <div class="drag-item absolute top-[50%] right-[25%] bg-paper border-1 border-ink text-ink hover:text-accent hover:border-accent p-3 font-mono text-[10px] uppercase interactive-trigger" id="node2" data-id="2">
+                    [Particle] は
+                </div>
+                <div class="drag-item absolute bottom-[20%] left-[30%] bg-paper border-1 border-ink text-ink hover:text-accent hover:border-accent p-3 font-mono text-[10px] uppercase interactive-trigger" id="node3" data-id="3">
+                    [Object] 構造
+                </div>
+                <div class="drag-item absolute bottom-[40%] right-[10%] bg-paper border-1 border-ink text-ink hover:text-accent hover:border-accent p-3 font-mono text-[10px] uppercase interactive-trigger" id="node4" data-id="4">
+                    [Verb] 理解する
+                </div>
+            </div>
+            
+            <div class="absolute bottom-8 left-8 font-mono text-[10px] opacity-50 uppercase z-20 text-ink">Click & Drag to align logic</div>
+        </div>
+    </section>
+
+    <!-- 7. Immersive Experience (Video / Terminal) -->
+    <section class="grid grid-cols-1 md:grid-cols-[2fr_1fr] border-b-1 border-ink bg-paper relative z-10 text-ink">
+        
+        <!-- Viewfinder Area -->
+        <div class="border-r-1 border-ink p-8 md:p-16 relative min-h-[70vh] flex flex-col items-center justify-center">
+            <div class="w-full h-full border-1 border-ink flex items-center justify-center relative overflow-hidden bg-void text-paper group interactive-trigger">
+                <!-- Static Noise -->
+                <div class="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%221.5%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E');"></div>
+                
+                <span class="z-10 font-mono text-xs uppercase tracking-[0.3em] group-hover:scale-110 group-hover:tracking-[0.5em] transition-all duration-[2000ms] ease-expo text-paper">[ Decrypt Stream ]</span>
+                
+                <!-- Crosshairs in video -->
+                <div class="absolute top-1/2 left-0 w-full h-[1px] bg-paper/20 group-hover:bg-accent/40 transition-colors duration-1000"></div>
+                <div class="absolute top-0 left-1/2 w-[1px] h-full bg-paper/20 group-hover:bg-accent/40 transition-colors duration-1000"></div>
+                
+                <div class="absolute top-4 left-4 w-4 h-4 border-t-1 border-l-1 border-paper group-hover:border-accent transition-colors duration-1000"></div>
+                <div class="absolute bottom-4 right-4 w-4 h-4 border-b-1 border-r-1 border-paper group-hover:border-accent transition-colors duration-1000"></div>
+            </div>
+            <div class="w-full flex justify-between font-mono text-[10px] uppercase mt-4 opacity-50">
+                <span>Visual Field</span>
+                <span>REC // 00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Terminal Log -->
+        <div class="bg-void text-[#00FF41] p-8 font-mono text-[10px] h-[50vh] md:h-auto overflow-hidden relative" id="terminal-container">
+            <!-- CRT Scanline effect -->
+            <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-10 mix-blend-overlay opacity-50"></div>
+            
+            <div class="absolute top-4 right-4 text-paper/30 uppercase z-20">Sys_Log.exe</div>
+            <div id="terminal-content" class="h-full flex flex-col justify-end pb-8 relative z-20 space-y-2 opacity-80 mix-blend-screen text-[#00FF41]">
+                <div class="cursor-blink">> Root access granted.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. Social Proof & Scrubber -->
+    <section class="border-b-1 border-ink grid grid-cols-1 md:grid-cols-2 relative z-10 bg-paper text-ink">
+        
+        <!-- Dynamic Metrics -->
+        <div class="p-8 md:p-24 border-b-1 md:border-b-0 md:border-r-1 border-ink flex flex-col items-center justify-center group">
+            <span class="font-mono text-[10px] uppercase tracking-widest absolute top-8 left-8">Efficacy Rate</span>
+            
+            <div class="relative overflow-hidden w-full text-center py-12">
+                <h2 id="metric-counter" class="font-serif text-[12rem] md:text-[18rem] leading-[0.7] tracking-tighter text-ink inline-block transform group-hover:scale-105 transition-transform duration-1000 ease-expo">
+                    00<span class="text-4xl md:text-6xl align-top text-ink/50">.0%</span>
+                </h2>
+            </div>
+            
+            <p class="font-mono text-xs mt-8 uppercase text-center max-w-xs reveal-up">Retention sustained over 90 cycles of structural mapping protocol.</p>
+        </div>
+
+        <!-- Scrubber -->
+        <div class="p-8 md:p-16 flex flex-col justify-center relative bg-ink text-paper h-full interactive-trigger" id="scrubber-container">
+            <span class="absolute top-8 left-8 font-mono text-[10px] uppercase tracking-widest opacity-50">Timeline</span>
+            
+            <div class="w-full relative h-32 flex items-center group cursor-none mt-8">
+                <!-- Base Line -->
+                <div class="absolute w-full h-[1px] bg-paper opacity-20"></div>
+                <!-- Active Line -->
+                <div class="absolute h-[1px] bg-paper w-[33%] transition-all duration-200" id="scrubber-active"></div>
+                
+                <!-- Nodes -->
+                <div class="absolute left-0 w-2 h-2 bg-paper rounded-full -ml-1"></div>
+                <div class="absolute left-1/3 w-2 h-2 bg-paper rounded-full -ml-1"></div>
+                <div class="absolute left-2/3 w-2 h-2 bg-paper rounded-full -ml-1"></div>
+                <div class="absolute right-0 w-2 h-2 bg-paper rounded-full -mr-1"></div>
+                
+                <!-- Handle -->
+                <div class="absolute w-[1px] h-16 bg-paper -ml-[0.5px] top-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-100" id="scrubber-handle" style="left: 33%;">
+                    <div class="w-8 h-8 border-1 border-paper rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-50 group-hover:scale-100 ease-expo flex items-center justify-center backdrop-blur-sm">
+                        <div class="w-2 h-2 bg-accent rounded-full shadow-[0_0_10px_rgba(255,51,51,0.5)]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between w-full font-mono text-[10px] uppercase mt-4 opacity-50 text-paper">
+                <span id="scrubber-value">DAY_30</span>
+                <span>MASTERY</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. Final CTA (SVG Stroke Draw) -->
+    <section class="h-[80vh] flex flex-col items-center justify-center relative bg-paper z-10" id="final-cta">
+        <div class="absolute inset-0 bg-ink transform scale-y-0 origin-bottom transition-transform duration-[1.5s] ease-expo z-0" id="inversion-bg"></div>
+
+        <div class="relative group z-20">
+            <!-- SVG Progress Ring -->
+            <svg class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 pointer-events-none overflow-visible">
+                <circle cx="64" cy="64" r="45" fill="none" stroke="#1A1A1A" stroke-width="1" class="opacity-10" />
+                <circle cx="64" cy="64" r="45" fill="none" stroke="#1A1A1A" stroke-width="2" class="cta-progress group-hover:stroke-accent transition-colors duration-500" id="cta-circle" />
+            </svg>
+
+            <!-- Interaction Core -->
+            <div id="cta-dot" class="w-24 h-24 rounded-full flex items-center justify-center cursor-none z-10 relative bg-transparent interactive-trigger">
+                <div class="w-3 h-3 bg-accent rounded-full transition-transform duration-500 group-hover:scale-[2.5] ease-expo shadow-[0_0_15px_rgba(255,51,51,0.4)]" id="cta-inner"></div>
+            </div>
+        </div>
+
+        <p class="font-mono text-[10px] uppercase mt-12 text-ink transition-colors duration-500 text-center tracking-[0.2em] z-20" id="cta-text">
+            Hold sequence to instantiate.<br><span class="opacity-50 mt-2 block">T-Minus 3.0s</span>
+        </p>
+    </section>
+
+    <!-- 10. Footer -->
+    <footer class="border-t-1 border-ink py-4 overflow-hidden bg-paper relative z-20">
+        <div class="w-full flex whitespace-nowrap">
+            <div class="animate-marquee font-jp text-5xl md:text-8xl uppercase tracking-widest text-ink/[0.03] shrink-0 font-light select-none">
+                &nbsp;&nbsp;+&nbsp;&nbsp;THE LIVING MANUSCRIPT&nbsp;&nbsp;+&nbsp;&nbsp;構造的没入&nbsp;&nbsp;+&nbsp;&nbsp;SYNTAX AS FORM&nbsp;&nbsp;+&nbsp;&nbsp;文脈の理解&nbsp;&nbsp;+&nbsp;&nbsp;BEYOND TRANSLATION
+            </div>
+            <div class="animate-marquee font-jp text-5xl md:text-8xl uppercase tracking-widest text-ink/[0.03] shrink-0 font-light select-none">
+                &nbsp;&nbsp;+&nbsp;&nbsp;THE LIVING MANUSCRIPT&nbsp;&nbsp;+&nbsp;&nbsp;構造的没入&nbsp;&nbsp;+&nbsp;&nbsp;SYNTAX AS FORM&nbsp;&nbsp;+&nbsp;&nbsp;文脈の理解&nbsp;&nbsp;+&nbsp;&nbsp;BEYOND TRANSLATION
+            </div>
+        </div>
+        <div class="flex justify-between p-4 px-8 font-mono text-[10px] uppercase border-t-1 border-ink mt-6 opacity-50 text-ink">
+            <span>© 2026 Structura Systematics</span>
+            <span>Design: Brutal / Fluid</span>
+        </div>
+    </footer>
+
+    <!-- Core Interactions & Animations -->
+    <script>
+        // --- 1. Custom Smooth Cursor ---
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorRing = document.getElementById('cursor-ring');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+        
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            // Dot follows instantly
+            cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
+        });
+
+        // Smooth follow for the ring
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.15; // easing
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Cursor hover states
+        const interactives = document.querySelectorAll('.interactive-trigger, a, button, .drag-item');
+        interactives.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('hovering-interactive'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('hovering-interactive'));
+        });
+
+
+        // --- 2. Magnetic Elements ---
+        const magnetics = document.querySelectorAll('.magnetic-wrap');
+        magnetics.forEach(wrap => {
+            const el = wrap.querySelector('.magnetic-element');
+            wrap.addEventListener('mousemove', (e) => {
+                const rect = wrap.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            });
+            wrap.addEventListener('mouseleave', () => {
+                el.style.transform = `translate(0px, 0px)`;
+                el.style.transition = `transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)`;
+            });
+            wrap.addEventListener('mouseenter', () => {
+                el.style.transition = `none`; // remove transition for snappy follow
+            });
+        });
+
+
+        // --- 3. Text Scramble Decode Effect ---
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=日文漢語構造形態空';
+        
+        function scrambleText(element, finalString, duration = 1500) {
+            let start = null;
+            const length = finalString.length;
+            element.style.visibility = 'visible';
+
+            function update(timestamp) {
+                if (!start) start = timestamp;
+                const progress = timestamp - start;
+                const percentage = Math.min(progress / duration, 1);
+                
+                // Calculate how many characters should be final
+                const resolvedChars = Math.floor(length * percentage);
+                
+                let currentStr = '';
+                for(let i=0; i<length; i++) {
+                    if(i < resolvedChars || finalString[i] === ' ') {
+                        currentStr += finalString[i];
+                    } else {
+                        currentStr += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                }
+                
+                element.innerText = currentStr;
+
+                if (percentage < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.innerHTML = finalString; // ensure precise final HTML if needed
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Intersection Observer for Reveals & Scrambles
+        const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Handle standard reveal
+                    if (entry.target.classList.contains('reveal-up')) {
+                        entry.target.classList.add('is-visible');
+                    }
+                    // Handle Scramble Init
+                    if (entry.target.classList.contains('scramble-init')) {
+                        scrambleText(entry.target, entry.target.dataset.text, 1000);
+                        entry.target.classList.remove('scramble-init'); // run once
+                    }
+                    if (entry.target.classList.contains('scramble-heading')) {
+                        scrambleText(entry.target, entry.target.dataset.text, 2000);
+                        entry.target.classList.remove('scramble-heading');
+                    }
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-up, .scramble-init, .scramble-heading').forEach(el => observer.observe(el));
+
+
+        // --- 4. Dynamic SVG Syntax Tree (Draggable Logic) ---
+        const dragItems = document.querySelectorAll('.drag-item');
+        const container = document.getElementById('drag-container');
+        const path = document.getElementById('connection-path');
+
+        function updateSpline() {
+            // Get center points of all 4 nodes
+            const points = Array.from(dragItems).sort((a,b) => a.dataset.id - b.dataset.id).map(item => {
+                const rect = item.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                return {
+                    x: rect.left - containerRect.left + rect.width / 2,
+                    y: rect.top - containerRect.top + rect.height / 2
+                };
+            });
+
+            // Create curved SVG path (Catmull-Rom or simple Bezier)
+            // Using simple lines with smooth corners for brutalist tech look
+            if(points.length === 4) {
+                const d = `M ${points[0].x} ${points[0].y} 
+                           L ${points[1].x} ${points[1].y} 
+                           L ${points[2].x} ${points[2].y} 
+                           L ${points[3].x} ${points[3].y}`;
+                path.setAttribute('d', d);
+            }
+        }
+
+        // Initial draw and window resize
+        setTimeout(updateSpline, 100);
+        window.addEventListener('resize', updateSpline);
+
+        // Dragging Logic
+        let activeDrag = null;
+        let offsetX = 0, offsetY = 0;
+
+        dragItems.forEach(item => {
+            item.addEventListener('mousedown', (e) => {
+                activeDrag = item;
+                item.classList.add('dragging');
+                const rect = item.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+            });
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!activeDrag) return;
+            const containerRect = container.getBoundingClientRect();
+            
+            let x = e.clientX - containerRect.left - offsetX;
+            let y = e.clientY - containerRect.top - offsetY;
+
+            // Constrain
+            x = Math.max(0, Math.min(x, containerRect.width - activeDrag.offsetWidth));
+            y = Math.max(0, Math.min(y, containerRect.height - activeDrag.offsetHeight));
+
+            activeDrag.style.left = `${x}px`;
+            activeDrag.style.top = `${y}px`;
+            activeDrag.style.transform = `scale(1.05) rotate(${e.movementX * 0.5}deg)`; // Kinetic tilt
+            
+            updateSpline();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (activeDrag) {
+                activeDrag.style.transform = `scale(1) rotate(0deg)`; // Reset tilt
+                activeDrag.classList.remove('dragging');
+                activeDrag = null;
+            }
+        });
+
+
+        // --- 5. Hero Parallax & Scroll Skew ---
+        const jpWall = document.getElementById('jp-wall');
+        const panels = document.querySelectorAll('.h-panel');
+        const hScroll = document.getElementById('horizontal-scroll');
+
+        window.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.clientX) * 0.02;
+            const y = (window.innerHeight / 2 - e.clientY) * 0.02;
+            jpWall.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        hScroll.addEventListener('scroll', () => {
+            // Apply slight skew based on scroll velocity (simplified for vanilla)
+            panels.forEach(p => {
+                p.style.transform = `skewX(-2deg)`;
+                clearTimeout(p.skewTimer);
+                p.skewTimer = setTimeout(() => { p.style.transform = `skewX(0deg)`; }, 150);
+            });
+        });
+
+
+        // --- 6. Terminal Logs Simulation ---
+        const terminalContent = document.getElementById('terminal-content');
+        const logs = [
+            "> Initializing morphological breakdown...",
+            "> Mapping particle vectors: [WA] -> [GA] shift detected.",
+            "> Re-routing to drill module Beta-4.",
+            "ERR: Nuance drift > 0.4. Recalibrating cultural context.",
+            "> Constructing semantic hierarchy.",
+            "SUCCESS: Assimilation metric updated.",
+            "> Listening..."
+        ];
+        let logIdx = 0;
+        function typeLog() {
+            if (logIdx < logs.length) {
+                const line = document.createElement('div');
+                line.textContent = logs[logIdx];
+                
+                const cursor = document.querySelector('.cursor-blink');
+                if(cursor) cursor.classList.remove('cursor-blink');
+                
+                if (logIdx === logs.length - 1) line.classList.add('cursor-blink');
+                
+                terminalContent.appendChild(line);
+                terminalContent.scrollTop = terminalContent.scrollHeight;
+                
+                logIdx++;
+                setTimeout(typeLog, Math.random() * 1000 + 400); // Glitchy timing
+            }
+        }
+        // Start terminal when in view
+        const termObserver = new IntersectionObserver(e => {
+            if(e[0].isIntersecting) { typeLog(); termObserver.disconnect(); }
+        });
+        termObserver.observe(document.getElementById('terminal-container'));
+
+
+        // --- 7. Number Counter up to 84.2 ---
+        const metricObj = { val: 0 };
+        const counterEl = document.getElementById('metric-counter');
+        
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // Ease out Expo
+                const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                const current = (start + (end - start) * ease).toFixed(1);
+                
+                // Add scramble effect occasionally during count
+                const display = Math.random() > 0.8 && progress < 0.9 ? 
+                    `${Math.floor(Math.random()*99)}.${Math.floor(Math.random()*9)}<span class="text-4xl md:text-6xl align-top text-ink/50">%</span>` : 
+                    `${current}<span class="text-4xl md:text-6xl align-top text-ink/50">%</span>`;
+                    
+                counterEl.innerHTML = display;
+                if (progress < 1) window.requestAnimationFrame(step);
+                else counterEl.innerHTML = `84.2<span class="text-4xl md:text-6xl align-top text-ink/50">%</span>`;
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        const metricObs = new IntersectionObserver(e => {
+            if(e[0].isIntersecting) {
+                animateValue(metricObj, 0, 84.2, 2500);
+                metricObs.disconnect();
+            }
+        });
+        metricObs.observe(counterEl);
+
+
+        // --- 8. Progress Scrubber (Magnetic snapping simulation) ---
+        const scrubContainer = document.getElementById('scrubber-container');
+        const scrubHandle = document.getElementById('scrubber-handle');
+        const scrubActive = document.getElementById('scrubber-active');
+        const scrubVal = document.getElementById('scrubber-value');
+        let isScrubbing = false;
+
+        function updateScrubber(clientX) {
+            const rect = scrubContainer.getBoundingClientRect();
+            let x = clientX - rect.left;
+            x = Math.max(0, Math.min(x, rect.width));
+            let pct = (x / rect.width) * 100;
+            
+            // Snap to nodes (0, 33, 66, 100)
+            const snaps = [0, 33.33, 66.66, 100];
+            const closest = snaps.reduce((prev, curr) => Math.abs(curr - pct) < Math.abs(prev - pct) ? curr : prev);
+            if(Math.abs(pct - closest) < 5) pct = closest; // 5% snap threshold
+
+            scrubHandle.style.left = `${pct}%`;
+            scrubActive.style.width = `${pct}%`;
+            
+            if(pct < 10) scrubVal.innerText = "DAY_01";
+            else if(pct < 50) scrubVal.innerText = "DAY_30";
+            else if(pct < 90) scrubVal.innerText = "DAY_60";
+            else scrubVal.innerText = "DAY_90";
+        }
+
+        scrubContainer.addEventListener('mousedown', (e) => { isScrubbing = true; updateScrubber(e.clientX); });
+        window.addEventListener('mousemove', (e) => { if(isScrubbing) updateScrubber(e.clientX); });
+        window.addEventListener('mouseup', () => isScrubbing = false);
+
+
+        // --- 9. Final CTA 3-Second Precise Draw & Invert ---
+        const ctaDot = document.getElementById('cta-dot');
+        const ctaCircle = document.getElementById('cta-circle');
+        const ctaInner = document.getElementById('cta-inner');
+        const ctaTextFinal = document.getElementById('cta-text');
+        const invertBg = document.getElementById('inversion-bg');
+        let ctaTimer;
+
+        function startCta() {
+            // Animate SVG stroke
+            ctaCircle.style.strokeDashoffset = '0';
+            ctaInner.style.transform = 'scale(4)';
+            ctaTextFinal.innerHTML = "Instantiating sequence...<br><span class='opacity-50 mt-2 block'>Hold</span>";
+            
+            ctaTimer = setTimeout(() => {
+                // SUCCESS STATE
+                document.body.classList.toggle('inverted');
+                
+                // Visual shockwave
+                invertBg.style.transform = 'scaleY(1)';
+                
+                // Swap colors of local elements manually to handle CSS specificities
+                ctaCircle.style.stroke = '#F4F2EC';
+                ctaInner.style.backgroundColor = '#FF3333'; /* Keep accent pop */
+                ctaTextFinal.style.color = '#F4F2EC';
+                ctaTextFinal.innerHTML = "System Inverted.<br><span class='opacity-50 mt-2 block'>Perspective Shifted.</span>";
+                
+                // Hide cursor rings for impact
+                document.getElementById('cursor-ring').style.display = 'none';
+
+            }, 3000); // Exact 3s
+        }
+
+        function cancelCta() {
+            clearTimeout(ctaTimer);
+            if(!document.body.classList.contains('inverted')) {
+                ctaCircle.style.strokeDashoffset = '283'; // Reset
+                ctaInner.style.transform = 'scale(1)';
+                ctaTextFinal.innerHTML = "Hold sequence to instantiate.<br><span class='opacity-50 mt-2 block'>T-Minus 3.0s</span>";
+            }
+        }
+
+        ctaDot.addEventListener('mousedown', startCta);
+        window.addEventListener('mouseup', cancelCta);
+        ctaDot.addEventListener('mouseleave', cancelCta);
+        
+        // Touch events
+        ctaDot.addEventListener('touchstart', (e) => { e.preventDefault(); startCta(); });
+        window.addEventListener('touchend', cancelCta);
+
+    </script>
+</body>
+</html>

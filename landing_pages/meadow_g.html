@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create from the Heart - Meadow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/caveat@5.0.8/index.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-mono@5.0.8/index.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/index.min.css">
+    <style>
+        :root {
+            --bg-alabaster: #F9F8F6;
+            --accent-black: #111111;
+            --brand-green: #6E9C4E;
+            --text-secondary: #525252;
+            --spacing-base: 24px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-alabaster);
+            color: var(--accent-black);
+            overflow-x: hidden;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .paper-texture {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .font-handwritten { font-family: 'Caveat', cursive; }
+        .font-mono-custom { font-family: 'Space Mono', monospace; }
+
+        /* Bento Architecture */
+        .bento-cell {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 24px -4px rgba(17, 17, 17, 0.04);
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+        }
+        .bento-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -8px rgba(17, 17, 17, 0.08);
+        }
+        .bento-cell-img {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 24px -4px rgba(17, 17, 17, 0.04);
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+        }
+        .bento-cell-img:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -8px rgba(17, 17, 17, 0.08);
+        }
+
+        /* Floating Nav */
+        .floating-nav {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px); border-radius: 100px;
+            padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 24px -4px rgba(17, 17, 17, 0.04);
+            z-index: 50; width: calc(100% - 48px); max-width: 1200px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        /* Magnetic Button */
+        .magnetic-btn {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            padding: 16px 32px; background: var(--accent-black); color: #ffffff;
+            border-radius: 100px; font-weight: 500; font-size: 14px; letter-spacing: 0.02em;
+            cursor: pointer; border: none; outline: none; will-change: transform;
+            transition: box-shadow 0.3s ease;
+        }
+        .magnetic-btn:hover { box-shadow: 0 8px 24px -4px rgba(17, 17, 17, 0.3); }
+        .magnetic-btn-inner { display: flex; align-items: center; gap: 8px; will-change: transform; }
+
+        .outline-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 14px 28px; background: transparent; color: var(--accent-black);
+            border-radius: 100px; font-weight: 500; font-size: 14px; letter-spacing: 0.02em;
+            cursor: pointer; border: 1.5px solid var(--accent-black); outline: none;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .outline-btn:hover { background: var(--accent-black); color: #ffffff; }
+
+        /* Section dividers */
+        .section-divider {
+            width: 100%; height: 1px; background: rgba(17, 17, 17, 0.08);
+            margin: 0 auto; max-width: 1200px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-alabaster); }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+
+        /* Animations */
+        .fade-in-up {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .bento-grid-3, .bento-grid-4 { grid-template-columns: 1fr !important; }
+            .bento-span-2, .bento-span-3 { grid-column: span 1 !important; grid-row: span 1 !important; }
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col">
+    <div class="paper-texture"></div>
+
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+        <a href="#" class="text-lg font-semibold tracking-tight text-[#111111] flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            Meadow
+        </a>
+        <div class="hidden md:flex items-center gap-6">
+            <a href="#philosophy" class="nav-link text-[#111111] text-sm font-medium opacity-55 hover:opacity-100 transition-opacity duration-300">Philosophy</a>
+            <a href="#gallery" class="nav-link text-[#111111] text-sm font-medium opacity-55 hover:opacity-100 transition-opacity duration-300">Gallery</a>
+            <a href="#voices" class="nav-link text-[#111111] text-sm font-medium opacity-55 hover:opacity-100 transition-opacity duration-300">Voices</a>
+            <a href="#join" class="nav-link text-[#111111] text-sm font-medium opacity-55 hover:opacity-100 transition-opacity duration-300">Join</a>
+        </div>
+        <button class="md:hidden text-[#111111] p-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="relative z-10 flex-1 flex flex-col justify-center px-[24px] pt-32 pb-16 md:pt-40 md:pb-24">
+        <div class="max-w-[1200px] mx-auto w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                <div class="lg:col-span-5 flex flex-col justify-center space-y-10 fade-in-up">
+                    <div class="space-y-6">
+                        <h1 class="font-handwritten text-[#111111] font-normal" style="font-size: clamp(3rem, 7vw, 6.5rem); line-height: 1.3;">
+                            Create from the Heart.
+                        </h1>
+                        <p class="font-mono-custom text-[15px] text-[#525252] tracking-[0.12em] leading-relaxed max-w-md">
+                            A gentle space for artists, dreamers, and wanderers to find their rhythm in the quiet meadows of imagination.
+                        </p>
+                    </div>
+                    <div class="pt-2">
+                        <button id="magnetic-btn" class="magnetic-btn group">
+                            <span class="magnetic-btn-inner">
+                                Join the Flock
+                                <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4 pt-4 opacity-70">
+                        <div class="flex -space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-[#6E9C4E] border-[3px] border-[#F9F8F6]"></div>
+                            <div class="w-8 h-8 rounded-full bg-[#8FBC6A] border-[3px] border-[#F9F8F6]"></div>
+                            <div class="w-8 h-8 rounded-full bg-[#A8D08D] border-[3px] border-[#F9F8F6]"></div>
+                        </div>
+                        <span class="font-mono-custom text-[11px] tracking-wider text-[#525252] uppercase">1,240 creators joined</span>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 relative fade-in-up" style="transition-delay: 0.15s;">
+                    <div class="grid grid-cols-4 grid-rows-2 gap-4" style="min-height: 480px;">
+                        <div class="col-span-3 row-span-2 bento-cell-img relative">
+                            <img src="https://image.qwenlm.ai/public_source/277a145e-2550-4f59-939f-bd31d53fa93e/196cdde26-7a61-4618-b1c5-e0db708f64b6.png" alt="Artist painting sheep in a meadow" class="w-full h-full object-cover"/>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none"></div>
+                            <div class="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+                                <div class="bg-white/85 backdrop-blur-md rounded-2xl px-5 py-3.5 shadow-sm border border-white/50">
+                                    <p class="font-mono-custom text-[10px] text-[#525252] tracking-widest uppercase">Pastoral Series</p>
+                                    <p class="font-handwritten text-2xl text-[#111111] mt-0.5 leading-none">Morning Light</p>
+                                </div>
+                                <button class="bg-white/85 backdrop-blur-md rounded-full p-3 shadow-sm border border-white/50 cursor-pointer hover:bg-white transition-colors duration-300">
+                                    <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-span-1 row-span-1 bento-cell p-6 flex flex-col justify-between">
+                            <div class="w-8 h-8 rounded-full bg-[#6E9C4E]/15 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-[#6E9C4E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-mono-custom text-[10px] text-[#525252] tracking-widest uppercase">New Drop</p>
+                                <p class="font-semibold text-sm text-[#111111] mt-1">Spring Collection</p>
+                            </div>
+                        </div>
+                        <div class="col-span-1 row-span-1 bento-cell p-6 flex flex-col justify-between bg-[#6E9C4E]/5">
+                            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <svg class="w-4 h-4 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-handwritten text-xl text-[#111111] leading-tight">"Art is the<br>shepherd of<br>the soul."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 2: Philosophy / Features -->
+    <section id="philosophy" class="relative z-10 px-[24px] py-24 md:py-32">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="mb-16 md:mb-20 fade-in-up">
+                <p class="font-mono-custom text-[11px] text-[#6E9C4E] tracking-[0.2em] uppercase mb-4">Our Philosophy</p>
+                <h2 class="font-handwritten text-[#111111] font-normal" style="font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.2;">
+                    Rooted in Nature.
+                </h2>
+                <p class="font-mono-custom text-[15px] text-[#525252] tracking-[0.1em] mt-6 max-w-lg leading-relaxed">
+                    Every piece is born from the quiet rhythms of the meadow. We believe in slow creation, sustainable materials, and the gentle art of living well.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 fade-in-up" style="transition-delay: 0.1s;">
+                <!-- Large Cell with Image -->
+                <div class="md:col-span-2 bento-cell-img relative" style="min-height: 400px;">
+                    <img src="https://image.qwenlm.ai/public_source/277a145e-2550-4f59-939f-bd31d53fa93e/169b49d16-cf87-4284-88f5-b49658d649eb.png" alt="Handcrafted pottery in meadow" class="w-full h-full object-cover"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-6 left-6 right-6">
+                        <div class="bg-white/85 backdrop-blur-md rounded-2xl px-5 py-4 shadow-sm border border-white/50 inline-block">
+                            <p class="font-mono-custom text-[10px] text-[#525252] tracking-widest uppercase">Handcrafted</p>
+                            <p class="font-handwritten text-2xl text-[#111111] mt-1 leading-none">Earth & Clay</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Cells -->
+                <div class="md:col-span-1 flex flex-col gap-4">
+                    <div class="bento-cell p-8 flex-1 flex flex-col justify-between">
+                        <div class="w-10 h-10 rounded-full bg-[#6E9C4E]/15 flex items-center justify-center mb-6">
+                            <svg class="w-5 h-5 text-[#6E9C4E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-[#111111] mb-2">Sustainable Roots</h3>
+                            <p class="font-mono-custom text-[13px] text-[#525252] leading-relaxed tracking-wide">
+                                Materials sourced from the earth, returned to the earth. Zero waste, infinite care.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="bento-cell p-8 flex-1 flex flex-col justify-between bg-[#6E9C4E]/5">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-6">
+                            <svg class="w-5 h-5 text-[#111111]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg text-[#111111] mb-2">Slow Creation</h3>
+                            <p class="font-mono-custom text-[13px] text-[#525252] leading-relaxed tracking-wide">
+                                No rush. Every piece takes the time it needs to breathe and become.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 3: Gallery -->
+    <section id="gallery" class="relative z-10 px-[24px] py-24 md:py-32">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-16 md:mb-20 gap-8 fade-in-up">
+                <div>
+                    <p class="font-mono-custom text-[11px] text-[#6E9C4E] tracking-[0.2em] uppercase mb-4">The Meadow Gallery</p>
+                    <h2 class="font-handwritten text-[#111111] font-normal" style="font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.2;">
+                        From the Meadow.
+                    </h2>
+                </div>
+                <button class="outline-btn self-start md:self-auto">
+                    View All Works
+                    <svg class="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 fade-in-up" style="transition-delay: 0.1s;">
+                <!-- Large Cabin -->
+                <div class="md:col-span-2 md:row-span-2 bento-cell-img relative" style="min-height: 500px;">
+                    <img src="https://image.qwenlm.ai/public_source/277a145e-2550-4f59-939f-bd31d53fa93e/18d29a474-b142-4c13-bf95-ccef8cc825f6.png" alt="Rustic cabin in rolling hills" class="w-full h-full object-cover"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-6 left-6">
+                        <div class="bg-white/85 backdrop-blur-md rounded-2xl px-5 py-3.5 shadow-sm border border-white/50">
+                            <p class="font-mono-custom text-[10px] text-[#525252] tracking-widest uppercase">Watercolor</p>
+                            <p class="font-handwritten text-xl text-[#111111] mt-1 leading-none">The Quiet Cabin</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sheep -->
+                <div class="md:col-span-1 md:row-span-2 bento-cell-img relative" style="min-height: 240px;">
+                    <img src="https://image.qwenlm.ai/public_source/277a145e-2550-4f59-939f-bd31d53fa93e/1bd3e11e1-fd6b-4d4e-a6a1-97bd5bc72641.png" alt="White sheep with wildflowers" class="w-full h-full object-cover"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-5 left-5 right-5">
+                        <div class="bg-white/85 backdrop-blur-md rounded-xl px-4 py-3 shadow-sm border border-white/50">
+                            <p class="font-handwritten text-lg text-[#111111] leading-none">Gentle Grazer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Artist -->
+                <div class="md:col-span-1 md:row-span-2 bento-cell-img relative" style="min-height: 240px;">
+                    <img src="https://image.qwenlm.ai/public_source/277a145e-2550-4f59-939f-bd31d53fa93e/1048caca4-a4f3-46c5-8d2c-02e7cfdc79e1.png" alt="Artist painting landscape" class="w-full h-full object-cover"/>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none"></div>
+                    <div class="absolute bottom-5 left-5 right-5">
+                        <div class="bg-white/85 backdrop-blur-md rounded-xl px-4 py-3 shadow-sm border border-white/50">
+                            <p class="font-handwritten text-lg text-[#111111] leading-none">In Progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 4: Testimonials -->
+    <section id="voices" class="relative z-10 px-[24px] py-24 md:py-32">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="text-center mb-16 md:mb-20 fade-in-up">
+                <p class="font-mono-custom text-[11px] text-[#6E9C4E] tracking-[0.2em] uppercase mb-4">Community</p>
+                <h2 class="font-handwritten text-[#111111] font-normal" style="font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.2;">
+                    Voices from the Flock.
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 fade-in-up" style="transition-delay: 0.1s;">
+                <!-- Testimonial 1 -->
+                <div class="bento-cell p-8 flex flex-col justify-between" style="min-height: 280px;">
+                    <div>
+                        <svg class="w-8 h-8 text-[#6E9C4E]/30 mb-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                        </svg>
+                        <p class="font-handwritten text-2xl text-[#111111] leading-snug mb-6">
+                            "Meadow gave me the space to breathe and create without pressure. It's a sanctuary for the soul."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#6E9C4E]/20 flex items-center justify-center">
+                            <span class="font-handwritten text-lg text-[#6E9C4E]">E</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm text-[#111111]">Elena M.</p>
+                            <p class="font-mono-custom text-[11px] text-[#525252] tracking-wider uppercase">Illustrator</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="bento-cell p-8 flex flex-col justify-between bg-[#6E9C4E]/5" style="min-height: 280px;">
+                    <div>
+                        <svg class="w-8 h-8 text-[#6E9C4E]/30 mb-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                        </svg>
+                        <p class="font-handwritten text-2xl text-[#111111] leading-snug mb-6">
+                            "The community here is unlike any other. Gentle, supportive, and deeply inspiring."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#8FBC6A]/20 flex items-center justify-center">
+                            <span class="font-handwritten text-lg text-[#8FBC6A]">J</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm text-[#111111]">James T.</p>
+                            <p class="font-mono-custom text-[11px] text-[#525252] tracking-wider uppercase">Potter</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="bento-cell p-8 flex flex-col justify-between" style="min-height: 280px;">
+                    <div>
+                        <svg class="w-8 h-8 text-[#6E9C4E]/30 mb-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                        </svg>
+                        <p class="font-handwritten text-2xl text-[#111111] leading-snug mb-6">
+                            "Finally, a platform that values the process as much as the product. Truly refreshing."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#A8D08D]/20 flex items-center justify-center">
+                            <span class="font-handwritten text-lg text-[#A8D08D]">S</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm text-[#111111]">Sarah K.</p>
+                            <p class="font-mono-custom text-[11px] text-[#525252] tracking-wider uppercase">Writer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 5: Newsletter / CTA -->
+    <section id="join" class="relative z-10 px-[24px] py-24 md:py-32">
+        <div class="max-w-[1200px] mx-auto fade-in-up">
+            <div class="bento-cell p-8 md:p-16 relative overflow-hidden" style="background: linear-gradient(135deg, rgba(110, 156, 78, 0.08) 0%, rgba(255, 255, 255, 0.7) 100%);">
+                <!-- Decorative circles -->
+                <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#6E9C4E]/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-20 -left-20 w-48 h-48 rounded-full bg-[#8FBC6A]/10 blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 max-w-2xl">
+                    <p class="font-mono-custom text-[11px] text-[#6E9C4E] tracking-[0.2em] uppercase mb-4">Stay Connected</p>
+                    <h2 class="font-handwritten text-[#111111] font-normal mb-6" style="font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.2;">
+                        Wander with us.
+                    </h2>
+                    <p class="font-mono-custom text-[15px] text-[#525252] tracking-[0.1em] leading-relaxed mb-10 max-w-lg">
+                        Receive gentle letters from the meadow. New collections, artist stories, and quiet moments delivered to your inbox.
+                    </p>
+
+                    <form class="flex flex-col sm:flex-row gap-3 max-w-md" onsubmit="event.preventDefault();">
+                        <input 
+                            type="email" 
+                            placeholder="your@email.com" 
+                            class="flex-1 px-6 py-4 rounded-full bg-white/80 border border-[#111111]/10 text-[#111111] font-mono-custom text-sm tracking-wide placeholder-[#525252]/50 focus:outline-none focus:border-[#111111]/30 transition-colors"
+                        />
+                        <button type="submit" class="magnetic-btn group whitespace-nowrap">
+                            <span class="magnetic-btn-inner">
+                                Subscribe
+                                <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </span>
+                        </button>
+                    </form>
+                    <p class="font-mono-custom text-[11px] text-[#525252]/60 tracking-wider mt-4">No spam. Only meadow whispers. Unsubscribe anytime.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 px-[24px] pt-16 pb-8">
+        <div class="max-w-[1200px] mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                <div class="md:col-span-2">
+                    <a href="#" class="text-xl font-semibold tracking-tight text-[#111111] flex items-center gap-2 mb-6">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        Meadow
+                    </a>
+                    <p class="font-mono-custom text-[13px] text-[#525252] tracking-wide leading-relaxed max-w-sm">
+                        A gentle space for artists, dreamers, and wanderers. Rooted in nature, crafted with care.
+                    </p>
+                </div>
+                <div>
+                    <p class="font-mono-custom text-[11px] text-[#111111] tracking-[0.15em] uppercase mb-6 font-semibold">Explore</p>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Philosophy</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Gallery</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Journal</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <p class="font-mono-custom text-[11px] text-[#111111] tracking-[0.15em] uppercase mb-6 font-semibold">Connect</p>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Instagram</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Twitter</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Pinterest</a></li>
+                        <li><a href="#" class="font-mono-custom text-[13px] text-[#525252] hover:text-[#111111] transition-colors tracking-wide">Newsletter</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="section-divider mb-8"></div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="font-mono-custom text-[11px] text-[#525252]/60 tracking-wider">© 2024 Meadow. All rights reserved.</p>
+                <p class="font-handwritten text-xl text-[#111111]/40">Create from the heart.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Magnetic Button Effect (Low Latency)
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            const inner = btn.querySelector('.magnetic-btn-inner');
+            const magneticStrength = 0.3;
+            const innerStrength = 0.5;
+            let mouseX = 0, mouseY = 0, btnX = 0, btnY = 0, innerX = 0, innerY = 0;
+
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                mouseX = e.clientX - rect.left - rect.width / 2;
+                mouseY = e.clientY - rect.top - rect.height / 2;
+            });
+            btn.addEventListener('mouseleave', () => { mouseX = 0; mouseY = 0; });
+
+            function animate() {
+                btnX += (mouseX * magneticStrength - btnX) * 0.15;
+                btnY += (mouseY * magneticStrength - btnY) * 0.15;
+                innerX += (mouseX * innerStrength - innerX) * 0.15;
+                innerY += (mouseY * innerStrength - innerY) * 0.15;
+                btn.style.transform = `translate(${btnX}px, ${btnY}px)`;
+                inner.style.transform = `translate(${innerX}px, ${innerY}px)`;
+                requestAnimationFrame(animate);
+            }
+            animate();
+        });
+
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1582 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate, AnimatePresence, useVelocity } from "framer-motion";
+
+// ==========================================
+// 1. GLOBAL UTILITIES & CUSTOM HOOKS
+// ==========================================
+
+const useGlobalReveal = () => {
+  useEffect(() => {
+    const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          
+          if (entry.target.classList.contains('counter-val') && !entry.target.classList.contains('counted')) {
+            entry.target.classList.add('counted');
+            const target = +entry.target.getAttribute('data-target');
+            const duration = 2000;
+            const start = performance.now();
+            
+            function updateCounter(currentTime) {
+              const elapsed = currentTime - start;
+              const progress = Math.min(elapsed / duration, 1);
+              const easeProgress = progress * (2 - progress);
+              const currentVal = Math.floor(easeProgress * target);
+              entry.target.innerText = currentVal.toLocaleString();
+              if (progress < 1) {
+                requestAnimationFrame(updateCounter);
+              } else {
+                entry.target.innerText = target.toLocaleString();
+                entry.target.classList.add('pop');
+                setTimeout(() => entry.target.classList.remove('pop'), 500);
+              }
+            }
+            requestAnimationFrame(updateCounter);
+          }
+          obs.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    const observeElements = () => {
+      document.querySelectorAll('.reveal-up:not(.observed), .reveal-clip:not(.observed), .curtain-container:not(.observed), .highlight-draw:not(.observed), .line-draw:not(.observed), .footer-reveal:not(.observed), .counter-val:not(.observed)').forEach(el => {
+        el.classList.add('observed');
+        observer.observe(el);
+      });
+    };
+
+    observeElements();
+    const mutationObserver = new MutationObserver(() => observeElements());
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, []);
+};
+
+// ==========================================
+// 2. REUSABLE UI COMPONENTS
+// ==========================================
+
+const MagicCursor = () => {
+  const cursorRef = useRef(null);
+
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    if (!cursor || window.matchMedia("(pointer: coarse)").matches) return;
+
+    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    let cursorX = mouseX, cursorY = mouseY;
+    let rafId;
+
+    const onMouseMove = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
+    const renderCursor = () => {
+      cursorX += (mouseX - cursorX) * 0.2;
+      cursorY += (mouseY - cursorY) * 0.2;
+      cursor.style.transform = `translate3d(calc(${cursorX}px - 50%), calc(${cursorY}px - 50%), 0)`;
+      rafId = requestAnimationFrame(renderCursor);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    renderCursor();
+
+    const handleMouseOver = (e) => {
+      const target = e.target.closest('.hover-trigger, a, button, .magnetic-btn, .service-row, .tilt-wrapper, .zoom-img-container, .stack-card, .arrow-item, .bento-card, .accordion-panel, .marquee-row, .telemetry-btn, .ignite-btn');
+      if (target) {
+        if(target.classList.contains('spotlight-container')) {
+           cursor.style.opacity = '0';
+        } else {
+           cursor.classList.add('cursor-hovering');
+        }
+      }
+    };
+    const handleMouseOut = (e) => {
+      const target = e.target.closest('.hover-trigger, a, button, .magnetic-btn, .service-row, .tilt-wrapper, .zoom-img-container, .stack-card, .arrow-item, .bento-card, .accordion-panel, .marquee-row, .telemetry-btn, .ignite-btn');
+      if (target) {
+        if(target.classList.contains('spotlight-container')) {
+           cursor.style.opacity = '1';
+        } else {
+           cursor.classList.remove('cursor-hovering');
+        }
+      }
+    };
+
+    document.body.addEventListener('mouseover', handleMouseOver);
+    document.body.addEventListener('mouseout', handleMouseOut);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      cancelAnimationFrame(rafId);
+      document.body.removeEventListener('mouseover', handleMouseOver);
+      document.body.removeEventListener('mouseout', handleMouseOut);
+    };
+  }, []);
+
+  return <div id="magic-cursor" ref={cursorRef} aria-hidden="true"></div>;
+};
+
+const MagneticButton = ({ children, className = '', href, 'aria-label': ariaLabel, ...props }) => {
+  const ref = useRef(null);
+
+  const handleMove = (e) => {
+    if (!ref.current || window.matchMedia("(pointer: coarse)").matches) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    ref.current.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.05)`;
+  };
+
+  const handleLeave = () => {
+    if (ref.current) ref.current.style.transform = `translate(0px, 0px) scale(1)`;
+  };
+
+  const handleDown = () => {
+    if (ref.current) ref.current.style.transform = `translate(0px, 0px) scale(0.95)`;
+  };
+
+  const Element = href ? 'a' : 'button';
+
+  return (
+    <Element
+      ref={ref}
+      href={href}
+      className={`magnetic-btn hover-trigger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 ${className}`}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      onMouseDown={handleDown}
+      onMouseUp={handleMove}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      {children}
+    </Element>
+  );
+};
+
+const ScrambleText = ({ text, className = '', as: Tag = 'span', ...props }) => {
+  const [displayText, setDisplayText] = useState(text);
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const intervalRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    let iteration = 0;
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setDisplayText(text.split("").map((letter, index) => {
+        if (index < iteration || letter === ' ') return text[index];
+        return letters[Math.floor(Math.random() * 26)];
+      }).join(""));
+      if (iteration >= text.length) clearInterval(intervalRef.current);
+      iteration += 1 / 3;
+    }, 30);
+  };
+
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  return (
+    <Tag 
+      className={`scramble-text hover-trigger transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded ${className}`} 
+      onMouseEnter={handleMouseEnter} 
+      onFocus={handleMouseEnter}
+      {...props}
+    >
+      <span aria-hidden="true">{displayText}</span>
+      <span className="sr-only">{text}</span>
+    </Tag>
+  );
+};
+
+// ==========================================
+// 3. SECTIONS
+// ==========================================
+
+const GForceDistortionSection = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  
+  const skewX = useTransform(scrollYProgress, [0, 0.5, 1], [45, 0, -45]);
+  const scaleX = useTransform(scrollYProgress, [0, 0.5, 1], [2, 1, 2]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+
+  return (
+    <section ref={ref} aria-hidden="true" className="py-32 md:py-64 bg-[#050505] overflow-hidden flex flex-col items-center justify-center border-t border-white/5 select-none">
+      <motion.div style={{ skewX, scaleX, opacity }} className="flex flex-col items-center text-center transform-gpu">
+         <h2 className="text-[15vw] md:text-[12vw] font-black italic text-transparent stroke-text-light uppercase tracking-tighter leading-none">PULLING</h2>
+         <h2 className="text-[15vw] md:text-[12vw] font-black italic text-red-600 uppercase tracking-tighter leading-none -mt-4 md:-mt-8">G-FORCE</h2>
+      </motion.div>
+    </section>
+  );
+};
+
+// --- BRAND NEW EXPERIMENTAL SECTION 1: V12 Ignition Sequence ---
+const V12IgnitionSequence = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  
+  // As user scrolls, the background pulses deeper red simulating RPM increase
+  const bgColor = useTransform(scrollYProgress, [0, 0.5, 1], ["#050505", "#1a0000", "#050505"]);
+  const scaleText = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.2, 0.8]);
+  const opacityText = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+
+  // V12 Firing Order: 1, 7, 5, 11, 3, 9, 6, 12, 2, 8, 4, 10
+  // Mapped to a delay sequence for the animation
+  const firingOrder = [0, 6, 4, 10, 2, 8, 5, 11, 1, 7, 3, 9];
+
+  return (
+    <motion.section ref={ref} style={{ backgroundColor: bgColor }} className="h-[200vh] relative border-t border-white/5 z-20">
+        <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+             
+             {/* Background RPM Text */}
+             <motion.h2 style={{ scale: scaleText, opacity: opacityText }} className="absolute text-[15vw] font-black text-white/5 tracking-tighter mix-blend-overlay pointer-events-none select-none">
+                REDLINE
+             </motion.h2>
+
+             {/* 12 Kinetic Cylinders */}
+             <div className="flex items-end gap-2 md:gap-4 h-48 md:h-64 z-10 w-full max-w-4xl px-4">
+                {firingOrder.map((delayIndex, i) => (
+                   <motion.div
+                      key={i}
+                      animate={{ 
+                        height: ["20%", "100%", "20%"], 
+                        backgroundColor: ["#111111", "#ef4444", "#111111"],
+                        boxShadow: ["0 0 0px rgba(239,68,68,0)", "0 0 40px rgba(239,68,68,0.8)", "0 0 0px rgba(239,68,68,0)"]
+                      }}
+                      transition={{ 
+                        duration: 0.6, 
+                        repeat: Infinity, 
+                        delay: delayIndex * 0.05, 
+                        ease: "easeInOut" 
+                      }}
+                      className="flex-1 w-full rounded-t-md md:rounded-t-lg border border-white/10"
+                   >
+                      <div className="w-full h-[2px] bg-white/30 mt-2"></div>
+                   </motion.div>
+                ))}
+             </div>
+
+             <div className="mt-12 flex flex-col items-center z-10 gap-2">
+                 <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold tracking-widest text-white border border-white/20">KINETIC ENGINE</span>
+                 <p className="text-red-500 font-mono tracking-[0.4em] uppercase text-xs">V12 Firing Sequence Active</p>
+             </div>
+        </div>
+    </motion.section>
+  )
+};
+
+const TheVaultSection = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  
+  const leftX = useTransform(scrollYProgress, [0, 1], ["0%", "-100%"]);
+  const rightX = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const scaleInner = useTransform(scrollYProgress, [0, 1], [0.8, 1.1]);
+  const opacityInner = useTransform(scrollYProgress, [0, 0.4], [0, 1]);
+
+  return (
+    <section ref={ref} aria-label="The Vault" className="h-[250vh] bg-[#050505]">
+       <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#050505]">
+          <motion.div style={{ scale: scaleInner, opacity: opacityInner }} className="absolute inset-0 flex flex-col items-center justify-center z-0">
+             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-40 mix-blend-luminosity filter contrast-125"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
+             <h2 className="relative z-10 text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-[0_0_40px_rgba(220,38,38,0.8)]">UNCOMPROMISED</h2>
+             <p className="relative z-10 text-red-500 font-mono tracking-[0.4em] text-sm mt-4 uppercase">The core of performance</p>
+          </motion.div>
+          <motion.div 
+            style={{ x: leftX, clipPath: "polygon(0% 0%, 50% 0%, 50% 100%, 0% 100%)" }} 
+            className="absolute inset-0 bg-black z-10 flex items-center justify-center border-r border-white/10"
+          >
+             <h2 className="text-[10vw] font-black text-white/10 select-none -translate-x-[25%]">V</h2>
+          </motion.div>
+          <motion.div 
+            style={{ x: rightX, clipPath: "polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%)" }} 
+            className="absolute inset-0 bg-black z-10 flex items-center justify-center"
+          >
+             <h2 className="text-[10vw] font-black text-white/10 select-none translate-x-[25%]">AULT</h2>
+          </motion.div>
+          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-red-600 shadow-[0_0_20px_red] z-20 opacity-50" aria-hidden="true"></div>
+       </div>
+    </section>
+  );
+};
+
+// --- BRAND NEW EXPERIMENTAL SECTION 2: Aerodynamic Wind Tunnel ---
+const AerodynamicDragSection = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  
+  // Morphing the height of a central invisble block to "push" lines away, simulating wind drag
+  const centralObstacleHeight = useTransform(scrollYProgress, [0, 0.5, 1], ["0%", "80%", "0%"]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 0]);
+  const tunnelSpeed = useTransform(scrollYProgress, [0, 0.5, 1], [3, 0.5, 3]);
+
+  return (
+    <section ref={ref} className="h-[250vh] bg-[#050505] relative border-t border-white/5 z-20">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center items-center bg-black">
+         
+         <div className="absolute top-10 text-center z-30 opacity-60 mix-blend-difference pointer-events-none">
+             <h2 className="text-3xl md:text-5xl font-serif italic tracking-tighter text-white">Aerodynamic <span className="text-red-500 not-italic font-black">DRAG</span></h2>
+             <p className="text-xs font-mono tracking-widest mt-2 uppercase text-white/50">Fluid Displacement Simulation</p>
+         </div>
+
+         {/* The Wind Particles / Flow lines */}
+         <div className="absolute inset-0 flex flex-col justify-between py-20 px-0 opacity-40 z-10 pointer-events-none perspective-1000">
+            {[...Array(20)].map((_, i) => {
+               // Determine if line is in the upper or lower half
+               const isTopHalf = i < 10;
+               // Calculate how much the line should bend based on proximity to center
+               const distanceToCenter = Math.abs(i - 9.5);
+               const bendAmount = 10 - distanceToCenter;
+               
+               // Dynamic Y translation hooked to scroll
+               const dynamicY = useTransform(
+                 scrollYProgress, 
+                 [0, 0.5, 1], 
+                 [0, isTopHalf ? -bendAmount * 15 : bendAmount * 15, 0]
+               );
+
+               return (
+                 <motion.div 
+                    key={i} 
+                    className="w-full h-[1px] bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
+                    style={{ y: dynamicY, filter: `blur(${Math.max(0, 3 - bendAmount)}px)` }}
+                 >
+                    <motion.div 
+                      className="h-full w-[20%] bg-white shadow-[0_0_15px_white]"
+                      animate={{ x: ["-100vw", "100vw"] }}
+                      transition={{ 
+                        duration: (Math.random() * 2) + 1, 
+                        repeat: Infinity, 
+                        ease: "linear",
+                        delay: Math.random() * 2
+                      }}
+                    />
+                 </motion.div>
+               )
+            })}
+         </div>
+
+         {/* Central "Car" Silhouette / Obstacle */}
+         <motion.div 
+            style={{ height: centralObstacleHeight, opacity: glowOpacity }}
+            className="z-20 w-[60vw] md:w-[40vw] max-w-2xl rounded-[100%] border border-red-500/20 shadow-[0_0_100px_rgba(220,38,38,0.2)] backdrop-blur-sm flex items-center justify-center overflow-hidden"
+         >
+             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=800&q=80')] bg-cover bg-center opacity-30 mix-blend-screen grayscale"></div>
+             <span className="relative z-10 text-white font-mono tracking-[0.5em] text-xs font-bold bg-black/50 px-4 py-2 rounded-full border border-white/10">COEFFICIENT 0.28cd</span>
+         </motion.div>
+
+      </div>
+    </section>
+  )
+};
+
+const TelemetryScanSection = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  
+  const scanYPercent = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const scanYPixels = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const clipPath = useMotionTemplate`polygon(0% calc(${scanYPercent}% - 15%), 100% calc(${scanYPercent}% - 15%), 100% calc(${scanYPercent}% + 15%), 0% calc(${scanYPercent}% + 15%))`;
+
+  return (
+    <section id="specs" ref={ref} aria-label="Telemetry Scan" className="h-[200vh] bg-black relative border-t border-white/5 z-20">
+       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center bg-black">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518982540400-d6216a695133?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-20 filter grayscale invert z-0" aria-hidden="true"></div>
+          <motion.div 
+            className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1518982540400-d6216a695133?auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center z-10 mix-blend-screen"
+            style={{ clipPath, filter: 'sepia(100%) hue-rotate(300deg) saturate(300%) brightness(150%)' }}
+            aria-hidden="true"
+          />
+          <motion.div 
+             style={{ top: scanYPixels }}
+             className="absolute left-0 right-0 h-[2px] bg-red-500 shadow-[0_0_30px_rgba(220,38,38,1),0_0_10px_rgba(255,255,255,0.8)] z-20"
+             aria-hidden="true"
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30">
+              <h2 className="text-5xl md:text-7xl font-bold text-white tracking-tighter drop-shadow-lg mix-blend-difference">Diagnostic <span className="font-serif italic text-gray-400 font-light">Scan</span></h2>
+              <p className="text-white/60 font-mono tracking-[0.3em] uppercase text-xs mt-4">Structural integrity verified</p>
+          </div>
+       </div>
+    </section>
+  )
+};
+
+// --- BRAND NEW EXPERIMENTAL SECTION 3: Zenith Warp Tunnel ---
+const ZenithWarpTunnel = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+
+  return (
+    <section ref={ref} aria-hidden="true" className="h-[300vh] bg-[#000] relative border-t border-white/5 z-20">
+       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center bg-black preserve-3d perspective-1500">
+          
+          {/* Deep Tunnel Radial Glow */}
+          <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.15)_0%,transparent_70%)] pointer-events-none" />
+
+          {/* Render 25 depth rings that fly past the camera based on scroll */}
+          {[...Array(25)].map((_, i) => {
+             // Map each ring deeper into the Z-axis
+             const startZ = i * -600; 
+             // As we scroll to 1, move them 10000px towards the camera
+             const endZ = startZ + 12000; 
+             
+             const z = useTransform(scrollYProgress, [0, 1], [startZ, endZ]);
+             
+             // Fade them out as they clip past the camera
+             const opacity = useTransform(
+               scrollYProgress, 
+               // Fade in slowly, fade out sharply at the end of their journey
+               [0, (i/25) * 0.8, Math.min(1, (i/25) + 0.2)], 
+               [0.1, 0.8, 0]
+             );
+
+             // Alternating rotation for a twisting tunnel effect
+             const rotateZ = useTransform(
+               scrollYProgress, 
+               [0, 1], 
+               [0, i % 2 === 0 ? 180 : -180]
+             );
+
+             return (
+                <motion.div
+                   key={i}
+                   style={{ translateZ: z, opacity, rotateZ }}
+                   className="absolute w-[80vw] md:w-[50vw] h-[80vw] md:h-[50vw] rounded-full border border-white/10 flex items-center justify-center preserve-3d will-change-transform shadow-[inset_0_0_40px_rgba(255,255,255,0.02)]"
+                >
+                   {/* Add textual debris on some rings */}
+                   {i % 4 === 0 && (
+                      <div className="absolute top-0 text-white/20 font-serif italic text-2xl md:text-5xl tracking-tighter mix-blend-screen">SPEED</div>
+                   )}
+                   {i % 6 === 0 && (
+                      <div className="absolute bottom-0 text-red-500/20 font-black text-3xl md:text-6xl tracking-tighter">LIMIT</div>
+                   )}
+                </motion.div>
+             )
+          })}
+
+          {/* Central Typography HUD */}
+          <div className="z-50 flex flex-col items-center justify-center pointer-events-none mix-blend-difference">
+             <h2 className="text-6xl md:text-[8vw] font-black text-white tracking-tighter leading-none">
+                 TIME<br/>
+                 <span className="font-serif italic text-transparent stroke-text-light font-light ml-8 md:ml-16">DILATION</span>
+             </h2>
+             <motion.p 
+               style={{ scale: useTransform(scrollYProgress, [0, 1], [1, 2]) }} 
+               className="text-red-500 font-mono tracking-[0.8em] text-xs mt-8 md:mt-12 bg-black/50 px-6 py-2 rounded-full backdrop-blur-sm"
+             >
+                 APPROACHING ZENITH
+             </motion.p>
+          </div>
+       </div>
+    </section>
+  )
+};
+
+const Navbar = () => {
+  const navRef = useRef(null);
+  const logoRef = useRef(null);
+  const ctaRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const navbar = navRef.current;
+      if (!navbar) return;
+
+      if (scrollY > 50) {
+        navbar.classList.add('bg-[#050505]/95', 'backdrop-blur-md', 'border-white/10');
+        navbar.classList.remove('bg-transparent', 'border-transparent');
+        
+        if(ctaRef.current) {
+            ctaRef.current.classList.add('border-white', 'text-black', 'bg-white');
+            ctaRef.current.classList.remove('border-white/40', 'text-white', 'bg-transparent');
+            ctaRef.current.classList.replace('hover:bg-white', 'hover:bg-transparent');
+            ctaRef.current.classList.replace('hover:text-black', 'hover:text-white');
+        }
+      } else {
+        navbar.classList.remove('bg-[#050505]/95', 'backdrop-blur-md', 'border-white/10');
+        navbar.classList.add('bg-transparent', 'border-transparent');
+
+        if(ctaRef.current) {
+            ctaRef.current.classList.add('border-white/40', 'text-white', 'bg-transparent');
+            ctaRef.current.classList.remove('border-white', 'text-black', 'bg-white');
+            ctaRef.current.classList.replace('hover:bg-transparent', 'hover:bg-white');
+            ctaRef.current.classList.replace('hover:text-white', 'hover:text-black');
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <header ref={navRef} role="banner" className="fixed top-0 left-0 w-full z-50 transition-all duration-500 py-6 text-white border-b border-transparent" id="navbar">
+      <div className="max-w-[90rem] mx-auto px-6 md:px-12 flex items-center justify-between">
+          <a ref={logoRef} href="#" aria-label="APEX Home" className="hover-trigger text-white flex-1 flex items-center nav-logo transition-colors tracking-[0.3em] font-black text-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">
+              APEX<span aria-hidden="true" className="text-red-600">.</span>
+          </a>
+          <nav aria-label="Main Navigation" className="hidden md:flex flex-1 justify-center items-center gap-8 text-[11px] font-semibold tracking-[0.15em] uppercase text-white/80">
+              <a href="#fleet" className="nav-link hover-trigger text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded px-1">Fleet</a>
+              <a href="#experience" className="nav-link hover-trigger text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded px-1">Experience</a>
+              <a href="#members" className="nav-link hover-trigger text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded px-1">Members</a>
+              <a href="#specs" className="nav-link hover-trigger text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded px-1">Specs</a>
+              <a href="#contact" className="nav-link hover-trigger text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded px-1">Contact</a>
+          </nav>
+          <div className="flex flex-1 items-center justify-end">
+              <a ref={ctaRef} href="#contact" className="hover-trigger hidden md:flex border border-white/40 hover:bg-white hover:text-black transition-all duration-300 px-6 py-2.5 rounded-full text-[11px] font-bold tracking-widest uppercase nav-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
+                  Ignite Engine
+              </a>
+              <button aria-label="Toggle navigation menu" aria-expanded="false" className="md:hidden flex flex-col gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 hover-trigger w-8 items-end nav-hamburger rounded p-1">
+                  <span aria-hidden="true" className="block w-full h-[1.5px] bg-white transition-colors"></span>
+                  <span aria-hidden="true" className="block w-2/3 h-[1.5px] bg-white transition-colors"></span>
+              </button>
+          </div>
+      </div>
+    </header>
+  );
+};
+
+const HeroSection = () => {
+  const bgRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (bgRef.current && window.scrollY < window.innerHeight) {
+        bgRef.current.style.transform = `translate3d(0, ${window.scrollY * 0.15}px, 0)`;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <section id="hero" aria-label="Introduction" className="relative w-full h-screen min-h-[600px] md:min-h-[800px] flex flex-col justify-end px-0 overflow-hidden bg-[#050505]">
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black" aria-hidden="true">
+          <div ref={bgRef} className="w-full h-[120%] absolute -top-[10%] left-0">
+              <img src="https://images.unsplash.com/photo-1614200187524-dc4b892acf16?auto=format&fit=crop&w=2800&q=80" alt="" className="w-full h-full object-cover animate-slow-zoom opacity-70" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent pointer-events-none"></div>
+      </div>
+
+      <div className="relative z-20 w-full max-w-full mx-auto mt-auto pt-[40vh] md:pt-[45vh] pb-12 md:pb-20 px-6 md:px-8 lg:px-12 xl:px-16">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-12 md:gap-16 w-full">
+              
+              <div className="reveal-up w-full md:w-1/2 lg:w-auto flex flex-col" style={{ transitionDelay: '0.2s' }}>
+                  <div className="flex items-center gap-4 text-white/40 font-mono text-[10px] uppercase tracking-[0.3em] mb-4 md:mb-6" aria-hidden="true">
+                      <span className="w-8 md:w-12 h-[1px] bg-red-600"></span>
+                      Performance / 001
+                  </div>
+
+                  <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black tracking-tighter text-topographic whitespace-nowrap opacity-90 drop-shadow-[0_0_30px_rgba(220,38,38,0.3)] mb-2 md:mb-4">
+                      VELOCITY<span style={{ verticalAlign: '0.1em', fontSize: '0.8em', marginLeft: '0.1em' }} className="text-red-600/80">速</span>
+                  </h1>
+
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter text-white leading-[1.1] drop-shadow-lg">
+                      Command the <br/>
+                      <span className="font-serif italic text-red-500 font-light">asphalt.</span>
+                  </h2>
+              </div>
+
+              <div className="reveal-up w-full md:w-[45%] lg:w-[40%] xl:w-[30%] flex justify-start md:justify-end mt-4 md:mt-0" style={{ transitionDelay: '0.3s' }}>
+                  <div className="pl-4 md:pl-8 border-l border-white/10 relative py-2">
+                      <div className="absolute top-0 -left-[1.5px] w-[3px] h-8 bg-red-600 hidden md:block shadow-[0_0_10px_rgba(220,38,38,0.8)]" aria-hidden="true"></div>
+                      <p className="text-white/60 text-sm md:text-base leading-relaxed mb-6 md:mb-10 font-light mix-blend-normal drop-shadow-md">
+                          Experience the pinnacle of automotive engineering—unleashed, untamed, and exclusively yours. <strong className="text-white font-semibold">Pure adrenaline guaranteed.</strong>
+                      </p>
+                      
+                      <MagneticButton href="#fleet" aria-label="Explore our luxury fleet" className="group inline-flex items-center gap-4 sm:gap-6 bg-white/5 backdrop-blur-md border border-white/10 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all duration-700 pointer-events-auto shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                          <span>Explore Fleet</span>
+                          <div aria-hidden="true" className="relative flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white/30 group-hover:border-black/30 group-hover:bg-red-600 group-hover:text-white transition-all duration-700">
+                              <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                          </div>
+                      </MagneticButton>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </section>
+  );
+};
+
+const VelocityTextTunnel = () => {
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
+  const skewVelocity = useTransform(smoothVelocity, [-1000, 1000], [-15, 15]);
+
+  const x1 = useTransform(scrollY, [0, 3000], ["0%", "-50%"]);
+  const x2 = useTransform(scrollY, [0, 3000], ["-50%", "0%"]);
+
+  return (
+    <section aria-label="Velocity Stats" className="py-24 md:py-32 bg-[#050505] overflow-hidden border-t border-white/5 flex flex-col justify-center min-h-[50vh]">
+       <motion.div style={{ skewX: skewVelocity }} className="flex flex-col gap-2 md:gap-6 w-[200vw]">
+          <motion.div style={{ x: x1 }} className="whitespace-nowrap flex">
+             <h2 className="text-[12vw] font-black text-transparent stroke-text-light uppercase tracking-tighter leading-none" aria-hidden="true">
+               Zero to Sixty in 2.4s &nbsp;•&nbsp; Zero to Sixty in 2.4s &nbsp;•&nbsp; Zero to Sixty in 2.4s
+             </h2>
+          </motion.div>
+          <motion.div style={{ x: x2 }} className="whitespace-nowrap flex">
+             <h2 className="text-[12vw] font-black text-red-600/80 uppercase tracking-tighter leading-none" aria-hidden="true">
+               Naturally Aspirated V12 &nbsp;•&nbsp; Naturally Aspirated V12 &nbsp;•&nbsp; Naturally Aspirated V12
+             </h2>
+          </motion.div>
+       </motion.div>
+       <div className="sr-only">Stats: Zero to sixty in 2.4 seconds. Powered by a Naturally Aspirated V12 engine.</div>
+    </section>
+  );
+};
+
+const DeconstructedArchitecture = () => {
+  const shards = [
+    { clipPath: "polygon(0% 0%, 35% 0%, 20% 45%, 0% 60%)", ox1: "-30vw", oy1: "-30vh", or1: -45, ox2: "-40vw", oy2: "10vh", or2: -90, px: -30, py: -20, f1: "grayscale(100%) blur(5px)", fm: "grayscale(0%) blur(0px)", f2: "grayscale(0%) blur(0px)" },
+    { clipPath: "polygon(35% 0%, 75% 0%, 85% 35%, 50% 55%, 20% 45%)", ox1: "0vw", oy1: "-40vh", or1: 20, ox2: "10vw", oy2: "-50vh", or2: 60, px: 15, py: -35, f1: "sepia(100%) invert(0%)", fm: "sepia(0%) invert(0%)", f2: "sepia(0%) invert(100%)" },
+    { clipPath: "polygon(75% 0%, 100% 0%, 100% 50%, 85% 35%)", ox1: "30vw", oy1: "-20vh", or1: 45, ox2: "40vw", oy2: "0vh", or2: 120, px: 40, py: -15, f1: "brightness(150%)", fm: "brightness(100%)", f2: "brightness(100%)" },
+    { clipPath: "polygon(0% 60%, 20% 45%, 50% 55%, 30% 100%, 0% 100%)", ox1: "-30vw", oy1: "30vh", or1: -30, ox2: "-10vw", oy2: "40vh", or2: -60, px: -25, py: 30, f1: "invert(100%)", fm: "invert(0%)", f2: "invert(0%)" },
+    { clipPath: "polygon(50% 55%, 85% 35%, 100% 50%, 100% 100%, 30% 100%)", ox1: "30vw", oy1: "30vh", or1: 35, ox2: "30vw", oy2: "40vh", or2: 90, px: 30, py: 40, f1: "hue-rotate(-90deg)", fm: "hue-rotate(0deg)", f2: "hue-rotate(0deg)" }
+  ];
+
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothX = useSpring(mouseX, { damping: 20, stiffness: 100 });
+  const smoothY = useSpring(mouseY, { damping: 20, stiffness: 100 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseX.set((e.clientX / window.innerWidth) * 2 - 1);
+      mouseY.set((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
+
+  const controlledOpacity = useTransform(scrollYProgress, [0, 0.2, 0.35, 0.5], [0, 1, 1, 0]);
+  const controlledScale = useTransform(scrollYProgress, [0, 0.35], [1.2, 1]);
+  const controlledY = useTransform(scrollYProgress, [0, 0.35], ["20%", "0%"]);
+
+  const chaosOpacity = useTransform(scrollYProgress, [0.5, 0.65, 0.8, 1], [0, 0, 1, 1]);
+  const chaosScale = useTransform(scrollYProgress, [0.65, 1], [0.8, 1.2]);
+  const chaosY = useTransform(scrollYProgress, [0.65, 1], ["0%", "-20%"]);
+
+  const wireframeRotate = useTransform(scrollYProgress, [0, 1], [0, 180]);
+  const wireframeScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.2, 0.8]);
+
+  return (
+    <section ref={containerRef} aria-hidden="true" className="relative h-[400vh] bg-[#050505] text-white z-30 hidden md:block">
+      <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+        <motion.div style={{ rotate: wireframeRotate, scale: wireframeScale }} className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+          <svg viewBox="0 0 100 100" className="w-[120vmin] h-[120vmin] overflow-visible">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="white" strokeWidth="0.2" strokeDasharray="2 4" />
+            <circle cx="50" cy="50" r="35" fill="none" stroke="white" strokeWidth="0.1" />
+            <circle cx="50" cy="50" r="25" fill="none" stroke="white" strokeWidth="0.2" strokeDasharray="1 6" />
+            <path d="M 5 50 L 95 50 M 50 5 L 50 95" stroke="white" strokeWidth="0.1" />
+            <rect x="15" y="15" width="70" height="70" fill="none" stroke="white" strokeWidth="0.1" transform="rotate(45 50 50)" />
+          </svg>
+        </motion.div>
+
+        <div className="relative w-[90vw] h-[60vh] md:w-[60vw] md:h-[70vh] max-w-[1200px]">
+          {shards.map((shard, idx) => {
+            const x = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], [shard.ox1, "0vw", "0vw", shard.ox2]);
+            const y = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], [shard.oy1, "0vh", "0vh", shard.oy2]);
+            const rotate = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], [shard.or1, 0, 0, shard.or2]);
+            const filter = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], [shard.f1, shard.fm, shard.fm, shard.f2]);
+            const pX = useTransform(smoothX, v => v * shard.px);
+            const pY = useTransform(smoothY, v => v * shard.py);
+
+            return (
+              <motion.div key={idx} style={{ x: pX, y: pY }} className="absolute inset-0 w-full h-full z-10">
+                <motion.div style={{ x, y, rotate, clipPath: shard.clipPath, filter }} className="absolute inset-0 w-full h-full origin-center drop-shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+                  <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=2800&q=80" alt="" className="object-cover absolute inset-0 w-full h-full" />
+                </motion.div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mix-blend-difference z-20 px-4">
+          <motion.h2 style={{ opacity: controlledOpacity, scale: controlledScale, y: controlledY }} className="text-[12vw] md:text-[8vw] font-serif tracking-tighter leading-none text-white text-center">ENGINEERED</motion.h2>
+          <motion.h2 style={{ opacity: chaosOpacity, scale: chaosScale, y: chaosY }} className="text-[12vw] md:text-[8vw] font-serif tracking-tighter leading-none text-red-600 italic text-center">POWER.</motion.h2>
+        </div>
+
+        <div className="absolute bottom-10 left-6 md:left-10 text-white/30 font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] z-30">Chassis Diagnostics</div>
+      </div>
+    </section>
+  );
+};
+
+const WhyFindSection = () => (
+  <section aria-labelledby="why-apex-heading" className="py-24 md:py-32 bg-[#050505] text-white px-6 relative z-40 border-t border-white/5">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="reveal-up text-center md:text-left">
+              <h2 id="why-apex-heading" className="text-4xl md:text-5xl font-bold tracking-tight mb-6 md:mb-8">Why APEX</h2>
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-400 leading-relaxed max-w-lg mx-auto md:mx-0">
+                  Your drive is changing. Don't just rent a car — command a masterpiece. 
+                  <span className="font-serif italic text-white highlight-draw inline-block md:inline">We hand you the keys to the world's most exhilarating machines.</span>
+              </p>
+          </div>
+          <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-lg curtain-container reveal-up border border-white/10 mt-8 md:mt-0" style={{ transitionDelay: '0.1s' }}>
+              <img src="https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=800&q=80" alt="Supercar Speeding" className="w-full h-full object-cover transform scale-105 transition-transform duration-1000 ease-out opacity-80" />
+          </div>
+      </div>
+  </section>
+);
+
+const ArrowAccordionSection = () => (
+  <section className="py-20 bg-[#0a0a0a] px-6 overflow-hidden border-t border-white/5">
+      <div className="max-w-7xl mx-auto">
+          <div className="mb-10 md:mb-16 reveal-up text-center md:text-left">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white">
+                  This isn't just <br className="hidden md:block"/>
+                  <span className="font-serif italic text-gray-500">about getting from A to B.</span>
+              </h2>
+          </div>
+          <div className="arrow-container w-full mb-12 md:mb-16 reveal-up flex-col md:flex-row gap-2 md:gap-4 h-[400px] sm:h-[500px] md:h-[450px] lg:h-[500px]" style={{ transitionDelay: '0.1s' }}>
+              <div className="arrow-item md:clip-arrow-first rounded-xl md:rounded-none hover-trigger" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&q=80')" }}></div>
+              <div className="arrow-item md:clip-arrow-middle rounded-xl md:rounded-none hover-trigger" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&q=80')" }}></div>
+              <div className="arrow-item md:clip-arrow-last rounded-xl md:rounded-none hover-trigger" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80')" }}></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start reveal-up text-center md:text-left" style={{ transitionDelay: '0.2s' }}>
+              <div className="hidden md:flex md:col-span-5 justify-center">
+                  <div className="w-5 h-5 bg-red-600 rounded-full mt-1.5 shadow-[0_0_15px_rgba(220,38,38,0.8)]"></div>
+              </div>
+              <div className="md:col-span-7 text-base sm:text-lg md:text-xl text-gray-400 leading-relaxed pr-0 lg:pr-12">
+                  <p>
+                      It's about adrenaline. Presence. Dominance. You're not just looking for a ride. 
+                      <span className="font-serif italic text-white highlight-draw"> You're looking for an experience. That's what we deliver.</span>
+                  </p>
+              </div>
+          </div>
+      </div>
+  </section>
+);
+
+const AcousticSignature = () => {
+  const [rev, setRev] = useState(false);
+
+  return (
+    <motion.section
+       animate={{ backgroundColor: rev ? "#1a0505" : "#050505" }}
+       transition={{ duration: 0.3 }}
+       aria-labelledby="acoustic-heading"
+       className="py-32 md:py-48 relative overflow-hidden flex flex-col items-center justify-center border-t border-white/5 min-h-[70vh]"
+    >
+        <div className="relative z-20 text-center mb-16 md:mb-20 pointer-events-none px-6">
+           <motion.h2
+             id="acoustic-heading"
+             animate={{ x: rev ? [-3, 3, -3, 3, 0] : 0, y: rev ? [-2, 2, -2, 2, 0] : 0 }}
+             transition={{ repeat: rev ? Infinity : 0, duration: 0.1 }}
+             className="text-4xl sm:text-5xl md:text-7xl font-bold text-white tracking-tight drop-shadow-lg"
+           >
+             Acoustic <span className="font-serif italic text-red-500 font-light">Signature</span>
+           </motion.h2>
+           <p className="text-gray-400 mt-4 md:mt-6 font-mono text-[10px] md:text-sm tracking-[0.2em] md:tracking-widest uppercase">The visceral scream of an unrestricted exhaust.</p>
+        </div>
+
+        <div
+           onMouseEnter={() => setRev(true)}
+           onMouseLeave={() => setRev(false)}
+           onFocus={() => setRev(true)}
+           onBlur={() => setRev(false)}
+           tabIndex={0}
+           className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group z-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full ignite-btn"
+           aria-label="Rev the engine to hear acoustic signature"
+        >
+           <motion.div
+              animate={{ scale: rev ? 0.8 : 1 }}
+              className="absolute w-20 h-20 md:w-24 md:h-24 bg-red-600 rounded-full z-30 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.6)]"
+           >
+              <span className="text-white font-bold text-[10px] md:text-xs tracking-widest group-hover:animate-pulse">IGNITE</span>
+           </motion.div>
+           {[...Array(6)].map((_, i) => (
+              <motion.div
+                 key={i}
+                 animate={{
+                    scale: rev ? [1, 3.5] : [1, 1.5],
+                    opacity: rev ? [0.8, 0] : [0.2, 0],
+                    borderWidth: rev ? ["6px", "1px"] : ["1px", "0px"]
+                 }}
+                 transition={{
+                    duration: rev ? 0.3 : 2,
+                    repeat: Infinity,
+                    delay: i * (rev ? 0.05 : 0.3),
+                    ease: "easeOut"
+                 }}
+                 className="absolute w-20 h-20 md:w-24 md:h-24 border-red-500 rounded-full pointer-events-none"
+                 aria-hidden="true"
+              />
+           ))}
+        </div>
+    </motion.section>
+  )
+};
+
+const ChassisHologram = () => {
+  const containerRef = useRef(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { damping: 30, stiffness: 200 });
+  const springY = useSpring(mouseY, { damping: 30, stiffness: 200 });
+
+  const bgX = useTransform(springX, [-1, 1], [-15, 15]);
+  const bgY = useTransform(springY, [-1, 1], [-15, 15]);
+  const midX = useTransform(springX, [-1, 1], [-30, 30]);
+  const midY = useTransform(springY, [-1, 1], [-30, 30]);
+  const fgX = useTransform(springX, [-1, 1], [-60, 60]);
+  const fgY = useTransform(springY, [-1, 1], [-60, 60]);
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current || window.matchMedia("(pointer: coarse)").matches) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    mouseX.set(nx);
+    mouseY.set(ny);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
+  return (
+    <section aria-labelledby="hologram-heading" className="py-24 md:py-40 bg-[#050505] border-t border-white/5 flex flex-col items-center justify-center px-6 perspective-1000 overflow-hidden min-h-[90vh]">
+       <div className="text-center mb-12 md:mb-16 reveal-up z-20 pointer-events-none">
+          <h2 id="hologram-heading" className="text-4xl md:text-6xl font-bold text-white tracking-tight">Structural <span className="font-serif italic text-red-500 font-light">Integrity</span></h2>
+       </div>
+       <div
+         ref={containerRef}
+         onMouseMove={handleMouseMove}
+         onMouseLeave={handleMouseLeave}
+         className="relative w-full max-w-6xl aspect-[4/5] md:aspect-[21/9] rounded-[2rem] border border-white/10 bg-[#0a0a0a] overflow-hidden group cursor-crosshair shadow-[0_0_50px_rgba(0,0,0,0.8)] reveal-up reveal-delay-1"
+       >
+          <motion.div
+            style={{ x: bgX, y: bgY }}
+            className="absolute -inset-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] opacity-50"
+            aria-hidden="true"
+          />
+          <motion.div
+            style={{ x: midX, y: midY }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            aria-hidden="true"
+          >
+             <img src="https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80" alt="" className="w-full md:w-[80%] h-[100%] md:h-[80%] object-cover md:rounded-xl opacity-60 mix-blend-screen filter grayscale brightness-150 contrast-125" />
+          </motion.div>
+          <motion.div
+            style={{ x: fgX, y: fgY }}
+            className="absolute inset-0 p-6 md:p-12 flex flex-col justify-between pointer-events-none"
+          >
+             <div className="flex justify-between w-full opacity-80">
+                <span className="text-red-500 font-mono text-[10px] md:text-xs tracking-widest font-bold">X-RAY DIAGNOSTICS</span>
+                <span className="text-white font-mono text-[10px] md:text-xs tracking-widest">SYS.ON</span>
+             </div>
+             <div className="mt-auto">
+                <h3 className="text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
+                   CARBON <br/><span className="font-serif italic text-gray-400 font-light">TUB</span>
+                </h3>
+                <p className="text-gray-300 mt-4 max-w-sm drop-shadow-md bg-black/60 md:bg-black/40 p-4 rounded-lg backdrop-blur-md border border-white/5 text-xs md:text-sm leading-relaxed">
+                   Hover to inspect. The central monocoque is baked in an autoclave to provide Formula 1 levels of torsional rigidity, protecting the driver at extraordinary speeds.
+                </p>
+             </div>
+          </motion.div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.9)_100%)] pointer-events-none" aria-hidden="true"></div>
+       </div>
+    </section>
+  )
+};
+
+const HorizontalPortfolioSection = () => {
+  const hWrapper = useRef(null);
+  const hTrack = useRef(null);
+
+  useEffect(() => {
+    let hCurrentX = 0;
+    let hTargetX = 0;
+    let rafId;
+
+    const handleScroll = () => {
+      if (!hWrapper.current || !hTrack.current) return;
+      const rect = hWrapper.current.getBoundingClientRect();
+      const scrollProgress = -rect.top / (rect.height - window.innerHeight);
+      const maxScroll = Math.max(0, hTrack.current.scrollWidth - window.innerWidth + (window.innerWidth > 768 ? 100 : 40)); 
+      hTargetX = Math.max(0, Math.min(1, scrollProgress)) * maxScroll;
+    };
+
+    const renderLoop = () => {
+      if (hTrack.current) {
+          hCurrentX += (hTargetX - hCurrentX) * 0.08;
+          hTrack.current.style.transform = `translateX(-${hCurrentX}px)`;
+      }
+      rafId = requestAnimationFrame(renderLoop);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    rafId = requestAnimationFrame(renderLoop);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  return (
+    <section ref={hWrapper} id="fleet" className="h-[300vh] relative bg-[#111111] border-y border-white/10">
+        <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-center">
+            <div className="px-6 md:px-24 mb-8 md:mb-12 absolute top-16 md:top-20 left-0 reveal-up">
+                <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
+                    The Apex <br/>
+                    <span className="font-serif italic text-gray-500">Fleet</span>
+                </h2>
+            </div>
+            
+            <div ref={hTrack} id="h-scroll-track" className="flex gap-6 md:gap-16 px-6 md:px-24 w-[380vw] md:w-[300vw] lg:w-[250vw] mt-24 md:mt-20 items-center">
+                {[
+                  { img: '1583121274602-3e2820c69888', num: '01', loc: 'V12 HYBRID', title: 'Ferrari SF90 Stradale' },
+                  { img: '1503375819717-31295b9c0e5a', num: '02', loc: 'TWIN-TURBO', title: 'Porsche 911 Turbo S' },
+                  { img: '1614200187524-dc4b892acf16', num: '03', loc: 'NATURALLY ASPIRATED', title: 'Lamborghini Aventador' },
+                  { img: '1563720223185-11003d516935', num: '04', loc: 'LUXURY', title: 'Rolls Royce Cullinan' }
+                ].map((item, i) => (
+                  <div key={i} className="h-scroll-item group border border-white/10">
+                      <div className={`absolute inset-0 bg-cover bg-center transform group-hover:scale-105 transition-transform duration-1000`} style={{ backgroundImage: `url('https://images.unsplash.com/photo-${item.img}?auto=format&fit=crop&q=80')` }}></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                      <div className="absolute bottom-8 md:bottom-10 left-6 md:left-10 text-white pr-6 md:pr-10">
+                          <p className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-red-500 mb-2">{item.num} / {item.loc}</p>
+                          <h3 className="text-2xl md:text-4xl lg:text-5xl font-serif italic mb-4 leading-tight">{item.title}</h3>
+                          <a href="#" className="inline-flex items-center text-xs md:text-sm font-bold uppercase tracking-wider hover:text-red-500 transition-colors">View Specs &rarr;</a>
+                      </div>
+                  </div>
+                ))}
+            </div>
+        </div>
+    </section>
+  );
+};
+
+const ServicesAccordionSection = () => (
+  <section id="experience" className="bg-[#111] text-white pt-24 pb-12 border-t border-white/5">
+      <div className="max-w-7xl mx-auto px-6 mb-12 md:mb-16 reveal-up">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">Categories</div>
+              <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+                  Choose Your <br/>
+                  <span className="font-serif italic text-gray-500">Weapon</span>
+              </h2>
+          </div>
+      </div>
+      <div className="border-t border-white/10 reveal-up services-wrapper" style={{ transitionDelay: '0.1s' }}>
+          {['Exotic', 'Luxury', 'SUV'].map((service, i) => (
+            <a key={i} href="#" className="hover-trigger service-row group block border-b border-white/10 py-8 md:py-12 px-6 bg-transparent relative overflow-hidden">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8 relative z-10 pointer-events-none">
+                    <div className="md:w-1/2 service-desc">
+                        <h3 className="text-lg md:text-2xl font-serif italic text-gray-400">
+                            {service === 'Exotic' && "Mid-engine V8s, screaming V12s. Ferrari, Lamborghini, McLaren. Reserved for the bold."}
+                            {service === 'Luxury' && "Uncompromising comfort and status. Rolls Royce, Bentley, Maybach. Command the boardroom."}
+                            {service === 'SUV' && "Power meets utility. Urus, G-Wagon, G63 AMG. Dominate any terrain in absolute luxury."}
+                        </h3>
+                    </div>
+                    <div className="flex items-center gap-4 md:gap-6 mt-4 md:mt-0">
+                        <span className="service-text text-5xl md:text-8xl font-black uppercase text-gray-600 tracking-tighter transition-colors group-hover:text-white">{service}</span>
+                        <svg className="w-8 h-8 md:w-12 md:h-12 text-white/50 transform -rotate-45 group-hover:rotate-0 group-hover:text-red-500 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+                <div className="absolute inset-0 bg-[#1a1a1a] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-0"></div>
+            </a>
+          ))}
+      </div>
+  </section>
+);
+
+const TestimonialsSection = () => {
+  const [current, setCurrent] = useState(0);
+  const reviews = [
+    { text: "The sound, the grip, the sheer violence of the acceleration—it was an unmatched weekend. APEX sets the standard.", author: "Marcus Vance", img: '1618843479313-40f8afb4b4d8' },
+    { text: "Not only was the vehicle immaculate, but the concierge service anticipated every need. Absolute discretion.", author: "Elena R.", img: '1563720223185-11003d516935' }
+  ];
+
+  useEffect(() => {
+    const int = setInterval(() => {
+      setCurrent(c => (c + 1) % reviews.length);
+    }, 6000);
+    return () => clearInterval(int);
+  }, []);
+
+  return (
+    <section id="members" className="relative h-[60vh] md:h-[80vh] bg-[#050505] text-white flex items-center overflow-hidden border-t border-white/5 perspective-1000">
+        <AnimatePresence mode="wait">
+            <motion.div 
+              key={current}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-luminosity filter blur-sm"
+              style={{ backgroundImage: `url('https://images.unsplash.com/photo-${reviews[current].img}?auto=format&fit=crop&w=2000&q=80')` }}
+            />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10 text-center">
+            <div className="w-12 md:w-16 h-1 bg-red-600 mx-auto mb-8 md:mb-10"></div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, rotateX: 45, y: 50 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                exit={{ opacity: 0, rotateX: -45, y: -50 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="transform-gpu"
+              >
+                <p className="text-2xl md:text-5xl lg:text-7xl font-serif italic text-white leading-tight drop-shadow-2xl mb-6 md:mb-8 px-4">
+                    "{reviews[current].text}"
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs md:text-sm font-bold tracking-[0.2em] md:tracking-[0.3em] uppercase text-gray-400">
+                    <span className="text-red-500">{reviews[current].author}</span>
+                    <span className="hidden sm:inline">//</span>
+                    <div className="flex text-white">VIP SYNDICATE</div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+        </div>
+    </section>
+  );
+};
+
+const BlogSection = () => {
+  const [activeImg, setActiveImg] = useState(null);
+  
+  const articles = [
+    {img: '1492144534655-ae79c964c9d7', date: '2026-03-12', title: 'Top 5 Driving Roads in Europe'},
+    {img: '1544829099-b9a0c07fad1a', date: '2026-02-28', title: 'Aero: Downforce Explained'},
+    {img: '1553440569-bcc63803a83d', date: '2026-01-15', title: 'The Electric Hypercar Revolution'},
+    {img: '1603584173870-7f23fdae1b7a', date: '2026-01-02', title: 'V12 vs V8: The Purist Debate'}
+  ];
+
+  return (
+    <section id="blog" className="py-24 md:py-48 bg-[#050505] text-white relative border-t border-white/5 transition-colors overflow-hidden">
+      
+      <AnimatePresence>
+        {activeImg && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 0.3, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 bg-cover bg-center pointer-events-none filter blur-sm hidden md:block"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-${activeImg}?auto=format&fit=crop&w=2000&q=80')` }}
+          />
+        )}
+      </AnimatePresence>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/80 to-[#050505] pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="mb-16 md:mb-20 reveal-up text-center md:text-left">
+              <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+                  The Paddock <br className="hidden md:block"/> <span className="font-serif italic text-red-500 font-light">& News</span>
+              </h2>
+          </div>
+
+          <div className="flex flex-col border-t border-white/10">
+              {articles.map((article, i) => (
+                <div 
+                  key={i} 
+                  onMouseEnter={() => setActiveImg(article.img)}
+                  onMouseLeave={() => setActiveImg(null)}
+                  className="marquee-row group py-6 md:py-12 border-b border-white/10 relative flex flex-col md:flex-row items-start md:items-baseline justify-between hover-trigger cursor-pointer"
+                >
+                    <span className="text-[10px] md:text-xs font-mono uppercase tracking-[0.2em] text-gray-500 group-hover:text-red-500 transition-colors mb-2 md:mb-0 w-32">{article.date}</span>
+                    <h3 className={`text-2xl md:text-5xl lg:text-7xl font-black tracking-tighter uppercase transition-all duration-500 flex-1 ${activeImg && activeImg !== article.img ? 'text-white md:text-transparent md:stroke-text-light' : 'text-white group-hover:text-red-500 group-hover:translate-x-2 md:group-hover:translate-x-4'}`}>
+                      {article.title}
+                    </h3>
+                    <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform group-hover:-translate-x-4">
+                       <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </div>
+                </div>
+              ))}
+          </div>
+      </div>
+  </section>
+  );
+}
+
+const ImpactSection = () => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if(!container) return;
+
+    const trailImages = [
+      'https://images.unsplash.com/photo-1614200187524-dc4b892acf16?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1503375819717-31295b9c0e5a?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&q=80&w=400',
+      'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=400'
+    ];
+    let trailLastX = 0, trailLastY = 0;
+
+    const createTrailImage = (x, y) => {
+        const img = document.createElement('img');
+        img.src = trailImages[Math.floor(Math.random() * trailImages.length)];
+        img.className = 'trail-img border border-white/10';
+        
+        const rect = container.parentElement.getBoundingClientRect();
+        const localX = x - rect.left;
+        const localY = y - rect.top;
+        
+        img.style.left = `${localX}px`;
+        img.style.top = `${localY}px`;
+        const rotation = Math.random() * 30 - 15; 
+        
+        container.appendChild(img);
+        img.getBoundingClientRect(); 
+        
+        requestAnimationFrame(() => {
+            img.classList.add('active');
+            img.style.transform = `translate(-50%, -50%) scale(1) rotate(${rotation}deg)`;
+        });
+        
+        setTimeout(() => {
+            img.style.opacity = '0';
+            img.style.transform = `translate(-50%, -50%) scale(0.9) rotate(${rotation}deg)`;
+            setTimeout(() => { if (container.contains(img)) img.remove() }, 400); 
+        }, 800); 
+    };
+
+    const handleMouseMove = (e) => {
+        const dist = Math.hypot(e.clientX - trailLastX, e.clientY - trailLastY);
+        if (dist > 100) {
+            trailLastX = e.clientX;
+            trailLastY = e.clientY;
+            createTrailImage(e.clientX, e.clientY);
+        }
+    };
+
+    const parent = container.parentElement;
+    parent.addEventListener('mousemove', handleMouseMove);
+    return () => parent.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <section id="trail-section" className="py-32 md:py-48 bg-[#050505] text-white relative overflow-hidden flex items-center justify-center">
+        <div ref={containerRef} className="absolute inset-0 z-10 pointer-events-none overflow-hidden"></div>
+
+        <div className="relative z-20 text-center max-w-5xl mx-auto px-6 pointer-events-none">
+            <div className="text-xs font-bold uppercase tracking-[0.3em] text-red-500 mb-8 reveal-up">By The Numbers</div>
+            <div className="flex flex-col md:flex-row justify-center gap-12 md:gap-32">
+                <div className="reveal-up" style={{ transitionDelay: '0.1s' }}>
+                    <div className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter mb-2"><span className="counter-val" data-target="5">0</span>M+</div>
+                    <div className="text-xl font-serif italic text-gray-400">Miles Driven</div>
+                </div>
+                <div className="reveal-up" style={{ transitionDelay: '0.2s' }}>
+                    <div className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter mb-2"><span className="counter-val" data-target="10000">0</span>+</div>
+                    <div className="text-xl font-serif italic text-gray-400">Adrenaline Seekers</div>
+                </div>
+            </div>
+        </div>
+        <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1469285994282-454ceb49e63c?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-[0.07] pointer-events-none mix-blend-screen"></div>
+    </section>
+  );
+};
+
+const OutroSection = () => {
+  const outroRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if(!outroRef.current) return;
+      const rect = outroRef.current.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+          outroRef.current.style.transform = `translateY(${(rect.top - window.innerHeight) * 0.15}px)`;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <section id="contact" aria-label="Book your ride" className="relative py-32 md:py-48 flex items-center justify-center text-center overflow-hidden bg-[#050505]">
+        <div className="absolute inset-0 z-0" aria-hidden="true">
+            <img ref={outroRef} src="https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&q=80" alt="" className="w-full h-[130%] object-cover opacity-30" style={{ transform: 'translateY(0)' }} />
+        </div>
+        <div className="relative z-10 px-4 reveal-up text-white">
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-red-500 mb-6 block">Ready?</span>
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 md:mb-12">
+                Ignite.<br/>
+                <span className="font-serif italic text-gray-300 font-light highlight-draw" style={{ backgroundImage: 'linear-gradient(120deg, rgba(220,38,38,0.3) 0%, rgba(220,38,38,0.3) 100%)' }}>Your hypercar awaits.</span>
+            </h2>
+            <MagneticButton href="#" aria-label="Book Your Ride Now" className="inline-flex items-center gap-4 bg-white text-[#111111] px-6 md:px-8 py-3 md:py-4 rounded-full text-xs md:text-sm font-bold tracking-widest uppercase hover:bg-red-600 hover:text-white transition-colors btn-hover-arrow">
+                Book Your Ride
+                <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </MagneticButton>
+        </div>
+    </section>
+  );
+};
+
+const Footer = () => (
+  <footer aria-label="Site Footer" className="bg-[#050505] text-white pt-20 md:pt-24 pb-8 md:pb-12 px-6 overflow-hidden border-t border-white/10">
+      <div className="max-w-[90rem] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16 mb-16 md:mb-24">
+              
+              <div className="md:col-span-5 text-center md:text-left">
+                  <h3 className="text-2xl md:text-3xl font-serif italic mb-6 md:mb-8 text-gray-300">Join the apex registry.</h3>
+                  <form className="flex border-b border-white/20 pb-3 focus-within:border-white transition-colors group max-w-sm mx-auto md:mx-0">
+                      <label htmlFor="email-subscribe" className="sr-only">Email Address</label>
+                      <input id="email-subscribe" type="email" placeholder="Email Address" className="bg-transparent w-full text-white placeholder-gray-600 outline-none text-sm tracking-wide" required />
+                      <button type="submit" aria-label="Subscribe to newsletter" className="hover-trigger p-1 group-hover:translate-x-2 transition-transform text-red-500 group-hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">
+                          <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      </button>
+                  </form>
+              </div>
+
+              <div className="md:col-span-7 flex flex-col sm:flex-row gap-12 sm:gap-16 justify-between md:justify-end text-sm text-center sm:text-left">
+                  <div>
+                      <h3 className="text-gray-600 mb-6 uppercase tracking-widest text-[10px] md:text-xs font-bold" id="footer-menu-heading">Menu</h3>
+                      <nav aria-labelledby="footer-menu-heading" className="flex flex-col gap-4 text-gray-400">
+                          <a href="#fleet" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">Fleet</a>
+                          <a href="#experience" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">Experience</a>
+                          <a href="#blog" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">The Paddock</a>
+                          <a href="#contact" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">Contact</a>
+                      </nav>
+                  </div>
+                  <div>
+                      <h3 className="text-gray-600 mb-6 uppercase tracking-widest text-[10px] md:text-xs font-bold" id="footer-social-heading">Social</h3>
+                      <nav aria-labelledby="footer-social-heading" className="flex flex-col gap-4 text-gray-400">
+                          <a href="#" aria-label="Instagram" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">Instagram</a>
+                          <a href="#" aria-label="LinkedIn" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">LinkedIn</a>
+                          <a href="#" aria-label="Twitter" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">Twitter</a>
+                          <a href="#" aria-label="YouTube" className="hover-trigger nav-link inline-block self-center sm:self-start hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">YouTube</a>
+                      </nav>
+                  </div>
+                  <address className="not-italic">
+                      <h3 className="text-gray-600 mb-6 uppercase tracking-widest text-[10px] md:text-xs font-bold">Garage</h3>
+                      <p className="text-gray-400 leading-loose">
+                          5 W 37th St, Fl 12<br/>
+                          New York, NY 10018<br/>
+                          <a href="tel:+12129949965" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded">+1 212 994 9965</a>
+                      </p>
+                  </address>
+              </div>
+          </div>
+          
+          <div className="border-t border-white/10 pt-8 md:pt-12 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-8">
+              <div className="mask-wrapper" aria-hidden="true">
+                  <div className="reveal-up text-[15vw] md:text-[15vw] font-black tracking-tighter leading-none pr-4 text-white">APEX<span className="text-red-600">.</span></div>
+              </div>
+              
+              <div className="flex flex-col items-center md:items-end gap-4 text-[10px] md:text-xs text-gray-500 uppercase tracking-widest font-bold">
+                  <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+                      <ScrambleText text="Terms" href="#" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded" as="a" />
+                      <ScrambleText text="Privacy" href="#" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded" as="a" />
+                      <ScrambleText text="Insurance" href="#" className="hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded" as="a" />
+                  </div>
+                  <div>&copy; 2026 APEX LUXURY RENTALS</div>
+              </div>
+          </div>
+      </div>
+  </footer>
+);
+
+export default function App() {
+  const { scrollYProgress } = useScroll();
+  useGlobalReveal();
+
+  return (
+    <div className="antialiased selection:bg-red-600 selection:text-white scroll-smooth font-sans text-white bg-[#050505] overflow-x-clip cursor-none">
+      <style dangerouslySetInnerHTML={{ __html: customCSS }} />
+      <MagicCursor />
+
+      <motion.div 
+        aria-hidden="true"
+        className="fixed top-0 left-0 h-[3px] bg-red-600 shadow-[0_0_10px_red] z-[100] origin-left" 
+        style={{ scaleX: scrollYProgress }} 
+      />
+
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-red-600 focus:text-white focus:px-4 focus:py-2 focus:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        Skip to main content
+      </a>
+
+      <Navbar />
+      <main id="main-content">
+        <HeroSection />
+        <VelocityTextTunnel />
+        
+        {/* BRAND NEW SECTION 1 */}
+        <V12IgnitionSequence />
+        
+        <DeconstructedArchitecture />
+        <WhyFindSection />
+        <TheVaultSection />
+
+        {/* BRAND NEW SECTION 2 */}
+        <AerodynamicDragSection />
+
+        <AcousticSignature />
+        <ArrowAccordionSection />
+        <ChassisHologram />
+        <HorizontalPortfolioSection />
+        <ServicesAccordionSection />
+        <TelemetryScanSection />
+
+        {/* BRAND NEW SECTION 3 */}
+        <ZenithWarpTunnel />
+
+        <TestimonialsSection />
+        <BlogSection />
+        <ImpactSection />
+        <OutroSection />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+const customCSS = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap');
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Base styles */
+body {
+    background-color: #050505;
+    color: #e5e5e5;
+    overflow-x: clip;
+    cursor: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.text-shadow-glow { text-shadow: 0 0 20px rgba(220,38,38,0.8); }
+.perspective-1000 { perspective: 1000px; }
+.perspective-1500 { perspective: 1500px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.stroke-text-light { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2); color: transparent; }
+
+.spotlight-card { position: relative; }
+.spotlight-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(220,38,38,0.15), transparent 40%);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.spotlight-card:hover::before { opacity: 1; }
+
+#magic-cursor {
+    position: fixed;
+    top: 0; left: 0;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    mix-blend-mode: difference;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate3d(calc(50vw - 50%), calc(50vh - 50%), 0);
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1), height 0.4s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.4s ease;
+    will-change: transform, width, height;
+}
+#magic-cursor.cursor-hovering {
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,1);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    #magic-cursor { display: none !important; }
+}
+
+.reveal-up {
+    transform: translateY(40px);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 1s ease;
+    will-change: transform, opacity;
+}
+.reveal-up.in-view { transform: translateY(0); opacity: 1; }
+
+.reveal-clip {
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+}
+.reveal-clip.in-view { clip-path: circle(100% at 50% 50%); }
+
+@keyframes slow-zoom {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+.animate-slow-zoom {
+    animation: slow-zoom 20s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+.nav-link { position: relative; display: inline-block; }
+.nav-link::after {
+    content: ''; position: absolute; bottom: -4px; left: 0;
+    width: 100%; height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: right;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-link:hover::after { transform: scaleX(1); transform-origin: left; }
+
+.curtain-container { position: relative; overflow: hidden; }
+.curtain-container::after {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 100%; height: 100%; background-color: #050505;
+    transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+    transform-origin: right; z-index: 10;
+}
+.curtain-container.in-view::after { transform: scaleX(0); }
+
+.arrow-container { display: flex; width: 100%; }
+.arrow-item { flex: 1; transition: flex 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease; background-size: cover; background-position: center; filter: grayscale(100%); }
+@media (min-width: 768px) {
+    .arrow-container:not(:hover) .arrow-item:first-child { flex: 2.5; filter: grayscale(0); }
+    .arrow-container:hover .arrow-item { flex: 1; filter: grayscale(100%); }
+    .arrow-container .arrow-item:hover { flex: 2.5; filter: grayscale(0); }
+    .clip-arrow-first { clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%); }
+    .clip-arrow-middle { clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%, 15% 50%); }
+    .clip-arrow-last { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 15% 50%); }
+}
+@media (max-width: 767px) {
+    .arrow-container:not(:hover) .arrow-item:first-child { flex: 2; filter: grayscale(0); }
+    .arrow-container:hover .arrow-item { flex: 1; filter: grayscale(100%); }
+    .arrow-container .arrow-item:hover { flex: 2; filter: grayscale(0); }
+}
+
+.highlight-draw {
+    background-image: linear-gradient(120deg, rgba(220,38,38,0.4) 0%, rgba(220,38,38,0.4) 100%);
+    background-repeat: no-repeat; background-size: 0% 100%; background-position: 0% 100%;
+    transition: background-size 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+    padding: 0 0.2rem; border-radius: 2px;
+}
+.highlight-draw.in-view { background-size: 100% 100%; }
+
+.services-wrapper { transition: all 0.4s ease; }
+.service-row { transition: all 0.4s ease; }
+.services-wrapper:hover .service-row:not(:hover) { opacity: 0.3; filter: blur(4px); }
+.service-text { display: inline-block; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s; transform-origin: left center; }
+.service-row:hover .service-text { transform: scale(1.05) rotateZ(-2deg); color: #ffffff; }
+.service-row .service-desc { opacity: 0; transform: translateY(10px); transition: all 0.4s ease; }
+.service-row:hover .service-desc { opacity: 1; transform: translateY(0); }
+
+.zoom-img-container { overflow: hidden; position: relative; }
+.zoom-img-container img { transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+.zoom-img-container:hover img { transform: scale(1.05); }
+
+.btn-hover-arrow svg { transition: transform 0.3s ease; }
+.btn-hover-arrow:hover svg { transform: translateX(4px); }
+
+.tilt-wrapper { perspective: 1000px; transform-style: preserve-3d; }
+.tilt-inner { transition: transform 0.1s ease-out; transform-style: preserve-3d; will-change: transform; position: relative; overflow: hidden; }
+
+.counter-val {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+}
+.counter-val.pop { transform: scale(1.1); text-shadow: 0 0 30px rgba(220,38,38,0.8); }
+
+.text-topographic {
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.8);
+    background-image: 
+        repeating-radial-gradient(ellipse at 10% 40%, transparent 0%, transparent 12px, rgba(255, 255, 255, 0.2) 13px, transparent 14px),
+        repeating-radial-gradient(ellipse at 90% 60%, transparent 0%, transparent 18px, rgba(220, 38, 38, 0.3) 19px, transparent 20px);
+    background-size: 150% 150%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: topo-flow 25s ease-in-out infinite alternate;
+    filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8));
+}
+@media (max-width: 768px) {
+    .text-topographic { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8); }
+}
+@keyframes topo-flow {
+    0% { background-position: 0% 0%; background-size: 120% 120%; }
+    100% { background-position: 100% 100%; background-size: 200% 200%; }
+}
+
+.magnetic-btn {
+    display: inline-flex; position: relative; overflow: hidden; z-index: 1;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+.magnetic-btn::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.1); transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: -1; border-radius: 50% 50% 0 0;
+}
+.bg-white.magnetic-btn::after { background: rgba(0,0,0,0.05); }
+.magnetic-btn:hover { transform: scale(1.02); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.5); }
+.bg-white.magnetic-btn:hover { box-shadow: 0 15px 30px -10px rgba(255,255,255,0.2); }
+.magnetic-btn:hover::after { transform: translateY(0); border-radius: 0; }
+.magnetic-btn:active { transform: scale(0.98); }
+
+.parallax-img {
+    width: 100%; height: 120%; object-fit: cover; position: absolute; top: -10%; left: 0;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;
+}
+.zoom-img-container:hover .parallax-img { transform: scale(1.05) translateY(0) !important; }
+
+#h-scroll-track { will-change: transform; }
+.h-scroll-item {
+    width: 60vw; height: 70vh; flex-shrink: 0; background-size: cover; background-position: center;
+    border-radius: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+.h-scroll-item::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 50%);
+}
+@media (max-width: 768px) {
+    .h-scroll-item { width: 85vw; height: 60vh; }
+}
+
+.trail-img {
+    position: absolute; width: 250px; height: 320px; object-fit: cover; pointer-events: none; opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+    transition: opacity 0.4s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10;
+    border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); will-change: transform, opacity;
+}
+.trail-img.active { opacity: 1; }
+
+.fragment {
+    position: absolute; background-size: cover; border-radius: 12px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5); will-change: transform; pointer-events: none;
+}
+
+.digital-twin-container { position: relative; width: 100%; height: 100vh; background: #050505; overflow: hidden; }
+.twin-layer { position: absolute; inset: 0; }
+.twin-real { background-size: cover; background-position: center; clip-path: inset(0 100% 0 0); }
+.scan-line { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; z-index: 10; transform: translateX(-100%); }
+
+.well-container { position: relative; height: 100%; overflow: hidden; border-radius: 2rem; }
+.physics-obj { position: absolute; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 12px; text-transform: uppercase; will-change: transform; pointer-events: auto; }
+
+.zenith-tunnel { height: 400vh; position: relative; background: #000; }
+.tunnel-sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; perspective: 1500px; display: flex; align-items: center; justify-content: center; }
+.tunnel-frame { position: absolute; width: 80vw; height: 80vh; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; will-change: transform, opacity; border-radius: 20px; }
+.tunnel-image { width: 40%; height: 40%; object-fit: cover; opacity: 0.8; filter: grayscale(0.8); transition: filter 0.5s ease, transform 0.5s ease; border-radius: 10px; }
+.tunnel-frame:hover .tunnel-image { filter: grayscale(0); transform: scale(1.05); }
+`;

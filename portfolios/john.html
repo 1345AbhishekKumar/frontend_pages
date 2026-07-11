@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>John Mercer — Designer & Developer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@300..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EFE9DC;
+    --bg-2: #E7DFCE;
+    --card: #F7F2E7;
+    --fg: #1B1814;
+    --fg-soft: #2C2823;
+    --muted: #6B645A; /* Adjusted for WCAG AA contrast */
+    --border: #D6CDB9;
+    --border-soft: #E2DAC6;
+    --accent: #B8431F;
+    --accent-2: #2D4A3E;
+    --accent-3: #C68B3A;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ring-offset: 2px;
+  }
+
+  * { -webkit-font-smoothing: antialiased; }
+  
+  html { 
+    scroll-behavior: smooth; 
+    scroll-padding-top: 6rem; /* Offset for sticky header */
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    overflow-x: hidden;
+  }
+
+  /* Skip Link for Accessibility */
+  .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.75rem 1.5rem;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: 0.5rem;
+    transition: top 200ms var(--ease-out);
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  .font-display {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 50, "WONK" 0;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Balance headings to prevent awkward line breaks */
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* Grain overlay */
+  .grain {
+    position: fixed; inset: 0; pointer-events: none; z-index: 100;
+    opacity: 0.5; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Ambient Desk Lamp Light (GPU Accelerated) */
+  .ambient-light {
+    position: fixed;
+    top: -300px; /* Offset by half width/height */
+    left: -300px;
+    width: 600px;
+    height: 600px;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(circle, rgba(198, 139, 58, 0.12), transparent 60%);
+    will-change: transform;
+    transform: translate3d(50vw, 50vh, 0);
+  }
+
+  /* Custom cursor */
+  .cursor-dot, .cursor-ring {
+    position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-dot { width: 6px; height: 6px; background: var(--accent); }
+  .cursor-ring {
+    width: 32px; height: 32px;
+    border: 1px solid var(--fg); opacity: 0.4;
+    mix-blend-mode: multiply;
+    transition: background-color 250ms var(--ease-out), border-color 250ms var(--ease-out), opacity 250ms ease;
+  }
+  .cursor-ring.hover {
+    background-color: rgba(184, 67, 31, 0.35);
+    border-color: transparent;
+    opacity: 1;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Universal Focus Visible State */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--ring-offset) var(--bg), 0 0 0 calc(var(--ring-offset) + 2px) var(--accent);
+    border-radius: 4px;
+  }
+  .rounded-full:focus-visible {
+    border-radius: 9999px;
+  }
+
+  /* Link underline (Interruptible Dual-Origin Wipe) */
+  .link-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -2px;
+    width: 100%; height: 1px;
+    background: currentColor;
+    transform: scaleX(1);
+    transform-origin: left;
+    transition: transform 250ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .link-underline:hover::after {
+      transform: scaleX(0);
+      transform-origin: right;
+    }
+  }
+
+  /* Hero 3D Tilt Container */
+  .hero-tilt {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  /* Project card & Acrylic Spotlight */
+  .project-card .arrow {
+    transition: transform 200ms var(--ease-out);
+  }
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+  }
+  .spotlight::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(200px circle at var(--tx, 50%) var(--ty, 50%), rgba(255, 255, 255, 0.35), transparent 40%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+    z-index: 10;
+    mix-blend-mode: overlay;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .spotlight:hover::before {
+      opacity: 1;
+    }
+    .project-card:hover .arrow {
+      transform: translate(4px, -4px) rotate(-45deg);
+    }
+  }
+
+  /* Tech tile */
+  .tech-tile {
+    transition: transform 200ms var(--ease-out), background-color 200ms ease;
+  }
+  .tech-tile svg {
+    transition: color 200ms ease, transform 200ms var(--ease-out);
+    width: 2.25rem; /* Standardized icon sizing */
+    height: 2.25rem;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .tech-tile:hover {
+      transform: translateY(-6px);
+    }
+    .tech-tile:hover svg {
+      color: var(--brand);
+      transform: scale(1.15);
+    }
+  }
+
+  /* Marquee */
+  .marquee-track {
+    animation: marquee 40s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee-container:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* Article row */
+  .article-row {
+    transition: background-color 200ms ease;
+  }
+  .article-row > a {
+    transition: transform 200ms var(--ease-out);
+  }
+  .article-row .a-arrow {
+    transition: transform 200ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .article-row:hover {
+      background-color: var(--bg-2);
+    }
+    .article-row:hover > a {
+      transform: translateX(8px);
+    }
+    .article-row:hover .a-arrow {
+      transform: translateX(8px);
+    }
+  }
+
+  /* Contribution graph */
+  .contrib-cell {
+    transition: transform 150ms ease-out, fill 200ms ease;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .contrib-cell:hover {
+      transform: scale(1.4);
+    }
+  }
+
+  /* Scrollbar & Selection */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  ::selection { background: var(--accent); color: var(--bg); }
+
+  /* Role rotator */
+  .role-rotator {
+    display: inline-block;
+    position: relative;
+    min-width: 320px;
+    height: 1.2em;
+    vertical-align: bottom;
+  }
+  .role-rotator span {
+    position: absolute;
+    left: 0; top: 0;
+    opacity: 0;
+    color: var(--accent);
+    filter: blur(4px);
+    transform: translateY(8px);
+    transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out), filter 300ms var(--ease-out);
+  }
+  .role-rotator span.active {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  /* Number tick */
+  .num-tick { font-variant-numeric: tabular-nums; }
+
+  /* Big footer text */
+  .footer-mail {
+    transition: color 300ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .footer-mail:hover {
+      color: var(--accent);
+    }
+  }
+
+  /* Banner slide */
+  .banner-close {
+    transform: translateY(-100%);
+    transition: transform 200ms var(--ease-out);
+  }
+
+  /* Section number */
+  .section-num { font-feature-settings: "tnum"; }
+
+  /* Soft shadow */
+  .shadow-soft { box-shadow: 0 1px 2px rgba(27, 24, 20, 0.04), 0 8px 24px -8px rgba(27, 24, 20, 0.08); }
+  .shadow-lift { box-shadow: 0 1px 2px rgba(27, 24, 20, 0.04), 0 24px 48px -16px rgba(27, 24, 20, 0.18); }
+
+  /* Press Feedback for Interactive Elements */
+  a, button {
+    transition: transform 160ms ease-out, background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  }
+  a:active, button:active {
+    transform: scale(0.97);
+  }
+
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      transition: opacity 200ms ease !important;
+      transform: none !important;
+    }
+    .marquee-track { animation: none !important; }
+    .link-underline::after,
+    .project-card .arrow,
+    .tech-tile,
+    .tech-tile svg,
+    .article-row,
+    .article-row > a,
+    .article-row .a-arrow,
+    .footer-mail,
+    .contrib-cell,
+    .role-rotator span,
+    a, button {
+      transition: opacity 200ms ease, color 200ms ease, background-color 200ms ease !important;
+      transform: none !important;
+      filter: none !important;
+    }
+    a:active, button:active { transform: none !important; }
+    .cursor-dot, .cursor-ring, .ambient-light { display: none !important; }
+  }
+</style>
+</head>
+<body class="relative">
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<div class="ambient-light" id="ambientLight"></div>
+<div class="grain"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Announcement Banner -->
+<div id="banner" class="relative z-40 bg-[var(--fg)] text-[var(--bg)] overflow-hidden">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-3 flex items-center justify-between gap-4">
+    <div class="flex-1 flex items-center justify-center gap-3 text-sm">
+      <span class="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent-3)]"></span>
+      <span class="opacity-80">Currently accepting projects for <span class="font-semibold text-[var(--bg)]">Q2 2026</span></span>
+      <span class="hidden md:inline-block opacity-50">—</span>
+      <a href="#contact" class="hidden md:inline-flex items-center gap-1.5 font-semibold hover:text-[var(--accent-3)] transition-colors">
+        Start a conversation
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    <button onclick="document.getElementById('banner').classList.add('banner-close'); setTimeout(()=>document.getElementById('banner').style.display='none', 200)" class="shrink-0 w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors" aria-label="Dismiss announcement">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="sticky top-4 z-30 px-4 md:px-6">
+  <nav class="max-w-[1400px] mx-auto mt-4 md:mt-6 flex items-center justify-between gap-4" aria-label="Main navigation">
+    <div class="flex items-center gap-2.5">
+      <a href="#top" aria-label="Home" data-hover class="group w-11 h-11 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] shadow-soft">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      </a>
+      <a href="#work" aria-label="Projects" data-hover class="group w-11 h-11 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] shadow-soft">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+      </a>
+      <a href="#about" aria-label="About" data-hover class="group w-11 h-11 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] shadow-soft">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+      </a>
+      <a href="#writing" aria-label="Articles" data-hover class="group w-11 h-11 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] shadow-soft">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <div class="hidden sm:flex items-center gap-1 px-3 h-11 rounded-full bg-[var(--card)] border border-[var(--border)] shadow-soft">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span class="text-xs font-medium text-[var(--muted)]">Available</span>
+      </div>
+      <a href="https://github.com" target="_blank" rel="noopener noreferrer" data-hover class="magnetic group h-11 ps-2 pe-4 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center gap-2 hover:bg-[var(--fg)] hover:text-[var(--bg)] shadow-soft">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        <span class="text-sm font-semibold num-tick">11.2k</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main id="top" class="flex-1 relative z-10">
+
+  <!-- Hero -->
+  <section id="hero" class="px-6 md:px-10 pt-24 md:pt-36 pb-24 md:pb-32 scroll-mt-32">
+    <div class="max-w-[1400px] mx-auto">
+      <div class="reveal flex items-center gap-4 mb-10">
+        <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-4 ring-[var(--bg)] shadow-lift">
+          <img src="https://picsum.photos/seed/johnmercer-avatar/240/240.jpg" alt="Portrait of John Mercer" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--muted)]">est. 2014</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--accent)]">San Francisco · GMT-8</span>
+        </div>
+      </div>
+
+      <div class="hero-tilt">
+        <h1 class="reveal font-display text-[clamp(2.75rem,8vw,7.5rem)] leading-[0.95] tracking-[-0.03em] mb-8">
+          <span class="block">Hi, I'm John —</span>
+          <span class="block italic font-light text-[var(--muted)]">a <span class="role-rotator" id="roleRotator">
+            <span class="active">designer</span>
+            <span>builder</span>
+            <span>tinkerer</span>
+            <span>writer</span>
+          </span> who ships.</span>
+        </h1>
+      </div>
+
+      <div class="reveal flex flex-col md:flex-row md:items-end justify-between gap-8 mt-12 md:mt-16">
+        <p class="text-lg md:text-xl text-[var(--fg-soft)] leading-relaxed max-w-xl">
+          Full-stack developer working at the seam of design and engineering. I take ideas from sketch to launch — and care deeply about the small things that make products feel alive.
+        </p>
+        <a href="mailto:hi@johnmercer.studio" data-hover class="magnetic link-underline font-display text-2xl md:text-3xl italic">
+          hi@johnmercer.studio
+        </a>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="reveal grid grid-cols-2 md:grid-cols-4 gap-px mt-20 md:mt-28 bg-[var(--border-soft)] border border-[var(--border-soft)] rounded-3xl overflow-hidden" role="list">
+        <div class="bg-[var(--bg)] p-6 md:p-8" role="listitem">
+          <div class="font-display text-4xl md:text-5xl num-tick" data-count="11">0</div>
+          <div class="text-xs uppercase tracking-wider text-[var(--muted)] mt-2">Years building</div>
+        </div>
+        <div class="bg-[var(--bg)] p-6 md:p-8" role="listitem">
+          <div class="font-display text-4xl md:text-5xl num-tick" data-count="47">0</div>
+          <div class="text-xs uppercase tracking-wider text-[var(--muted)] mt-2">Shipped projects</div>
+        </div>
+        <div class="bg-[var(--bg)] p-6 md:p-8" role="listitem">
+          <div class="font-display text-4xl md:text-5xl num-tick" data-count="12">0</div>
+          <div class="text-xs uppercase tracking-wider text-[var(--muted)] mt-2">Open source repos</div>
+        </div>
+        <div class="bg-[var(--bg)] p-6 md:p-8" role="listitem">
+          <div class="font-display text-4xl md:text-5xl num-tick" data-count="2400">0</div>
+          <div class="text-xs uppercase tracking-wider text-[var(--muted)] mt-2">Commits this year</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selected Work -->
+  <section id="work" class="px-6 md:px-10 py-24 md:py-32 scroll-mt-32">
+    <div class="max-w-[1400px] mx-auto">
+      <div class="reveal flex items-end justify-between mb-12 md:mb-16">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <span class="font-mono text-xs text-[var(--accent)] section-num">01 /</span>
+            <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Selected work</span>
+          </div>
+          <h2 class="font-display text-4xl md:text-6xl tracking-[-0.02em]">Things I've made recently.</h2>
+        </div>
+        <a href="#" data-hover class="hidden md:inline-block link-underline font-display italic text-xl">view all →</a>
+      </div>
+
+      <ul class="grid md:grid-cols-2 gap-x-6 gap-y-14 md:gap-y-20" role="list">
+        <li class="reveal project-card" data-hover>
+          <a href="#" class="block group">
+            <div class="spotlight relative aspect-[5/4] rounded-3xl overflow-hidden border border-[var(--border)] shadow-soft">
+              <img src="https://picsum.photos/seed/echo-ui-cover/900/720.jpg" alt="Echo UI v3 project cover showing a component library interface" loading="lazy" decoding="async" class="project-img w-full h-full object-cover" />
+              <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg)]/90 backdrop-blur-sm z-20">
+                <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></span>
+                <span class="text-xs font-medium">Featured</span>
+              </div>
+            </div>
+            <div class="flex items-start justify-between gap-4 mt-6 px-1">
+              <div>
+                <h3 class="font-display text-2xl md:text-3xl tracking-tight">Echo UI v3</h3>
+                <p class="text-[var(--muted)] mt-2">Component library & design system</p>
+              </div>
+              <svg class="arrow shrink-0 mt-2 text-[var(--muted)]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 px-1">
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">TypeScript</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">React</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Design Tokens</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal project-card md:mt-16" data-hover>
+          <a href="#" class="block group">
+            <div class="spotlight relative aspect-[5/4] rounded-3xl overflow-hidden border border-[var(--border)] shadow-soft bg-[var(--card)] flex items-center justify-center">
+              <img src="https://picsum.photos/seed/justos-cover/900/720.jpg" alt="JustOS project cover showing a productivity dashboard" loading="lazy" decoding="async" class="project-img w-full h-full object-cover" />
+            </div>
+            <div class="flex items-start justify-between gap-4 mt-6 px-1">
+              <div>
+                <h3 class="font-display text-2xl md:text-3xl tracking-tight">JustOS</h3>
+                <p class="text-[var(--muted)] mt-2">Productivity OS for creators</p>
+              </div>
+              <svg class="arrow shrink-0 mt-2 text-[var(--muted)]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 px-1">
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Next.js</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">WebSockets</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Offline-first</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal project-card" data-hover>
+          <a href="#" class="block group">
+            <div class="spotlight relative aspect-[5/4] rounded-3xl overflow-hidden border border-[var(--border)] shadow-soft">
+              <img src="https://picsum.photos/seed/happy-stats-cover/900/720.jpg" alt="Happy Stats project cover showing an analytics dashboard" loading="lazy" decoding="async" class="project-img w-full h-full object-cover" />
+            </div>
+            <div class="flex items-start justify-between gap-4 mt-6 px-1">
+              <div>
+                <h3 class="font-display text-2xl md:text-3xl tracking-tight">Happy Stats</h3>
+                <p class="text-[var(--muted)] mt-2">Lightweight analytics dashboard</p>
+              </div>
+              <svg class="arrow shrink-0 mt-2 text-[var(--muted)]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 px-1">
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">PostgreSQL</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Supabase</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Recharts</span>
+            </div>
+          </a>
+        </li>
+
+        <li class="reveal project-card md:mt-16" data-hover>
+          <a href="#" class="block group">
+            <div class="spotlight relative aspect-[5/4] rounded-3xl overflow-hidden border border-[var(--border)] shadow-soft">
+              <img src="https://picsum.photos/seed/cactus-plant-cover/900/720.jpg" alt="Cactus Plant project cover showing realtime collaboration" loading="lazy" decoding="async" class="project-img w-full h-full object-cover" />
+              <div class="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent-2)] text-[var(--bg)] z-20">
+                <span class="text-xs font-medium">Open source</span>
+              </div>
+            </div>
+            <div class="flex items-start justify-between gap-4 mt-6 px-1">
+              <div>
+                <h3 class="font-display text-2xl md:text-3xl tracking-tight">Cactus Plant</h3>
+                <p class="text-[var(--muted)] mt-2">Realtime collaboration framework</p>
+              </div>
+              <svg class="arrow shrink-0 mt-2 text-[var(--muted)]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 px-1">
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">CRDT</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">Binary protocol</span>
+              <span class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] text-[var(--muted)]">100k+ concurrent</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Stack Marquee -->
+  <section class="py-12 md:py-16 border-y border-[var(--border)] bg-[var(--bg-2)] overflow-hidden" aria-label="Technology stack">
+    <div class="max-w-[1400px] mx-auto px-6 md:px-10 mb-8">
+      <div class="flex items-center gap-3">
+        <span class="font-mono text-xs text-[var(--accent)] section-num">02 /</span>
+        <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">My stack — the tools I reach for</span>
+      </div>
+    </div>
+    <div class="relative marquee-container">
+      <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[var(--bg-2)] to-transparent z-10 pointer-events-none"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[var(--bg-2)] to-transparent z-10 pointer-events-none"></div>
+      <div class="flex marquee-track gap-4 w-max">
+        <div class="flex gap-4 px-2" role="list">
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#3178C6" data-hover role="listitem">
+            <svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M1.6875 0C0.753 0 0 0.753 0 1.6875V34.3125C0 35.247 0.753 36 1.6875 36H34.3125C35.247 36 36 35.247 36 34.3125V1.6875C36 0.753 35.247 0 34.3125 0H1.6875ZM27.732 14.625C28.65 14.625 29.463 14.6805 30.1725 14.7915C30.8417 14.8918 31.4984 15.0627 32.1315 15.3015V18.9885C31.8276 18.7783 31.5047 18.597 31.167 18.447C30.8188 18.2903 30.4592 18.1599 30.0915 18.057C29.3949 17.8629 28.6756 17.762 27.9525 17.757C27.5025 17.757 27.093 17.799 26.724 17.886C26.3951 17.9563 26.0796 18.0789 25.7895 18.249C25.5345 18.405 25.3395 18.5925 25.2 18.81C25.0597 19.0292 24.9867 19.2847 24.99 19.545C24.99 19.839 25.0695 20.1045 25.224 20.3385C25.38 20.5725 25.602 20.7945 25.8885 21.0045C26.175 21.2145 26.523 21.4185 26.9325 21.6195C27.342 21.822 27.8055 22.0305 28.3215 22.2435C29.0265 22.539 29.6595 22.854 30.2205 23.1855C30.7815 23.5185 31.263 23.895 31.665 24.315C32.067 24.7335 32.373 25.212 32.586 25.7505C32.799 26.289 32.907 26.9145 32.907 27.63C32.907 28.6155 32.7195 29.445 32.3475 30.114C31.984 30.7738 31.4624 31.333 30.8295 31.7415C30.1473 32.1741 29.3911 32.4772 28.599 32.6355C27.75 32.8155 26.8545 32.9055 25.914 32.9055C24.9883 32.9096 24.0643 32.8272 23.154 32.6595C22.3664 32.5233 21.6025 32.2742 20.886 31.92V27.975C22.2417 29.1287 23.9614 29.7662 25.7415 29.775C26.241 29.775 26.6775 29.73 27.0495 29.64C27.423 29.55 27.7335 29.424 27.984 29.265C28.233 29.103 28.419 28.914 28.5435 28.695C28.6811 28.44 28.7437 28.1513 28.7241 27.8622C28.7044 27.5731 28.6033 27.2955 28.4325 27.0615C28.2096 26.7666 27.937 26.5128 27.627 26.3115C27.2425 26.0566 26.8376 25.8339 26.4165 25.6455C25.9174 25.4176 25.4138 25.1995 24.906 24.9915C23.529 24.417 22.503 23.7135 21.8265 22.884C21.1515 22.0545 20.8125 21.051 20.8125 19.8765C20.8125 18.9555 20.997 18.165 21.366 17.5035C21.735 16.842 22.236 16.2975 22.872 15.87C23.5447 15.4262 24.2915 15.1067 25.077 14.9265C25.947 14.7214 26.8382 14.6202 27.732 14.625ZM5.0625 14.907H19.407V18.156H14.259V32.625H10.1835V18.156H5.0625V14.907Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#000" data-hover role="listitem">
+            <svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M31.1083 36.63C27.93 38.7583 24.1083 40 20 40C8.96167 40 0 31.0383 0 20C0 8.96167 8.96167 0 20 0C31.0383 0 40 8.96167 40 20C40 25.9717 37.3767 31.335 33.2217 35.0017L15.365 12H12V27.9933H14.6917V15.4183L31.1083 36.63ZM25.555 22.4083L28.2217 25.8433V12H25.555V22.4083Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#F24E1E" data-hover role="listitem">
+            <svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M17.28 36C14.2247 36 11.2945 34.7863 9.13413 32.6259C6.97371 30.4655 5.76 27.5353 5.76 24.48C5.76 21.4247 6.97371 18.4945 9.13413 16.3341C11.2945 14.1737 14.2247 12.96 17.28 12.96V36ZM17.28 0V11.52H5.76V0H17.28ZM24.48 11.52C22.9524 11.52 21.4873 10.9131 20.4071 9.83294C19.3269 8.75273 18.72 7.28765 18.72 5.76C18.72 4.23235 19.3269 2.76727 20.4071 1.68706C21.4873 0.606855 22.9524 0 24.48 0C26.0076 0 27.4727 0.606855 28.5529 1.68706C29.6331 2.76727 30.24 4.23235 30.24 5.76C30.24 7.28765 29.6331 8.75273 28.5529 9.83294C27.4727 10.9131 26.0076 11.52 24.48 11.52Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#3C873A" data-hover role="listitem">
+            <svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M19.9967 40C19.4617 40 18.9283 39.86 18.46 39.5883L13.5667 36.6933C12.8367 36.285 13.1933 36.14 13.4333 36.055C14.4083 35.7167 14.605 35.6383 15.6467 35.0483C15.755 34.9867 15.8983 35.01 16.01 35.0767L19.77 37.3083C19.9067 37.3833 20.0983 37.3833 20.2233 37.3083L34.8817 28.8483C35.0183 28.77 35.105 28.6133 35.105 28.4517V11.535C35.105 11.37 35.0167 11.215 34.8767 11.1317L20.225 2.67833C20.09 2.6 19.91 2.6 19.7733 2.67833L5.125 11.1333C4.98333 11.215 4.89333 11.375 4.89333 11.535V28.4517C4.89333 28.6133 4.98333 28.7667 5.125 28.8433L9.14 31.1633C11.3183 32.2533 12.6533 30.97 12.6533 29.68V12.9783C12.6533 12.7417 12.8433 12.5567 13.08 12.5567H14.9383C15.17 12.5567 15.3633 12.7433 15.3633 12.9783V29.68C15.3633 32.5883 13.78 34.255 11.0233 34.255C10.1767 34.255 9.50833 34.255 7.64667 33.3367L3.8 31.125C2.85 30.5767 2.26333 29.55 2.26333 28.4517V11.535C2.26333 10.4367 2.85167 9.41 3.8 8.86333L18.4583 0.393333C19.3867 -0.131667 20.6183 -0.131667 21.5383 0.393333L36.195 8.86333C37.145 9.41167 37.735 10.4367 37.735 11.535V28.4517C37.735 29.55 37.145 30.5733 36.195 31.125L21.5383 39.5883C21.0717 39.86 20.54 40 19.9967 40Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#000" data-hover role="listitem">
+            <svg viewBox="0 0 38 38" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M34.5274 28.9509L21.4586 1.19779C21.1309 0.503975 20.4469 0.0462333 19.6717 0.0038C18.8763 -0.0425917 18.1638 0.34105 17.7618 0.993858L3.58783 23.9512C3.14877 24.6666 3.15748 25.549 3.61285 26.2558L10.5414 36.9886C10.9543 37.6292 11.6698 38 12.4133 38C12.6242 38 12.8361 37.9702 13.0446 37.9086L33.156 31.9604C33.772 31.7781 34.2757 31.3422 34.5393 30.7645C34.8029 30.1867 34.7979 29.525 34.5274 28.9509ZM31.6013 30.1414L14.5372 35.1883C14.016 35.3427 13.5163 34.8918 13.6258 34.3659L19.7218 5.17148C19.8358 4.62555 20.5905 4.53878 20.8286 5.04434L32.1159 29.0128C32.3287 29.465 32.0858 29.9983 31.6013 30.1414Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#06B6D4" data-hover role="listitem">
+            <svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M34.065 19.7175C31.575 22.8555 28.887 26.442 23.508 26.442C18.7035 26.442 16.9125 22.2045 16.788 18.762C17.8395 20.988 19.8975 22.7895 23.109 22.707C29.2845 22.5075 33.519 16.929 33.519 11.8485C33.519 5.7735 28.986 1.3905 21.117 1.3905C15.489 1.3905 8.517 3.5325 3.9345 6.918C3.885 10.4055 5.8275 14.937 6.525 14.439C10.497 11.583 13.647 9.744 16.701 8.823C12.18 13.866 1.329 25.575 0 27.6375C0.15 29.529 2.49 34.6095 3.636 34.6095C3.984 34.6095 4.2825 34.41 4.632 34.062C7.54792 30.8017 10.3205 27.416 12.942 23.9145C13.275 28.5705 15.564 34.2615 21.963 34.2615C27.6915 34.2615 33.369 30.1275 35.958 20.814C36.258 19.668 34.863 18.7725 34.0665 19.719L34.065 19.7175ZM27.5415 12.198C27.5415 15.1365 24.6525 16.581 22.014 16.581C20.6025 16.581 19.518 16.2105 18.6615 15.729C20.238 13.341 21.7995 10.8915 23.4765 8.2695C26.4345 8.7705 27.5415 10.4145 27.5415 12.198Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#0DB7ED" data-hover role="listitem">
+            <svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M23.305 18.4633H26.8367C26.9186 18.4633 26.9972 18.4309 27.0553 18.3731C27.1134 18.3154 27.1462 18.2369 27.1467 18.155V15.01C27.1467 14.9278 27.114 14.8489 27.0559 14.7908C26.9977 14.7327 26.9189 14.7 26.8367 14.7H23.305C23.2232 14.7 23.1448 14.7325 23.087 14.7903C23.0292 14.8481 22.9967 14.9266 22.9967 15.0083V18.155C22.9967 18.325 23.135 18.4633 23.305 18.4633ZM18.3817 9.41333H21.9117C21.9939 9.41333 22.0727 9.38067 22.1309 9.32254C22.189 9.2644 22.2217 9.18555 22.2217 9.10333V5.95667C22.2212 5.87474 22.1884 5.79632 22.1303 5.73854C22.0722 5.68076 21.9936 5.64833 21.9117 5.64833H18.3817C18.2999 5.64833 18.2215 5.68082 18.1636 5.73864C18.1058 5.79647 18.0733 5.87489 18.0733 5.95667V9.10333C18.0733 9.27333 18.21 9.41333 18.3817 9.41333ZM18.3817 13.9383H21.9117C21.9938 13.9379 22.0723 13.9051 22.1304 13.8471C22.1884 13.789 22.2212 13.7104 22.2217 13.6283V10.4833C22.2212 10.4014 22.1884 10.323 22.1303 10.2652C22.0722 10.2074 21.9936 10.175 21.9117 10.175H18.3817C18.2999 10.175 18.2215 10.2075 18.1636 10.2653C18.1058 10.3231 18.0733 10.4016 18.0733 10.4833V13.6283C18.0733 13.7983 18.21 13.9367 18.3817 13.9383ZM13.4983 13.9383H17.0317C17.1133 13.9375 17.1913 13.9044 17.2487 13.8464C17.3061 13.7883 17.3383 13.71 17.3383 13.6283V10.4833C17.3383 10.4016 17.3058 10.3231 17.248 10.2653C17.1902 10.2075 17.1118 10.175 17.03 10.175H13.5C13.4182 10.175 13.3398 10.2075 13.282 10.2653C13.2242 10.3231 13.1917 10.4016 13.1917 10.4833V13.6283C13.1917 13.7983 13.33 13.9367 13.5 13.9383M8.56 13.9383H12.0917C12.1736 13.9379 12.252 13.905 12.3098 13.8469C12.3676 13.7889 12.4 13.7103 12.4 13.6283V10.4833C12.4 10.4016 12.3675 10.3231 12.3097 10.2653C12.2519 10.2075 12.1734 10.175 12.0917 10.175H8.56C8.47807 10.175 8.39947 10.2074 8.34138 10.2652C8.2833 10.323 8.25044 10.4014 8.25 10.4833V13.6283C8.25 13.7983 8.39 13.9367 8.56 13.9383ZM18.3817 18.4633H21.9117C21.9936 18.4633 22.0722 18.4309 22.1303 18.3731C22.1884 18.3154 22.2212 18.2369 22.2217 18.155V15.01C22.2217 14.9278 22.189 14.8489 22.1309 14.7908C22.0727 14.7327 21.9939 14.7 21.9117 14.7H18.3817C18.2999 14.7 18.2215 14.7325 18.1636 14.7903C18.1058 14.8481 18.0733 14.9266 18.0733 15.0083V18.155C18.0733 18.325 18.21 18.4633 18.3817 18.4633ZM13.4983 18.4633H17.0317C17.1132 18.4629 17.1912 18.4302 17.2486 18.3724C17.3061 18.3147 17.3383 18.2365 17.3383 18.155V15.01C17.3386 14.9695 17.3308 14.9294 17.3155 14.8919C17.3002 14.8544 17.2777 14.8203 17.2492 14.7915C17.2207 14.7627 17.1869 14.7398 17.1495 14.7241C17.1122 14.7084 17.0722 14.7002 17.0317 14.7H13.4983C13.4168 14.7004 13.3388 14.7331 13.2814 14.7909C13.2239 14.8487 13.1917 14.9268 13.1917 15.0083V18.155C13.1917 18.325 13.33 18.4633 13.5 18.4633M8.56 18.4633H12.0917C12.1734 18.4633 12.2519 18.4308 12.3097 18.373C12.3675 18.3152 12.4 18.2368 12.4 18.155V15.01C12.4002 14.9695 12.3925 14.9294 12.3772 14.8919C12.3619 14.8544 12.3393 14.8203 12.3109 14.7915C12.2824 14.7627 12.2485 14.7398 12.2112 14.7241C12.1739 14.7084 12.1338 14.7002 12.0933 14.7H8.56C8.47778 14.7 8.39893 14.7327 8.3408 14.7908C8.28266 14.8489 8.25 14.9278 8.25 15.01V18.155C8.25 18.325 8.39 18.4633 8.56 18.4633ZM3.69333 18.4633H7.22667C7.30815 18.4629 7.38615 18.4302 7.44362 18.3724C7.50108 18.3147 7.53334 18.2365 7.53333 18.155V15.01C7.53355 14.9695 7.52579 14.9294 7.5105 14.8919C7.49521 14.8544 7.47268 14.8203 7.44421 14.7915C7.41573 14.7627 7.38186 14.7398 7.34453 14.7241C7.30721 14.7084 7.26716 14.7002 7.22667 14.7H3.69333C3.61185 14.7004 3.53385 14.7331 3.47639 14.7909C3.41892 14.8487 3.38667 14.9268 3.38667 15.0083V18.155C3.38667 18.325 3.52167 18.4633 3.69333 18.4633ZM39.605 16.4833C39.4967 16.3983 38.485 15.6333 36.3483 15.6333C35.785 15.635 35.2217 15.6833 34.665 15.7783C34.2517 12.945 31.91 11.5617 31.805 11.5017L31.2317 11.17L30.855 11.715C30.3817 12.445 30.0383 13.2517 29.835 14.0983C29.4517 15.715 29.685 17.235 30.5067 18.5333C29.515 19.0867 27.9233 19.2217 27.6 19.2333H1.25167C0.920857 19.2338 0.603674 19.3652 0.369444 19.5988C0.135214 19.8324 0.00298785 20.1492 0.00166667 20.48C-0.0291972 22.7881 0.361658 25.0824 1.155 27.25C2.06333 29.63 3.41333 31.3833 5.17167 32.4567C7.13833 33.6617 10.3383 34.3517 13.9633 34.3517C15.6017 34.3567 17.235 34.2083 18.8467 33.9083C21.0847 33.4972 23.2383 32.7147 25.2183 31.5933C26.8517 30.6483 28.3183 29.4467 29.5683 28.0333C31.655 25.67 32.8983 23.0383 33.8233 20.7H34.1917C36.4783 20.7 37.8833 19.785 38.6583 19.0183C39.1733 18.53 39.575 17.935 39.8367 17.275L40 16.795L39.605 16.4833Z"/></svg>
+          </div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#8B5CF6" data-hover role="listitem">
+            <svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]" aria-hidden="true"><path d="M2.16 0V11.3625L12.0015 17.0475V5.6805L2.16 0ZM33.84 6.3405L23.9985 12.027V23.388L33.8385 17.7075L33.84 6.3405ZM13.08 6.345V17.7075L22.9215 23.388V12.027L13.08 6.345ZM13.08 18.9525V30.315L22.92 36V24.633L13.08 18.9525Z"/></svg>
+          </div>
+        </div>
+        <div class="flex gap-4 px-2" aria-hidden="true">
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#3178C6"><svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]"><path d="M1.6875 0C0.753 0 0 0.753 0 1.6875V34.3125C0 35.247 0.753 36 1.6875 36H34.3125C35.247 36 36 35.247 36 34.3125V1.6875C36 0.753 35.247 0 34.3125 0H1.6875ZM27.732 14.625C28.65 14.625 29.463 14.6805 30.1725 14.7915C30.8417 14.8918 31.4984 15.0627 32.1315 15.3015V18.9885C31.8276 18.7783 31.5047 18.597 31.167 18.447C30.8188 18.2903 30.4592 18.1599 30.0915 18.057C29.3949 17.8629 28.6756 17.762 27.9525 17.757C27.5025 17.757 27.093 17.799 26.724 17.886C26.3951 17.9563 26.0796 18.0789 25.7895 18.249C25.5345 18.405 25.3395 18.5925 25.2 18.81C25.0597 19.0292 24.9867 19.2847 24.99 19.545C24.99 19.839 25.0695 20.1045 25.224 20.3385C25.38 20.5725 25.602 20.7945 25.8885 21.0045C26.175 21.2145 26.523 21.4185 26.9325 21.6195C27.342 21.822 27.8055 22.0305 28.3215 22.2435C29.0265 22.539 29.6595 22.854 30.2205 23.1855C30.7815 23.5185 31.263 23.895 31.665 24.315C32.067 24.7335 32.373 25.212 32.586 25.7505C32.799 26.289 32.907 26.9145 32.907 27.63C32.907 28.6155 32.7195 29.445 32.3475 30.114C31.984 30.7738 31.4624 31.333 30.8295 31.7415C30.1473 32.1741 29.3911 32.4772 28.599 32.6355C27.75 32.8155 26.8545 32.9055 25.914 32.9055C24.9883 32.9096 24.0643 32.8272 23.154 32.6595C22.3664 32.5233 21.6025 32.2742 20.886 31.92V27.975C22.2417 29.1287 23.9614 29.7662 25.7415 29.775C26.241 29.775 26.6775 29.73 27.0495 29.64C27.423 29.55 27.7335 29.424 27.984 29.265C28.233 29.103 28.419 28.914 28.5435 28.695C28.6811 28.44 28.7437 28.1513 28.7241 27.8622C28.7044 27.5731 28.6033 27.2955 28.4325 27.0615C28.2096 26.7666 27.937 26.5128 27.627 26.3115C27.2425 26.0566 26.8376 25.8339 26.4165 25.6455C25.9174 25.4176 25.4138 25.1995 24.906 24.9915C23.529 24.417 22.503 23.7135 21.8265 22.884C21.1515 22.0545 20.8125 21.051 20.8125 19.8765C20.8125 18.9555 20.997 18.165 21.366 17.5035C21.735 16.842 22.236 16.2975 22.872 15.87C23.5447 15.4262 24.2915 15.1067 25.077 14.9265C25.947 14.7214 26.8382 14.6202 27.732 14.625ZM5.0625 14.907H19.407V18.156H14.259V32.625H10.1835V18.156H5.0625V14.907Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#000"><svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]"><path d="M31.1083 36.63C27.93 38.7583 24.1083 40 20 40C8.96167 40 0 31.0383 0 20C0 8.96167 8.96167 0 20 0C31.0383 0 40 8.96167 40 20C40 25.9717 37.3767 31.335 33.2217 35.0017L15.365 12H12V27.9933H14.6917V15.4183L31.1083 36.63ZM25.555 22.4083L28.2217 25.8433V12H25.555V22.4083Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#F24E1E"><svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]"><path d="M17.28 36C14.2247 36 11.2945 34.7863 9.13413 32.6259C6.97371 30.4655 5.76 27.5353 5.76 24.48C5.76 21.4247 6.97371 18.4945 9.13413 16.3341C11.2945 14.1737 14.2247 12.96 17.28 12.96V36ZM17.28 0V11.52H5.76V0H17.28ZM24.48 11.52C22.9524 11.52 21.4873 10.9131 20.4071 9.83294C19.3269 8.75273 18.72 7.28765 18.72 5.76C18.72 4.23235 19.3269 2.76727 20.4071 1.68706C21.4873 0.606855 22.9524 0 24.48 0C26.0076 0 27.4727 0.606855 28.5529 1.68706C29.6331 2.76727 30.24 4.23235 30.24 5.76C30.24 7.28765 29.6331 8.75273 28.5529 9.83294C27.4727 10.9131 26.0076 11.52 24.48 11.52Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#3C873A"><svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]"><path d="M19.9967 40C19.4617 40 18.9283 39.86 18.46 39.5883L13.5667 36.6933C12.8367 36.285 13.1933 36.14 13.4333 36.055C14.4083 35.7167 14.605 35.6383 15.6467 35.0483C15.755 34.9867 15.8983 35.01 16.01 35.0767L19.77 37.3083C19.9067 37.3833 20.0983 37.3833 20.2233 37.3083L34.8817 28.8483C35.0183 28.77 35.105 28.6133 35.105 28.4517V11.535C35.105 11.37 35.0167 11.215 34.8767 11.1317L20.225 2.67833C20.09 2.6 19.91 2.6 19.7733 2.67833L5.125 11.1333C4.98333 11.215 4.89333 11.375 4.89333 11.535V28.4517C4.89333 28.6133 4.98333 28.7667 5.125 28.8433L9.14 31.1633C11.3183 32.2533 12.6533 30.97 12.6533 29.68V12.9783C12.6533 12.7417 12.8433 12.5567 13.08 12.5567H14.9383C15.17 12.5567 15.3633 12.7433 15.3633 12.9783V29.68C15.3633 32.5883 13.78 34.255 11.0233 34.255C10.1767 34.255 9.50833 34.255 7.64667 33.3367L3.8 31.125C2.85 30.5767 2.26333 29.55 2.26333 28.4517V11.535C2.26333 10.4367 2.85167 9.41 3.8 8.86333L18.4583 0.393333C19.3867 -0.131667 20.6183 -0.131667 21.5383 0.393333L36.195 8.86333C37.145 9.41167 37.735 10.4367 37.735 11.535V28.4517C37.735 29.55 37.145 30.5733 36.195 31.125L21.5383 39.5883C21.0717 39.86 20.54 40 19.9967 40Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#000"><svg viewBox="0 0 38 38" fill="currentColor" class="text-[var(--muted)]"><path d="M34.5274 28.9509L21.4586 1.19779C21.1309 0.503975 20.4469 0.0462333 19.6717 0.0038C18.8763 -0.0425917 18.1638 0.34105 17.7618 0.993858L3.58783 23.9512C3.14877 24.6666 3.15748 25.549 3.61285 26.2558L10.5414 36.9886C10.9543 37.6292 11.6698 38 12.4133 38C12.6242 38 12.8361 37.9702 13.0446 37.9086L33.156 31.9604C33.772 31.7781 34.2757 31.3422 34.5393 30.7645C34.8029 30.1867 34.7979 29.525 34.5274 28.9509ZM31.6013 30.1414L14.5372 35.1883C14.016 35.3427 13.5163 34.8918 13.6258 34.3659L19.7218 5.17148C19.8358 4.62555 20.5905 4.53878 20.8286 5.04434L32.1159 29.0128C32.3287 29.465 32.0858 29.9983 31.6013 30.1414Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#06B6D4"><svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]"><path d="M34.065 19.7175C31.575 22.8555 28.887 26.442 23.508 26.442C18.7035 26.442 16.9125 22.2045 16.788 18.762C17.8395 20.988 19.8975 22.7895 23.109 22.707C29.2845 22.5075 33.519 16.929 33.519 11.8485C33.519 5.7735 28.986 1.3905 21.117 1.3905C15.489 1.3905 8.517 3.5325 3.9345 6.918C3.885 10.4055 5.8275 14.937 6.525 14.439C10.497 11.583 13.647 9.744 16.701 8.823C12.18 13.866 1.329 25.575 0 27.6375C0.15 29.529 2.49 34.6095 3.636 34.6095C3.984 34.6095 4.2825 34.41 4.632 34.062C7.54792 30.8017 10.3205 27.416 12.942 23.9145C13.275 28.5705 15.564 34.2615 21.963 34.2615C27.6915 34.2615 33.369 30.1275 35.958 20.814C36.258 19.668 34.863 18.7725 34.0665 19.719L34.065 19.7175ZM27.5415 12.198C27.5415 15.1365 24.6525 16.581 22.014 16.581C20.6025 16.581 19.518 16.2105 18.6615 15.729C20.238 13.341 21.7995 10.8915 23.4765 8.2695C26.4345 8.7705 27.5415 10.4145 27.5415 12.198Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#0DB7ED"><svg viewBox="0 0 40 40" fill="currentColor" class="text-[var(--muted)]"><path d="M23.305 18.4633H26.8367C26.9186 18.4633 26.9972 18.4309 27.0553 18.3731C27.1134 18.3154 27.1462 18.2369 27.1467 18.155V15.01C27.1467 14.9278 27.114 14.8489 27.0559 14.7908C26.9977 14.7327 26.9189 14.7 26.8367 14.7H23.305C23.2232 14.7 23.1448 14.7325 23.087 14.7903C23.0292 14.8481 22.9967 14.9266 22.9967 15.0083V18.155C22.9967 18.325 23.135 18.4633 23.305 18.4633ZM18.3817 9.41333H21.9117C21.9939 9.41333 22.0727 9.38067 22.1309 9.32254C22.189 9.2644 22.2217 9.18555 22.2217 9.10333V5.95667C22.2212 5.87474 22.1884 5.79632 22.1303 5.73854C22.0722 5.68076 21.9936 5.64833 21.9117 5.64833H18.3817C18.2999 5.64833 18.2215 5.68082 18.1636 5.73864C18.1058 5.79647 18.0733 5.87489 18.0733 5.95667V9.10333C18.0733 9.27333 18.21 9.41333 18.3817 9.41333ZM18.3817 13.9383H21.9117C21.9938 13.9379 22.0723 13.9051 22.1304 13.8471C22.1884 13.789 22.2212 13.7104 22.2217 13.6283V10.4833C22.2212 10.4014 22.1884 10.323 22.1303 10.2652C22.0722 10.2074 21.9936 10.175 21.9117 10.175H18.3817C18.2999 10.175 18.2215 10.2075 18.1636 10.2653C18.1058 10.3231 18.0733 10.4016 18.0733 10.4833V13.6283C18.0733 13.7983 18.21 13.9367 18.3817 13.9383ZM13.4983 13.9383H17.0317C17.1133 13.9375 17.1913 13.9044 17.2487 13.8464C17.3061 13.7883 17.3383 13.71 17.3383 13.6283V10.4833C17.3383 10.4016 17.3058 10.3231 17.248 10.2653C17.1902 10.2075 17.1118 10.175 17.03 10.175H13.5C13.4182 10.175 13.3398 10.2075 13.282 10.2653C13.2242 10.3231 13.1917 10.4016 13.1917 10.4833V13.6283C13.1917 13.7983 13.33 13.9367 13.5 13.9383M8.56 13.9383H12.0917C12.1736 13.9379 12.252 13.905 12.3098 13.8469C12.3676 13.7889 12.4 13.7103 12.4 13.6283V10.4833C12.4 10.4016 12.3675 10.3231 12.3097 10.2653C12.2519 10.2075 12.1734 10.175 12.0917 10.175H8.56C8.47807 10.175 8.39947 10.2074 8.34138 10.2652C8.2833 10.323 8.25044 10.4014 8.25 10.4833V13.6283C8.25 13.7983 8.39 13.9367 8.56 13.9383ZM18.3817 18.4633H21.9117C21.9936 18.4633 22.0722 18.4309 22.1303 18.3731C22.1884 18.3154 22.2212 18.2369 22.2217 18.155V15.01C22.2217 14.9278 22.189 14.8489 22.1309 14.7908C22.0727 14.7327 21.9939 14.7 21.9117 14.7H18.3817C18.2999 14.7 18.2215 14.7325 18.1636 14.7903C18.1058 14.8481 18.0733 14.9266 18.0733 15.0083V18.155C18.0733 18.325 18.21 18.4633 18.3817 18.4633ZM13.4983 18.4633H17.0317C17.1132 18.4629 17.1912 18.4302 17.2486 18.3724C17.3061 18.3147 17.3383 18.2365 17.3383 18.155V15.01C17.3386 14.9695 17.3308 14.9294 17.3155 14.8919C17.3002 14.8544 17.2777 14.8203 17.2492 14.7915C17.2207 14.7627 17.1869 14.7398 17.1495 14.7241C17.1122 14.7084 17.0722 14.7002 17.0317 14.7H13.4983C13.4168 14.7004 13.3388 14.7331 13.2814 14.7909C13.2239 14.8487 13.1917 14.9268 13.1917 15.0083V18.155C13.1917 18.325 13.33 18.4633 13.5 18.4633M8.56 18.4633H12.0917C12.1734 18.4633 12.2519 18.4308 12.3097 18.373C12.3675 18.3152 12.4 18.2368 12.4 18.155V15.01C12.4002 14.9695 12.3925 14.9294 12.3772 14.8919C12.3619 14.8544 12.3393 14.8203 12.3109 14.7915C12.2824 14.7627 12.2485 14.7398 12.2112 14.7241C12.1739 14.7084 12.1338 14.7002 12.0933 14.7H8.56C8.47778 14.7 8.39893 14.7327 8.3408 14.7908C8.28266 14.8489 8.25 14.9278 8.25 15.01V18.155C8.25 18.325 8.39 18.4633 8.56 18.4633ZM3.69333 18.4633H7.22667C7.30815 18.4629 7.38615 18.4302 7.44362 18.3724C7.50108 18.3147 7.53334 18.2365 7.53333 18.155V15.01C7.53355 14.9695 7.52579 14.9294 7.5105 14.8919C7.49521 14.8544 7.47268 14.8203 7.44421 14.7915C7.41573 14.7627 7.38186 14.7398 7.34453 14.7241C7.30721 14.7084 7.26716 14.7002 7.22667 14.7H3.69333C3.61185 14.7004 3.53385 14.7331 3.47639 14.7909C3.41892 14.8487 3.38667 14.9268 3.38667 15.0083V18.155C3.38667 18.325 3.52167 18.4633 3.69333 18.4633ZM39.605 16.4833C39.4967 16.3983 38.485 15.6333 36.3483 15.6333C35.785 15.635 35.2217 15.6833 34.665 15.7783C34.2517 12.945 31.91 11.5617 31.805 11.5017L31.2317 11.17L30.855 11.715C30.3817 12.445 30.0383 13.2517 29.835 14.0983C29.4517 15.715 29.685 17.235 30.5067 18.5333C29.515 19.0867 27.9233 19.2217 27.6 19.2333H1.25167C0.920857 19.2338 0.603674 19.3652 0.369444 19.5988C0.135214 19.8324 0.00298785 20.1492 0.00166667 20.48C-0.0291972 22.7881 0.361658 25.0824 1.155 27.25C2.06333 29.63 3.41333 31.3833 5.17167 32.4567C7.13833 33.6617 10.3383 34.3517 13.9633 34.3517C15.6017 34.3567 17.235 34.2083 18.8467 33.9083C21.0847 33.4972 23.2383 32.7147 25.2183 31.5933C26.8517 30.6483 28.3183 29.4467 29.5683 28.0333C31.655 25.67 32.8983 23.0383 33.8233 20.7H34.1917C36.4783 20.7 37.8833 19.785 38.6583 19.0183C39.1733 18.53 39.575 17.935 39.8367 17.275L40 16.795L39.605 16.4833Z"/></svg></div>
+          <div class="tech-tile spotlight shrink-0 w-28 h-28 rounded-3xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center" style="--brand:#8B5CF6"><svg viewBox="0 0 36 36" fill="currentColor" class="text-[var(--muted)]"><path d="M2.16 0V11.3625L12.0015 17.0475V5.6805L2.16 0ZM33.84 6.3405L23.9985 12.027V23.388L33.8385 17.7075L33.84 6.3405ZM13.08 6.345V17.7075L22.9215 23.388V12.027L13.08 6.345ZM13.08 18.9525V30.315L22.92 36V24.633L13.08 18.9525Z"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="px-6 md:px-10 py-24 md:py-32 scroll-mt-32">
+    <div class="max-w-[1400px] mx-auto">
+      <div class="reveal flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-[var(--accent)] section-num">03 /</span>
+        <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">About</span>
+      </div>
+
+      <div class="grid md:grid-cols-12 gap-12 md:gap-16">
+        <div class="md:col-span-7">
+          <h2 class="reveal font-display text-4xl md:text-6xl leading-[1.05] tracking-[-0.02em] mb-10">
+            I started coding out of <em class="italic font-light">curiosity</em> — and never quite stopped.
+          </h2>
+          <div class="reveal space-y-6 text-lg md:text-xl text-[var(--fg-soft)] leading-relaxed">
+            <p>Building small browser games and landing pages turned into developing complete products that balance design and engineering. The thing that hooked me then is the same thing that hooks me now: the moment when something you imagined becomes something you can click.</p>
+            <p>My stack includes <span class="font-medium text-[var(--fg)]">TypeScript</span>, <span class="font-medium text-[var(--fg)]">React</span>, <span class="font-medium text-[var(--fg)]">Next.js</span>, <span class="font-medium text-[var(--fg)]">Node</span>, and <span class="font-medium text-[var(--fg)]">PostgreSQL</span> — but I love exploring new tools that make the web feel a little more considered.</p>
+            <p>Outside of coding, I write, contribute to open source, and teach others what I've learned. I also walk a French Bulldog named Pixel.</p>
+          </div>
+        </div>
+
+        <div class="md:col-span-5 relative min-h-[400px] md:min-h-0">
+          <div class="reveal flex flex-wrap gap-6 md:gap-8 justify-center md:justify-end items-center md:h-full">
+            <div class="about-img-card spotlight relative w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden border border-[var(--border)] shadow-lift" style="transform: rotate(5deg)">
+              <img src="https://picsum.photos/seed/about-coding/400/600.jpg" alt="John Mercer coding at a desk" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+              <div class="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-2xl shadow-soft z-20" aria-hidden="true">💻</div>
+            </div>
+            <div class="about-img-card spotlight relative w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden border border-[var(--border)] shadow-lift md:-mt-12" style="transform: rotate(-4deg)">
+              <img src="https://picsum.photos/seed/about-bridge/400/600.jpg" alt="Golden Gate Bridge on a sunny day" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+              <div class="absolute -bottom-3 -right-3 w-12 h-12 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-2xl shadow-soft z-20" aria-hidden="true">🏔️</div>
+            </div>
+            <div class="about-img-card spotlight relative w-44 h-56 md:w-52 md:h-64 rounded-2xl overflow-hidden border border-[var(--border)] shadow-lift md:mt-8" style="transform: rotate(3.5deg)">
+              <img src="https://picsum.photos/seed/about-dog/400/600.jpg" alt="A French Bulldog sitting on grass" loading="lazy" decoding="async" class="w-full h-full object-cover" />
+              <div class="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-2xl shadow-soft z-20" aria-hidden="true">🐶</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Experience -->
+  <section class="px-6 md:px-10 py-24 md:py-32 bg-[var(--bg-2)] border-y border-[var(--border)] scroll-mt-32">
+    <div class="max-w-[1400px] mx-auto">
+      <div class="reveal flex items-center gap-3 mb-6">
+        <span class="font-mono text-xs text-[var(--accent)] section-num">04 /</span>
+        <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Experience</span>
+      </div>
+      <h2 class="reveal font-display text-4xl md:text-6xl tracking-[-0.02em] mb-16 md:mb-20">A decade of building.</h2>
+
+      <div class="grid md:grid-cols-2 gap-12 md:gap-20">
+        <ul class="space-y-10" role="list">
+          <li class="reveal group" data-hover>
+            <a href="#" class="block">
+              <div class="flex items-baseline justify-between gap-4 mb-2">
+                <span class="font-display text-2xl md:text-3xl link-underline">Cactus Plant</span>
+                <span class="font-mono text-xs text-[var(--muted)] num-tick">2024 — NOW</span>
+              </div>
+              <p class="text-[var(--muted)]">Full-stack developer · Realtime infrastructure</p>
+            </a>
+          </li>
+          <li class="reveal group" data-hover>
+            <a href="#" class="block">
+              <div class="flex items-baseline justify-between gap-4 mb-2">
+                <span class="font-display text-2xl md:text-3xl link-underline">Happy Stats</span>
+                <span class="font-mono text-xs text-[var(--muted)] num-tick">2023 — 2024</span>
+              </div>
+              <p class="text-[var(--muted)]">Full-stack developer · Analytics & data viz</p>
+            </a>
+          </li>
+          <li class="reveal group" data-hover>
+            <a href="#" class="block">
+              <div class="flex items-baseline justify-between gap-4 mb-2">
+                <span class="font-display text-2xl md:text-3xl link-underline">JustOS</span>
+                <span class="font-mono text-xs text-[var(--muted)] num-tick">2021 — 2023</span>
+              </div>
+              <p class="text-[var(--muted)]">Frontend developer · Productivity suite</p>
+            </a>
+          </li>
+          <li class="reveal group" data-hover>
+            <a href="#" class="block">
+              <div class="flex items-baseline justify-between gap-4 mb-2">
+                <span class="font-display text-2xl md:text-3xl link-underline">Freelance</span>
+                <span class="font-mono text-xs text-[var(--muted)] num-tick">2019 — 2021</span>
+              </div>
+              <p class="text-[var(--muted)]">Frontend developer · Independent</p>
+            </a>
+          </li>
+        </ul>
+
+        <div class="reveal">
+          <p class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)] mb-6">Things I'm good at</p>
+          <ul class="space-y-1" role="list">
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">01</span>
+              <span class="text-lg">React / Next.js architecture</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">02</span>
+              <span class="text-lg">TypeScript & JavaScript (ES6+)</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">03</span>
+              <span class="text-lg">State management (Zustand, Redux)</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">04</span>
+              <span class="text-lg">Responsive design & accessibility</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">05</span>
+              <span class="text-lg">Motion & interaction (GSAP, Framer)</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">06</span>
+              <span class="text-lg">RESTful & GraphQL API design</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">07</span>
+              <span class="text-lg">PostgreSQL / Prisma ORM</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">08</span>
+              <span class="text-lg">Authentication & authorization</span>
+            </li>
+            <li class="flex items-center gap-4 py-3 border-b border-[var(--border-soft)]">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">09</span>
+              <span class="text-lg">WebSockets & real-time systems</span>
+            </li>
+            <li class="flex items-center gap-4 py-3">
+              <span class="font-mono text-xs text-[var(--accent)] num-tick w-8">10</span>
+              <span class="text-lg">Node.js / Express / Fastify</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Writing -->
+  <section id="writing" class="px-6 md:px-10 py-24 md:py-32 scroll-mt-32">
+    <div class="max-w-[1400px] mx-auto">
+      <div class="reveal flex items-end justify-between mb-12 md:mb-16">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <span class="font-mono text-xs text-[var(--accent)] section-num">05 /</span>
+            <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Latest writing</span>
+          </div>
+          <h2 class="font-display text-4xl md:text-6xl tracking-[-0.02em]">Notes from the workbench.</h2>
+        </div>
+        <a href="#" class="hidden md:inline-block link-underline font-display italic text-xl">read all →</a>
+      </div>
+
+      <ul class="rounded-3xl border border-[var(--border)] bg-[var(--card)] overflow-hidden shadow-soft" role="list">
+        <li class="reveal article-row border-b border-[var(--border-soft)]" data-hover>
+          <a href="#" class="flex items-start justify-between gap-6 p-8 md:p-10">
+            <div class="flex-1 space-y-3">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--accent)]">Pinned</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">·</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)] num-tick">Nov 04, 2025</span>
+              </div>
+              <h3 class="font-display text-2xl md:text-3xl tracking-tight">Scaling a side project to 10k users</h3>
+              <p class="text-[var(--muted)] max-w-2xl">What started as a weekend idea slowly turned into a product used by thousands. Here's what I learned about infrastructure, patience, and why "just ship it" only works when you're ready to handle what comes next.</p>
+            </div>
+            <svg class="a-arrow shrink-0 mt-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </li>
+        <li class="reveal article-row border-b border-[var(--border-soft)]" data-hover>
+          <a href="#" class="flex items-start justify-between gap-6 p-8 md:p-10">
+            <div class="flex-1 space-y-3">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)] num-tick">Nov 01, 2025</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">·</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">8 min read</span>
+              </div>
+              <h3 class="font-display text-2xl md:text-3xl tracking-tight">Why I still love writing vanilla JavaScript</h3>
+              <p class="text-[var(--muted)] max-w-2xl">Even with frameworks evolving every month, I keep coming back to plain JavaScript. There's something pure about writing logic that runs instantly in the browser — no setup, no build step, just you and the code.</p>
+            </div>
+            <svg class="a-arrow shrink-0 mt-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </li>
+        <li class="reveal article-row" data-hover>
+          <a href="#" class="flex items-start justify-between gap-6 p-8 md:p-10">
+            <div class="flex-1 space-y-3">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)] num-tick">Oct 25, 2025</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">·</span>
+                <span class="font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">6 min read</span>
+              </div>
+              <h3 class="font-display text-2xl md:text-3xl tracking-tight">Thinking in components</h3>
+            </a>
+          </li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer id="contact" class="px-6 md:px-10 pt-24 md:pt-32 pb-12 bg-[var(--bg-2)] border-t border-[var(--border)] relative z-10">
+  <div class="max-w-[1400px] mx-auto">
+
+    <!-- Contribution graph -->
+    <div class="reveal mb-20 md:mb-32">
+      <div class="flex items-end justify-between mb-6">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <span class="font-mono text-xs text-[var(--accent)] section-num">06 /</span>
+            <span class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Activity</span>
+          </div>
+          <p class="text-sm text-[var(--muted)]">2,400 contributions in the last year</p>
+        </div>
+        <div class="hidden md:flex items-center gap-2 text-xs text-[var(--muted)]">
+          <span>Less</span>
+          <span class="w-3 h-3 rounded-sm bg-[var(--border)]"></span>
+          <span class="w-3 h-3 rounded-sm" style="background: rgba(184, 67, 31, 0.25)"></span>
+          <span class="w-3 h-3 rounded-sm" style="background: rgba(184, 67, 31, 0.5)"></span>
+          <span class="w-3 h-3 rounded-sm" style="background: rgba(184, 67, 31, 0.75)"></span>
+          <span class="w-3 h-3 rounded-sm" style="background: var(--accent)"></span>
+          <span>More</span>
+        </div>
+      </div>
+      <div class="overflow-x-auto pb-2">
+        <svg id="contribGraph" class="block w-max" viewBox="0 0 880 140" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Contribution graph showing 2,400 contributions over the last year"></svg>
+      </div>
+    </div>
+
+    <!-- Big CTA -->
+    <div class="reveal text-center mb-16 md:mb-24">
+      <p class="font-mono text-xs uppercase tracking-[0.2em] text-[var(--muted)] mb-6">Want to work together?</p>
+      <a href="mailto:hi@johnmercer.studio" data-hover class="footer-mail magnetic inline-block font-display italic text-[clamp(2.5rem,8vw,7rem)] leading-none tracking-[-0.03em]">
+        hi@johnmercer.studio
+      </a>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="#" data-hover class="magnetic inline-flex items-center gap-2 px-5 py-3 rounded-full bg-[var(--fg)] text-[var(--bg)] text-sm font-medium hover:bg-[var(--accent)]">
+          Book a call
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#" data-hover class="magnetic inline-flex items-center gap-2 px-5 py-3 rounded-full border border-[var(--border)] text-sm font-medium hover:bg-[var(--card)]">
+          Download résumé
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer meta -->
+    <div class="border-t border-[var(--border)] pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-[var(--muted)]">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full overflow-hidden">
+          <img src="https://picsum.photos/seed/johnmercer-avatar/80/80.jpg" alt="" class="w-full h-full object-cover" />
+        </div>
+        <span>© 2026 John Mercer. Built with care.</span>
+      </div>
+      <div class="flex items-center gap-5">
+        <a href="#" data-hover class="link-underline">GitHub</a>
+        <a href="#" data-hover class="link-underline">X</a>
+        <a href="#" data-hover class="link-underline">Read.cv</a>
+        <a href="#" data-hover class="link-underline">RSS</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const ambientLight = document.getElementById('ambientLight');
+
+  // ============== Contribution graph (Static Generation) ==============
+  function buildContribGraph() {
+    const svg = document.getElementById('contribGraph');
+    const weeks = 53;
+    const days = 7;
+    const cell = 13;
+    const gap = 4;
+    const offsetX = 28;
+    const offsetY = 4;
+
+    let seed = 42;
+    function rand() {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    }
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let lastMonth = -1;
+
+    for (let w = 0; w < weeks; w++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (weeks - w) * 7);
+      const m = date.getMonth();
+      if (m !== lastMonth) {
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', offsetX + w * (cell + gap));
+        label.setAttribute('y', 12);
+        label.setAttribute('fill', 'var(--muted)');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('font-family', 'JetBrains Mono, monospace');
+        label.textContent = monthNames[m];
+        svg.appendChild(label);
+        lastMonth = m;
+      }
+    }
+
+    const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+    dayLabels.forEach((d, i) => {
+      if (d) {
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', 0);
+        label.setAttribute('y', offsetY + i * (cell + gap) + cell - 2);
+        label.setAttribute('fill', 'var(--muted)');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('font-family', 'JetBrains Mono, monospace');
+        label.textContent = d;
+        svg.appendChild(label);
+      }
+    });
+
+    const colors = [
+      'var(--border)',
+      'rgba(184, 67, 31, 0.25)',
+      'rgba(184, 67, 31, 0.5)',
+      'rgba(184, 67, 31, 0.75)',
+      'var(--accent)'
+    ];
+
+    for (let w = 0; w < weeks; w++) {
+      for (let d = 0; d < days; d++) {
+        const r = rand();
+        let level = 0;
+        if (r > 0.45) level = 1;
+        if (r > 0.62) level = 2;
+        if (r > 0.78) level = 3;
+        if (r > 0.9) level = 4;
+        if (rand() > 0.88) level = 0;
+
+        const rect = document.createElementNS(ns, 'rect');
+        rect.setAttribute('x', offsetX + w * (cell + gap));
+        rect.setAttribute('y', offsetY + 14 + d * (cell + gap));
+        rect.setAttribute('width', cell);
+        rect.setAttribute('height', cell);
+        rect.setAttribute('rx', 3);
+        rect.setAttribute('fill', colors[level]);
+        rect.classList.add('contrib-cell');
+
+        const date = new Date();
+        date.setDate(date.getDate() - ((weeks - w) * 7 + (days - d)));
+        const dateStr = date.toISOString().slice(0, 10);
+        const count = level === 0 ? 0 : Math.floor(level * 3 + rand() * 4);
+        const title = document.createElementNS(ns, 'title');
+        title.textContent = `${count} contributions on ${dateStr}`;
+        rect.appendChild(title);
+
+        svg.appendChild(rect);
+      }
+    }
+  }
+  buildContribGraph();
+
+  // ============== Spotlight Hover Tracking ==============
+  document.body.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('.spotlight');
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      target.style.setProperty('--tx', `${x}px`);
+      target.style.setProperty('--ty', `${y}px`);
+    }
+  }, { passive: true });
+
+  // ============== Animation Orchestration ==============
+  if (!reduceMotion) {
+    // --- Global State & Elements ---
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0, scale = 1, targetScale = 1;
+    let aboutX = 0, aboutY = 0;
+    let aboutVisible = false;
+    let heroVisible = false;
+    let magElements = [];
+    let tiltX = 0, tiltY = 0, targetTiltX = 0, targetTiltY = 0;
+    let isHovering = false;
+
+    // --- Magnetic Elements Setup ---
+    document.querySelectorAll('.magnetic').forEach(el => {
+      const m = { el: el, x: 0, y: 0, tx: 0, ty: 0, active: false };
+      magElements.push(m);
+      el.addEventListener('mouseenter', () => m.active = true);
+      el.addEventListener('mouseleave', () => { m.active = false; m.tx = 0; m.ty = 0; });
+      el.addEventListener('mousemove', (e) => {
+        const rect = el.getBoundingClientRect();
+        m.tx = (e.clientX - rect.left - rect.width / 2) * 0.25;
+        m.ty = (e.clientY - rect.top - rect.height / 2) * 0.4;
+      });
+    });
+
+    // --- About Cards Setup ---
+    const aboutCards = document.querySelectorAll('.about-img-card');
+    aboutCards.forEach(card => {
+      const match = card.style.transform.match(/rotate\(([-\d.]+)deg\)/);
+      card.dataset.baseRotate = match ? match[1] : 0;
+    });
+    const aboutSection = document.getElementById('about');
+    const aboutObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => aboutVisible = entry.isIntersecting);
+    }, { threshold: 0.1 });
+    aboutObs.observe(aboutSection);
+
+    // --- Hero Title 3D Tilt Setup ---
+    const heroSection = document.getElementById('hero');
+    const heroTilt = document.querySelector('.hero-tilt');
+    const heroObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => heroVisible = entry.isIntersecting);
+    }, { threshold: 0.1 });
+    heroObs.observe(heroSection);
+
+    // --- Project Card Tilt Setup (Unified in rAF) ---
+    const projectCards = document.querySelectorAll('.project-card');
+    const cardStates = [];
+
+    if (canHover) {
+      projectCards.forEach(card => {
+        const img = card.querySelector('.project-img');
+        if (!img) return;
+        const state = { card, img, tx: 0, ty: 0, cx: 0, cy: 0, hovering: false };
+        cardStates.push(state);
+
+        card.addEventListener('mouseenter', () => state.hovering = true);
+        card.addEventListener('mouseleave', () => {
+          state.hovering = false;
+          state.tx = 0;
+          state.ty = 0;
+        });
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          state.tx = ((e.clientX - rect.left) / rect.width - 0.5) * 8;
+          state.ty = ((e.clientY - rect.top) / rect.height - 0.5) * 8;
+        });
+      });
+    }
+
+    // --- Global Mousemove Listener (Delegated & GPU-accelerated) ---
+    window.addEventListener('mousemove', (e) => {
+      mx = e.clientX;
+      my = e.clientY;
+      dot.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+      
+      // Ambient Light (GPU transform)
+      ambientLight.style.transform = `translate3d(${mx}px, ${my}px, 0)`;
+
+      // About Parallax Vars
+      aboutX = (mx / window.innerWidth - 0.5) * 2;
+      aboutY = (my / window.innerHeight - 0.5) * 2;
+
+      // Hero Tilt Vars
+      if (heroVisible && canHover) {
+        targetTiltY = (mx / window.innerWidth - 0.5) * 6; // Max 6deg
+        targetTiltX = -(my / window.innerHeight - 0.5) * 4; // Max 4deg
+      } else {
+        targetTiltX = 0;
+        targetTiltY = 0;
+      }
+    });
+
+    // --- Cursor Hover State (Delegated) ---
+    document.body.addEventListener('mouseover', (e) => {
+      if (e.target.closest('a, button, [data-hover]')) {
+        if (!isHovering) {
+          isHovering = true;
+          targetScale = 2;
+          ring.classList.add('hover');
+        }
+      }
+    });
+    document.body.addEventListener('mouseout', (e) => {
+      if (e.target.closest('a, button, [data-hover]')) {
+        if (!e.relatedTarget || !e.relatedTarget.closest('a, button, [data-hover]')) {
+          isHovering = false;
+          targetScale = 1;
+          ring.classList.remove('hover');
+        }
+      }
+    });
+
+    // --- Master Animation Loop (Springs) ---
+    function animateLoop() {
+      // Cursor ring spring
+      rx += (mx - rx) * 0.18;
+      ry += (my - ry) * 0.18;
+      scale += (targetScale - scale) * 0.2;
+      ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%) scale(${scale})`;
+
+      // Hero tilt spring
+      if (heroVisible) {
+        tiltX += (targetTiltX - tiltX) * 0.1;
+        tiltY += (targetTiltY - tiltY) * 0.1;
+        heroTilt.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+      }
+
+      // About parallax spring
+      if (aboutVisible) {
+        aboutCards.forEach((card, i) => {
+          const baseRotate = parseFloat(card.dataset.baseRotate);
+          const factor = (i + 1) * 3;
+          card.style.transform = `rotate(${baseRotate + aboutX * factor * 0.3}deg) translate(${aboutX * factor}px, ${aboutY * factor}px)`;
+        });
+      }
+
+      // Magnetic elements spring
+      magElements.forEach(m => {
+        m.x += (m.tx - m.x) * 0.15;
+        m.y += (m.ty - m.y) * 0.15;
+        if (Math.abs(m.x) > 0.05 || Math.abs(m.y) > 0.05 || m.active) {
+          m.el.style.transform = `translate(${m.x}px, ${m.y}px)`;
+        } else {
+          m.el.style.transform = '';
+        }
+      });
+
+      // Project Cards spring (No CSS transition conflict)
+      cardStates.forEach(s => {
+        s.cx += (s.tx - s.cx) * 0.1;
+        s.cy += (s.ty - s.cy) * 0.1;
+        const scaleVal = s.hovering ? 1.04 : 1.0;
+        s.img.style.transform = `scale(${scaleVal}) translate(${s.cx}px, ${s.cy}px)`;
+      });
+
+      requestAnimationFrame(animateLoop);
+    }
+    requestAnimationFrame(animateLoop);
+
+    // --- Role Rotator ---
+    const roles = document.querySelectorAll('#roleRotator span');
+    let roleIdx = 0;
+    setInterval(() => {
+      roles[roleIdx].classList.remove('active');
+      roleIdx = (roleIdx + 1) % roles.length;
+      roles[roleIdx].classList.add('active');
+    }, 2400);
+
+    // --- Number Counters (Throttled) ---
+    const counterObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.count, 10);
+          const duration = 1600;
+          const start = performance.now();
+          let frameCount = 0;
+          function tick(now) {
+            frameCount++;
+            if (frameCount % 2 === 0 || now - start >= duration) {
+              const p = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - p, 3);
+              const val = Math.floor(target * eased);
+              el.textContent = target >= 1000 ? val.toLocaleString() : val;
+            }
+            if (now - start < duration) requestAnimationFrame(tick);
+            else el.textContent = target >= 1000 ? target.toLocaleString() : target;
+          }
+          requestAnimationFrame(tick);
+          counterObs.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => counterObs.observe(el));
+
+    // --- Scroll Reveals ---
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('in'), i * 60);
+          revealObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count, 10);
+      el.textContent = target >= 1000 ? target.toLocaleString() : target;
+    });
+    document.getElementById('cursorDot').style.display = 'none';
+    document.getElementById('cursorRing').style.display = 'none';
+  }
+</script>
+
+</body>
+</html>

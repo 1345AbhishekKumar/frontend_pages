@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOCUS — Editorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/plus-jakarta-sans@latest/latin-400-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/plus-jakarta-sans@latest/latin-300-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/plus-jakarta-sans@latest/latin-500-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/plus-jakarta-sans@latest/latin-700-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-400-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-300-normal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/cormorant-garamond@latest/latin-500-italic.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { overscroll-behavior: none; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #E9E9E9;
+            color: #0A0A0A;
+            overflow-x: hidden;
+        }
+
+        .font-display { font-family: 'Bebas Neue', sans-serif; }
+        .font-accent  { font-family: 'Cormorant Garamond', serif; }
+
+        .outlined-text {
+            color: transparent;
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.9);
+            text-stroke: 2px rgba(255, 255, 255, 0.9);
+        }
+
+        .outlined-dark {
+            color: transparent;
+            -webkit-text-stroke: 1.5px #0A0A0A;
+            text-stroke: 1.5px #0A0A0A;
+        }
+
+        .bg-zoom { animation: slowZoom 22s ease-out forwards; }
+        @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+        .fade-in { opacity: 0; animation: fadeIn 1.5s ease-out forwards; }
+        .fade-in-delay-1 { animation-delay: 0.3s; }
+        .fade-in-delay-2 { animation-delay: 0.6s; }
+        .fade-in-delay-3 { animation-delay: 0.9s; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .eye-frame {
+            transition: transform 0.6s cubic-bezier(0.4,0,0.2,1),
+                        border-color 0.5s ease,
+                        box-shadow 0.6s ease;
+        }
+        .eye-frame:hover {
+            transform: translateY(-6px) scale(1.015);
+            border-color: rgba(255,255,255,1);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+        }
+
+        .eye-frame .slide {
+            position: absolute; inset: 0;
+            opacity: 0;
+            transition: opacity 1.2s cubic-bezier(0.4,0,0.2,1), transform 6s ease-out;
+            transform: scale(1.08);
+        }
+        .eye-frame .slide.active { opacity: 1; transform: scale(1); }
+
+        .slide-progress {
+            position: absolute; bottom: 0; left: 0;
+            height: 2px; background: rgba(255,255,255,0.85);
+            width: 0%; transition: width 0.3s linear; z-index: 5;
+        }
+
+        .vertical-text { writing-mode: vertical-rl; text-orientation: mixed; }
+
+        .grain-overlay {
+            position: absolute; inset: 0;
+            opacity: 0.05; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Legacy reveals (keep) */
+        .reveal {
+            opacity: 0; transform: translateY(60px);
+            transition: opacity 1.2s cubic-bezier(0.2,0.8,0.2,1),
+                        transform 1.2s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .reveal.in-view { opacity: 1; transform: translateY(0); }
+        .reveal.delay-1 { transition-delay: 0.15s; }
+        .reveal.delay-2 { transition-delay: 0.3s; }
+        .reveal.delay-3 { transition-delay: 0.45s; }
+        .reveal.delay-4 { transition-delay: 0.6s; }
+        .reveal.delay-5 { transition-delay: 0.75s; }
+
+        .reveal-scale {
+            opacity: 0; transform: scale(0.92);
+            transition: opacity 1.4s ease, transform 1.4s ease;
+        }
+        .reveal-scale.in-view { opacity: 1; transform: scale(1); }
+
+        .reveal-clip {
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 1.4s cubic-bezier(0.77,0,0.175,1);
+        }
+        .reveal-clip.in-view { clip-path: inset(0 0 0 0); }
+
+        .line-grow {
+            transform: scaleX(0); transform-origin: left;
+            transition: transform 1.4s cubic-bezier(0.77,0,0.175,1);
+        }
+        .line-grow.in-view { transform: scaleX(1); }
+
+        .img-hover-zoom { overflow: hidden; }
+        .img-hover-zoom img { transition: transform 1.2s cubic-bezier(0.2,0.8,0.2,1); }
+        .img-hover-zoom:hover img { transform: scale(1.08); }
+
+        @keyframes marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-track {
+            display: inline-flex;
+            animation: marquee 40s linear infinite;
+            white-space: nowrap;
+        }
+
+        .parallax { will-change: transform; }
+
+        @media (max-width: 640px) {
+            .outlined-text { -webkit-text-stroke: 1.5px rgba(255,255,255,0.9); }
+            .outlined-dark { -webkit-text-stroke: 1px #0A0A0A; }
+        }
+
+        ::selection { background: #0A0A0A; color: #F7F7F7; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #E9E9E9; }
+        ::-webkit-scrollbar-thumb { background: #0A0A0A; }
+
+        /* ========== NEW — Awwwards-style additions ========== */
+
+        /* Scroll progress bar */
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px; width: 100%;
+            background: #0A0A0A;
+            transform-origin: left center;
+            transform: scaleX(0);
+            z-index: 9999;
+            pointer-events: none;
+            mix-blend-mode: difference;
+            background: #F7F7F7;
+        }
+
+        /* Scroll velocity skew */
+        .skew-wrap { will-change: transform; transition: transform 0.25s ease-out; }
+
+        /* Per-word reveal */
+        .word-reveal .word {
+            display: inline-block;
+            overflow: hidden;
+            vertical-align: top;
+            margin-right: 0.25em;
+        }
+        .word-reveal .word-inner {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 1s cubic-bezier(0.77,0,0.175,1);
+        }
+        .word-reveal.in-view .word-inner { transform: translateY(0); }
+        .word-reveal .word:nth-child(2) .word-inner { transition-delay: 0.08s; }
+        .word-reveal .word:nth-child(3) .word-inner { transition-delay: 0.16s; }
+        .word-reveal .word:nth-child(4) .word-inner { transition-delay: 0.24s; }
+        .word-reveal .word:nth-child(5) .word-inner { transition-delay: 0.32s; }
+        .word-reveal .word:nth-child(6) .word-inner { transition-delay: 0.40s; }
+        .word-reveal .word:nth-child(7) .word-inner { transition-delay: 0.48s; }
+        .word-reveal .word:nth-child(8) .word-inner { transition-delay: 0.56s; }
+
+        /* Per-character big heading */
+        .char-reveal .char {
+            display: inline-block;
+            transform: translateY(100%);
+            transition: transform 1.2s cubic-bezier(0.77,0,0.175,1);
+        }
+        .char-reveal.in-view .char { transform: translateY(0); }
+
+        /* Image mask reveal */
+        .img-mask-reveal { overflow: hidden; position: relative; }
+        .img-mask-reveal img {
+            transform: scale(1.35);
+            transition: transform 1.8s cubic-bezier(0.77,0,0.175,1);
+        }
+        .img-mask-reveal.in-view img { transform: scale(1); }
+        .img-mask-reveal::after {
+            content: ""; position: absolute; inset: 0;
+            background: #E9E9E9;
+            transform-origin: right center;
+            transition: transform 1.2s cubic-bezier(0.77,0,0.175,1);
+        }
+        .img-mask-reveal.in-view::after { transform: scaleX(0); }
+
+        .img-mask-dark::after { background: #F7F7F7; }
+
+        /* Horizontal scroll strip */
+        .hstrip-pin { height: 400vh; position: relative; }
+        .hstrip-track-wrap {
+            position: sticky; top: 0; height: 100vh;
+            display: flex; align-items: center; overflow: hidden;
+        }
+        .hstrip-track {
+            display: flex; gap: 32px; padding: 0 8vw;
+            will-change: transform;
+        }
+        .hstrip-card {
+            flex: 0 0 auto;
+            width: 42vw; max-width: 560px;
+        }
+        @media (max-width: 768px) {
+            .hstrip-card { width: 80vw; }
+            .hstrip-pin { height: 320vh; }
+        }
+
+        /* Pinned feature scale */
+        .pinned-scale { transform-origin: center center; will-change: transform; }
+
+        /* Magnetic button */
+        .magnetic-btn {
+            position: relative; display: inline-block;
+            transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .magnetic-btn .m-inner {
+            transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
+        }
+
+        /* Stats counter */
+        .stat-num {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+
+        /* Cursor dot */
+        .cursor-dot {
+            position: fixed; top: 0; left: 0;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #0A0A0A;
+            mix-blend-mode: difference;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease, background 0.3s ease;
+        }
+        .cursor-dot.grow {
+            width: 60px; height: 60px;
+            background: #F7F7F7;
+        }
+        @media (hover: none) { .cursor-dot { display: none; } }
+
+        /* Loading intro */
+        .loader {
+            position: fixed; inset: 0; background: #0A0A0A;
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .loader.done { opacity: 0; visibility: hidden; }
+        .loader-text {
+            font-family: 'Bebas Neue', sans-serif;
+            color: transparent;
+            -webkit-text-stroke: 1.5px #F7F7F7;
+            font-size: clamp(60px, 12vw, 160px);
+            letter-spacing: 0.1em;
+            overflow: hidden;
+        }
+        .loader-text span {
+            display: inline-block;
+            animation: slideUp 1s cubic-bezier(0.77,0,0.175,1) forwards;
+            transform: translateY(100%);
+        }
+        .loader-text span:nth-child(1) { animation-delay: 0.1s; }
+        .loader-text span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-text span:nth-child(3) { animation-delay: 0.3s; }
+        .loader-text span:nth-child(4) { animation-delay: 0.4s; }
+        .loader-text span:nth-child(5) { animation-delay: 0.5s; }
+        @keyframes slideUp { to { transform: translateY(0); } }
+
+        /* Floating side progress */
+        .side-progress {
+            position: fixed; right: 24px; top: 50%;
+            transform: translateY(-50%);
+            height: 120px; width: 1px;
+            background: rgba(10,10,10,0.15);
+            z-index: 9000;
+        }
+        .side-progress-bar {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: #0A0A0A;
+            transform-origin: top;
+            transform: scaleY(0);
+        }
+        .side-progress-label {
+            position: absolute; right: 16px; top: 0;
+            font-size: 10px; letter-spacing: 0.3em;
+            text-transform: uppercase; color: #7A7A7A;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
+        @media (max-width: 768px) { .side-progress { display: none; } }
+
+        /* Parallax img inner */
+        .parallax-img {
+            will-change: transform;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Loader -->
+<div class="loader" id="loader">
+    <div class="loader-text"><span>F</span><span>O</span><span>C</span><span>U</span><span>S</span></div>
+</div>
+
+<!-- Scroll progress bar -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- Side progress -->
+<div class="side-progress">
+    <div class="side-progress-bar" id="sideProgress"></div>
+    <span class="side-progress-label">Scroll</span>
+</div>
+
+<!-- Custom cursor -->
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- Skew wrapper for velocity effect -->
+<div class="skew-wrap" id="skewWrap">
+
+<!-- ================= HERO ================= -->
+<section class="relative min-h-screen w-full overflow-hidden bg-[#0A0A0A]">
+    <div class="grain-overlay z-50"></div>
+
+    <div class="absolute inset-0 z-0 bg-zoom parallax" data-parallax="0.15">
+        <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/11d7106f4-a6a7-4669-aa54-dc2723b74f77.png"
+             alt="Editorial Portrait"
+             class="w-full h-full object-cover object-center blur-[6px] scale-105 opacity-75">
+    </div>
+
+    <div class="absolute inset-0 z-[1] bg-gradient-to-b from-black/30 via-transparent to-black/50"></div>
+
+    <div class="absolute inset-0 z-10 flex items-center justify-center px-4 md:px-6 lg:px-12 fade-in fade-in-delay-2">
+        <div id="eyeFrame" class="eye-frame relative w-[75%] max-w-[920px] aspect-[16/7] rounded-lg border border-white/70 overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.25)] cursor-pointer">
+            <div class="slide active" data-index="0">
+                <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/1973b9ff9-71ef-496f-a22e-18a2010fd4d7.png" class="w-full h-full object-cover" alt="Eye detail 1">
+            </div>
+            <div class="slide" data-index="1">
+                <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/11f0f9c4a-ba82-4112-afd9-6ee9fd50213c.png" class="w-full h-full object-cover" alt="Eye detail 2">
+            </div>
+            <div class="slide" data-index="2">
+                <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/13765d521-54f3-4220-ae58-f83d1b7789ff.png" class="w-full h-full object-cover" alt="Eye detail 3">
+            </div>
+            <div class="slide" data-index="3">
+                <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/19bceab53-e274-48ec-bf00-f6f9fa766102.png" class="w-full h-full object-cover" alt="Eye detail 4">
+            </div>
+
+            <div class="slide-progress" id="slideProgress"></div>
+
+            <div class="absolute top-3 left-4 z-10 flex items-center gap-2">
+                <span class="text-[10px] uppercase tracking-[0.25em] text-white/90 font-light">Frame</span>
+                <span class="text-[10px] uppercase tracking-[0.25em] text-white/90 font-medium" id="slideIndex">01 / 04</span>
+            </div>
+
+            <div class="absolute bottom-3 right-4 z-10 text-[10px] uppercase tracking-[0.25em] text-white/70 font-light transition-opacity" id="hoverHint">
+                Hover to reveal
+            </div>
+
+            <div class="absolute inset-0 border border-white/20 rounded-lg pointer-events-none"></div>
+        </div>
+    </div>
+
+    <div class="absolute top-[6%] left-0 right-0 z-20 text-center fade-in pointer-events-none">
+        <h1 class="font-display outlined-text tracking-tight leading-none uppercase" style="font-size: clamp(100px, 14vw, 220px);">
+            FOCUS
+        </h1>
+    </div>
+
+    <div class="absolute left-4 md:left-12 top-1/2 -translate-y-1/2 z-30 fade-in fade-in-delay-3 hidden sm:block">
+        <div class="vertical-text flex items-center gap-8">
+            <p class="font-accent text-base md:text-lg text-white/85 tracking-wider italic">It's in the eyes.</p>
+            <p class="font-accent text-base md:text-lg text-white/55 tracking-wider italic">Always in the eyes.</p>
+        </div>
+    </div>
+
+    <div class="absolute bottom-8 left-4 md:left-12 z-30 fade-in fade-in-delay-3">
+        <div class="space-y-1">
+            <p class="text-[11px] uppercase tracking-[0.25em] text-white/60 font-light">May 28, 2026</p>
+            <p class="text-[11px] uppercase tracking-[0.25em] text-white/60 font-light">14:32:07 UTC</p>
+        </div>
+    </div>
+
+    <div class="absolute bottom-8 right-4 md:right-12 z-30 fade-in fade-in-delay-3">
+        <div class="flex flex-col items-end space-y-2">
+            <svg width="120" height="40" viewBox="0 0 120 40" class="opacity-80">
+                <rect x="0" y="0" width="2" height="40" fill="white"/>
+                <rect x="4" y="0" width="1" height="40" fill="white"/>
+                <rect x="7" y="0" width="3" height="40" fill="white"/>
+                <rect x="12" y="0" width="1" height="40" fill="white"/>
+                <rect x="15" y="0" width="2" height="40" fill="white"/>
+                <rect x="19" y="0" width="1" height="40" fill="white"/>
+                <rect x="22" y="0" width="4" height="40" fill="white"/>
+                <rect x="28" y="0" width="1" height="40" fill="white"/>
+                <rect x="31" y="0" width="2" height="40" fill="white"/>
+                <rect x="35" y="0" width="1" height="40" fill="white"/>
+                <rect x="38" y="0" width="3" height="40" fill="white"/>
+                <rect x="43" y="0" width="1" height="40" fill="white"/>
+                <rect x="46" y="0" width="2" height="40" fill="white"/>
+                <rect x="50" y="0" width="1" height="40" fill="white"/>
+                <rect x="53" y="0" width="4" height="40" fill="white"/>
+                <rect x="59" y="0" width="1" height="40" fill="white"/>
+                <rect x="62" y="0" width="2" height="40" fill="white"/>
+                <rect x="66" y="0" width="1" height="40" fill="white"/>
+                <rect x="69" y="0" width="3" height="40" fill="white"/>
+                <rect x="74" y="0" width="1" height="40" fill="white"/>
+                <rect x="77" y="0" width="2" height="40" fill="white"/>
+                <rect x="81" y="0" width="1" height="40" fill="white"/>
+                <rect x="84" y="0" width="4" height="40" fill="white"/>
+                <rect x="90" y="0" width="1" height="40" fill="white"/>
+                <rect x="93" y="0" width="2" height="40" fill="white"/>
+                <rect x="97" y="0" width="1" height="40" fill="white"/>
+                <rect x="100" y="0" width="3" height="40" fill="white"/>
+                <rect x="105" y="0" width="1" height="40" fill="white"/>
+                <rect x="108" y="0" width="2" height="40" fill="white"/>
+                <rect x="112" y="0" width="1" height="40" fill="white"/>
+                <rect x="115" y="0" width="5" height="40" fill="white"/>
+            </svg>
+            <p class="text-[10px] uppercase tracking-[0.25em] text-white/50 font-light">ED-2026-0528-001</p>
+        </div>
+    </div>
+
+    <div class="absolute top-6 left-6 w-8 h-8 border-t border-l border-white/30 z-20 fade-in fade-in-delay-1"></div>
+    <div class="absolute top-6 right-6 w-8 h-8 border-t border-r border-white/30 z-20 fade-in fade-in-delay-1"></div>
+    <div class="absolute bottom-6 left-6 w-8 h-8 border-b border-l border-white/30 z-20 fade-in fade-in-delay-1"></div>
+    <div class="absolute bottom-6 right-6 w-8 h-8 border-b border-r border-white/30 z-20 fade-in fade-in-delay-1"></div>
+
+    <div class="absolute top-1/2 right-4 md:right-12 -translate-y-1/2 z-30 fade-in fade-in-delay-3 hidden md:flex flex-col items-end gap-2">
+        <span class="inline-block px-3 py-1 border border-white/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-white/70">Vol. 01</span>
+        <span class="inline-block px-3 py-1 border border-white/40 rounded-full text-[10px] uppercase tracking-[0.25em] text-white/70">2026</span>
+    </div>
+
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 fade-in fade-in-delay-3 flex flex-col items-center gap-2">
+        <span class="text-[10px] uppercase tracking-[0.3em] text-white/50">Scroll</span>
+        <div class="w-px h-10 bg-gradient-to-b from-white/60 to-transparent"></div>
+    </div>
+</section>
+
+<!-- ================= MARQUEE ================= -->
+<section class="bg-[#0A0A0A] py-6 border-y border-white/10 overflow-hidden">
+    <div class="marquee-track font-display text-white/90 text-3xl md:text-5xl tracking-[0.2em] uppercase">
+        <span class="px-8">The Gaze</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8 italic font-accent font-normal">Intimacy of Sight</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8">Editorial Study</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8 italic font-accent font-normal">Vol. I</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8">The Gaze</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8 italic font-accent font-normal">Intimacy of Sight</span>
+        <span class="px-8">Editorial Study</span>
+        <span class="px-8 text-white/30">◆</span>
+        <span class="px-8 italic font-accent font-normal">Vol. I</span>
+        <span class="px-8 text-white/30">◆</span>
+    </div>
+</section>
+
+<!-- ================= THE SERIES ================= -->
+<section class="relative bg-[#E9E9E9] py-24 md:py-32">
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12">
+        <div class="flex items-end justify-between mb-16 md:mb-24 flex-wrap gap-6">
+            <div class="reveal">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Chapter 01 — The Series</p>
+                <h2 class="font-display outlined-dark uppercase leading-none" style="font-size: clamp(60px, 9vw, 140px);">
+                    Four Studies
+                </h2>
+            </div>
+            <p class="reveal delay-2 font-accent italic text-[#0A0A0A] text-xl md:text-2xl max-w-md leading-relaxed">
+                A quiet dissection of the gaze — each frame a confession held between the lashes.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+            <div class="reveal-scale img-hover-zoom img-mask-reveal rounded-lg overflow-hidden bg-[#B8B8B8]">
+                <div class="aspect-[4/5]">
+                    <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/1973b9ff9-71ef-496f-a22e-18a2010fd4d7.png" class="w-full h-full object-cover parallax-img" alt="Study I">
+                </div>
+            </div>
+            <div class="reveal-scale delay-2 img-hover-zoom img-mask-reveal rounded-lg overflow-hidden bg-[#B8B8B8] md:mt-16">
+                <div class="aspect-[4/5]">
+                    <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/11f0f9c4a-ba82-4112-afd9-6ee9fd50213c.png" class="w-full h-full object-cover parallax-img" alt="Study II">
+                </div>
+            </div>
+            <div class="reveal-scale delay-1 img-hover-zoom img-mask-reveal rounded-lg overflow-hidden bg-[#B8B8B8] md:-mt-8">
+                <div class="aspect-[4/5]">
+                    <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/13765d521-54f3-4220-ae58-f83d1b7789ff.png" class="w-full h-full object-cover parallax-img" alt="Study III">
+                </div>
+            </div>
+            <div class="reveal-scale delay-3 img-hover-zoom img-mask-reveal rounded-lg overflow-hidden bg-[#B8B8B8]">
+                <div class="aspect-[4/5]">
+                    <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/19bceab53-e274-48ec-bf00-f6f9fa766102.png" class="w-full h-full object-cover parallax-img" alt="Study IV">
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 mt-6">
+            <div class="reveal delay-1 flex justify-between text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">
+                <span>Study I — Iris</span><span>00:04:12</span>
+            </div>
+            <div class="reveal delay-2 flex justify-between text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] md:mt-16">
+                <span>Study II — Lash</span><span>00:06:47</span>
+            </div>
+            <div class="reveal delay-3 flex justify-between text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] md:-mt-8">
+                <span>Study III — Pupil</span><span>00:09:03</span>
+            </div>
+            <div class="reveal delay-4 flex justify-between text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">
+                <span>Study IV — Reflection</span><span>00:11:28</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= FILM STRIP — Horizontal Scroll (NEW) ================= -->
+<section class="relative bg-[#0A0A0A] hstrip-pin" id="hstrip">
+    <div class="hstrip-track-wrap">
+        <div class="absolute top-10 left-8 md:left-12 z-10">
+            <p class="text-[11px] uppercase tracking-[0.3em] text-white/50">Chapter 01.5 — Film Strip</p>
+        </div>
+        <div class="absolute top-10 right-8 md:right-12 z-10 hidden md:block">
+            <p class="text-[11px] uppercase tracking-[0.3em] text-white/50">Drag → Scroll</p>
+        </div>
+
+        <div class="hstrip-track" id="hstripTrack">
+            <div class="hstrip-card">
+                <div class="overflow-hidden rounded-lg bg-[#1A1A1A]">
+                    <div class="aspect-[3/4]">
+                        <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/1973b9ff9-71ef-496f-a22e-18a2010fd4d7.png" class="w-full h-full object-cover" alt="Frame 1">
+                    </div>
+                </div>
+                <div class="flex justify-between mt-4 text-[11px] uppercase tracking-[0.25em] text-white/60">
+                    <span>Frame 01 — Iris</span><span>35mm</span>
+                </div>
+            </div>
+            <div class="hstrip-card">
+                <div class="overflow-hidden rounded-lg bg-[#1A1A1A]">
+                    <div class="aspect-[3/4]">
+                        <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/11f0f9c4a-ba82-4112-afd9-6ee9fd50213c.png" class="w-full h-full object-cover" alt="Frame 2">
+                    </div>
+                </div>
+                <div class="flex justify-between mt-4 text-[11px] uppercase tracking-[0.25em] text-white/60">
+                    <span>Frame 02 — Lash</span><span>50mm</span>
+                </div>
+            </div>
+            <div class="hstrip-card">
+                <div class="overflow-hidden rounded-lg bg-[#1A1A1A]">
+                    <div class="aspect-[3/4]">
+                        <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/13765d521-54f3-4220-ae58-f83d1b7789ff.png" class="w-full h-full object-cover" alt="Frame 3">
+                    </div>
+                </div>
+                <div class="flex justify-between mt-4 text-[11px] uppercase tracking-[0.25em] text-white/60">
+                    <span>Frame 03 — Pupil</span><span>85mm</span>
+                </div>
+            </div>
+            <div class="hstrip-card">
+                <div class="overflow-hidden rounded-lg bg-[#1A1A1A]">
+                    <div class="aspect-[3/4]">
+                        <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/19bceab53-e274-48ec-bf00-f6f9fa766102.png" class="w-full h-full object-cover" alt="Frame 4">
+                    </div>
+                </div>
+                <div class="flex justify-between mt-4 text-[11px] uppercase tracking-[0.25em] text-white/60">
+                    <span>Frame 04 — Reflection</span><span>100mm</span>
+                </div>
+            </div>
+            <div class="hstrip-card flex items-center justify-center">
+                <div class="text-center">
+                    <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-4">End of Reel</p>
+                    <p class="font-display outlined-text uppercase" style="font-size: clamp(50px, 8vw, 100px);">
+                        Continue →
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= EDITORIAL QUOTE ================= -->
+<section class="relative bg-[#0A0A0A] py-32 md:py-48 overflow-hidden">
+    <div class="grain-overlay z-10"></div>
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12 relative z-20">
+        <div class="reveal">
+            <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-8">Chapter 02 — Notes</p>
+        </div>
+        <blockquote class="font-accent italic font-normal text-white leading-[1.1] word-reveal" data-word-reveal style="font-size: clamp(36px, 6vw, 88px);">
+            "The eye is the first to confess, and the last to lie."
+        </blockquote>
+        <div class="reveal delay-5 mt-12 flex items-center gap-4">
+            <div class="w-12 h-px bg-white/50"></div>
+            <p class="text-[11px] uppercase tracking-[0.3em] text-white/60">Attributed, Studio Notes — MMXXVI</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= STATS (NEW) ================= -->
+<section class="relative bg-[#E9E9E9] py-24 md:py-32 border-y border-[#0A0A0A]/10">
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-6">
+            <div class="reveal">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Editions</p>
+                <p class="font-display stat-num leading-none" style="font-size: clamp(60px, 9vw, 120px);" data-count="48">0</p>
+            </div>
+            <div class="reveal delay-1">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Exhibitions</p>
+                <p class="font-display stat-num leading-none" style="font-size: clamp(60px, 9vw, 120px);" data-count="12">0</p>
+            </div>
+            <div class="reveal delay-2">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Years</p>
+                <p class="font-display stat-num leading-none" style="font-size: clamp(60px, 9vw, 120px);" data-count="07">0</p>
+            </div>
+            <div class="reveal delay-3">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Cities</p>
+                <p class="font-display stat-num leading-none" style="font-size: clamp(60px, 9vw, 120px);" data-count="14">0</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= GALLERY INDEX ================= -->
+<section class="relative bg-[#E9E9E9] py-24 md:py-32">
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12">
+        <div class="reveal mb-20">
+            <p class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-4">Chapter 03 — Index</p>
+            <h2 class="font-display outlined-dark uppercase leading-none char-reveal" data-char-reveal style="font-size: clamp(50px, 8vw, 120px);">Gallery Index</h2>
+        </div>
+
+        <div class="border-t border-[#0A0A0A]/20">
+            <div class="reveal grid grid-cols-12 gap-4 py-8 border-b border-[#0A0A0A]/20 items-center hover:bg-[#DCDCDC] transition-colors duration-500 cursor-pointer group">
+                <div class="col-span-2 md:col-span-1 font-display text-2xl">01</div>
+                <div class="col-span-6 md:col-span-4">
+                    <h3 class="text-xl md:text-2xl font-medium">The Quiet Before</h3>
+                    <p class="text-xs uppercase tracking-widest text-[#7A7A7A] mt-1">Silver gelatin, 2026</p>
+                </div>
+                <div class="col-span-4 md:col-span-3 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">Iris / Reflection</div>
+                <div class="col-span-2 md:col-span-2 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">48 × 60 cm</div>
+                <div class="col-span-12 md:col-span-2 text-right text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] group-hover:text-[#0A0A0A]">View →</div>
+            </div>
+
+            <div class="reveal delay-1 grid grid-cols-12 gap-4 py-8 border-b border-[#0A0A0A]/20 items-center hover:bg-[#DCDCDC] transition-colors duration-500 cursor-pointer group">
+                <div class="col-span-2 md:col-span-1 font-display text-2xl">02</div>
+                <div class="col-span-6 md:col-span-4">
+                    <h3 class="text-xl md:text-2xl font-medium">A Slow Unfolding</h3>
+                    <p class="text-xs uppercase tracking-widest text-[#7A7A7A] mt-1">Archival pigment, 2026</p>
+                </div>
+                <div class="col-span-4 md:col-span-3 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">Pupil / Shadow</div>
+                <div class="col-span-2 md:col-span-2 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">60 × 80 cm</div>
+                <div class="col-span-12 md:col-span-2 text-right text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] group-hover:text-[#0A0A0A]">View →</div>
+            </div>
+
+            <div class="reveal delay-2 grid grid-cols-12 gap-4 py-8 border-b border-[#0A0A0A]/20 items-center hover:bg-[#DCDCDC] transition-colors duration-500 cursor-pointer group">
+                <div class="col-span-2 md:col-span-1 font-display text-2xl">03</div>
+                <div class="col-span-6 md:col-span-4">
+                    <h3 class="text-xl md:text-2xl font-medium">Held Between</h3>
+                    <p class="text-xs uppercase tracking-widest text-[#7A7A7A] mt-1">Platinum print, 2025</p>
+                </div>
+                <div class="col-span-4 md:col-span-3 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">Lash / Light</div>
+                <div class="col-span-2 md:col-span-2 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">40 × 50 cm</div>
+                <div class="col-span-12 md:col-span-2 text-right text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] group-hover:text-[#0A0A0A]">View →</div>
+            </div>
+
+            <div class="reveal delay-3 grid grid-cols-12 gap-4 py-8 border-b border-[#0A0A0A]/20 items-center hover:bg-[#DCDCDC] transition-colors duration-500 cursor-pointer group">
+                <div class="col-span-2 md:col-span-1 font-display text-2xl">04</div>
+                <div class="col-span-6 md:col-span-4">
+                    <h3 class="text-xl md:text-2xl font-medium">What The Light Remembers</h3>
+                    <p class="text-xs uppercase tracking-widest text-[#7A7A7A] mt-1">Gelatin silver, 2025</p>
+                </div>
+                <div class="col-span-4 md:col-span-3 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">Brow / Silence</div>
+                <div class="col-span-2 md:col-span-2 hidden md:block text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A]">50 × 70 cm</div>
+                <div class="col-span-12 md:col-span-2 text-right text-[11px] uppercase tracking-[0.25em] text-[#7A7A7A] group-hover:text-[#0A0A0A]">View →</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= FEATURED SPLIT (pinned scale) ================= -->
+<section class="relative bg-[#F7F7F7] py-24 md:py-32 overflow-hidden" id="featuredSection">
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12 grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+        <div class="reveal-scale img-hover-zoom img-mask-reveal img-mask-dark rounded-lg overflow-hidden pinned-scale">
+            <div class="aspect-[3/4]">
+                <img src="https://image.qwenlm.ai/public_source/0204067f-ac93-4b2d-a2fc-405b783d296a/11d7106f4-a6a7-4669-aa54-dc2723b74f77.png" class="w-full h-full object-cover parallax-img" alt="Featured portrait">
+            </div>
+        </div>
+        <div>
+            <p class="reveal text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A] mb-6">Chapter 04 — Portrait</p>
+            <h2 class="reveal delay-1 font-display uppercase leading-none mb-8" style="font-size: clamp(44px, 6vw, 84px);">
+                A study in <span class="italic font-accent font-normal normal-case">stillness</span>
+            </h2>
+            <div class="reveal-clip h-px bg-[#0A0A0A] w-full mb-8"></div>
+            <p class="reveal delay-2 text-[#0A0A0A]/75 leading-relaxed mb-6">
+                Shot over three sessions in a quiet studio on the edge of the city, this series resists performance. The subject does not pose; they remain. What is left is the architecture of attention — the small, involuntary gestures of the eye that reveal more than any spoken word.
+            </p>
+            <p class="reveal delay-3 text-[#0A0A0A]/75 leading-relaxed mb-10">
+                Printed on archival platinum paper, each edition is numbered, signed, and accompanied by a handwritten note from the artist describing the exact minute the shutter closed.
+            </p>
+            <div class="reveal delay-4 flex items-center gap-6 flex-wrap">
+                <button class="magnetic-btn px-8 py-4 bg-[#0A0A0A] text-white text-[11px] uppercase tracking-[0.3em] rounded-full hover:bg-[#1A1A1A] transition-colors duration-500">
+                    <span class="m-inner">Request Private View</span>
+                </button>
+                <span class="text-[11px] uppercase tracking-[0.3em] text-[#7A7A7A]">Edition 1 / 12</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="bg-[#0A0A0A] text-white py-16 md:py-24 relative overflow-hidden">
+    <div class="grain-overlay"></div>
+    <div class="max-w-[1440px] mx-auto px-4 md:px-12 relative z-10">
+        <div class="reveal mb-16">
+            <h2 class="font-display outlined-text uppercase leading-none char-reveal" data-char-reveal style="font-size: clamp(80px, 16vw, 260px);">
+                FOCUS
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8 pb-12 border-b border-white/15">
+            <div class="reveal">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-4">Studio</p>
+                <p class="font-accent text-lg leading-relaxed">
+                    Atelier Noir<br>
+                    14 Rue du Silence<br>
+                    Paris, 75004
+                </p>
+            </div>
+            <div class="reveal delay-1">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-4">Contact</p>
+                <p class="font-accent text-lg leading-relaxed">
+                    press@focus.ed<br>
+                    +33 1 42 00 00 14<br>
+                    By appointment
+                </p>
+            </div>
+            <div class="reveal delay-2">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-4">Exhibition</p>
+                <p class="font-accent text-lg leading-relaxed">
+                    12 June — 30 Aug<br>
+                    Opening 19:00<br>
+                    Free entry
+                </p>
+            </div>
+            <div class="reveal delay-3">
+                <p class="text-[11px] uppercase tracking-[0.3em] text-white/50 mb-4">Newsletter</p>
+                <div class="flex items-center border-b border-white/30 pb-2">
+                    <input type="email" placeholder="your@email" class="bg-transparent flex-1 outline-none text-sm placeholder:text-white/40">
+                    <button class="text-[11px] uppercase tracking-[0.3em] hover:text-white/70">Subscribe →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center pt-8 gap-4">
+            <p class="text-[11px] uppercase tracking-[0.25em] text-white/50">© MMXXVI — All rights reserved</p>
+            <div class="flex items-center gap-6 text-[11px] uppercase tracking-[0.25em] text-white/50">
+                <span>Instagram</span>
+                <span>Are.na</span>
+                <span>Journal</span>
+            </div>
+            <p class="text-[11px] uppercase tracking-[0.25em] text-white/50">ED-2026-0528-001</p>
+        </div>
+    </div>
+</footer>
+
+</div><!-- /skew-wrap -->
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.42/bundled/lenis.min.js"></script>
+
+<script>
+    /* ======= Loader ======= */
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').classList.add('done');
+        }, 1400);
+    });
+
+    /* ======= Eye frame crossfade carousel ======= */
+    const eyeFrame      = document.getElementById('eyeFrame');
+    const slides        = eyeFrame.querySelectorAll('.slide');
+    const indexLabel    = document.getElementById('slideIndex');
+    const progressBar   = document.getElementById('slideProgress');
+    const hoverHint     = document.getElementById('hoverHint');
+
+    let current       = 0;
+    let hoverTimer    = null;
+    const INTERVAL    = 2600;
+    const pad = n => String(n).padStart(2, '0');
+
+    function showSlide(i) {
+        slides.forEach(s => s.classList.remove('active'));
+        slides[i].classList.add('active');
+        current = i;
+        indexLabel.textContent = `${pad(i + 1)} / ${pad(slides.length)}`;
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+        void progressBar.offsetWidth;
+        progressBar.style.transition = `width ${INTERVAL}ms linear`;
+        progressBar.style.width = '100%';
+    }
+    function nextSlide() { showSlide((current + 1) % slides.length); }
+    function startCycle() {
+        if (hoverTimer) return;
+        hoverHint.style.opacity = '0';
+        nextSlide();
+        hoverTimer = setInterval(nextSlide, INTERVAL);
+    }
+    function stopCycle() {
+        clearInterval(hoverTimer);
+        hoverTimer = null;
+        progressBar.style.transition = 'width 0.4s ease';
+        progressBar.style.width = '0%';
+        hoverHint.style.opacity = '1';
+    }
+    eyeFrame.addEventListener('mouseenter', startCycle);
+    eyeFrame.addEventListener('mouseleave', stopCycle);
+    eyeFrame.addEventListener('click', nextSlide);
+
+    /* ======= Scroll reveal (IntersectionObserver) ======= */
+    const revealSelectors = '.reveal, .reveal-scale, .reveal-clip, .line-grow, .img-mask-reveal, .char-reveal, .word-reveal';
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+                io.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll(revealSelectors).forEach(el => io.observe(el));
+
+    /* ======= Hero mouse parallax ======= */
+    const bgImg = document.querySelector('.bg-zoom img');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+    document.addEventListener('mousemove', (e) => {
+        mx = (e.clientX / window.innerWidth - 0.5) * 2;
+        my = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+    function loop() {
+        fx += (mx - fx) * 0.05;
+        fy += (my - fy) * 0.05;
+        if (bgImg && window.scrollY < window.innerHeight) {
+            bgImg.style.transform = `scale(1.08) translate(${fx * -6}px, ${fy * -6}px)`;
+        }
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+    /* ========================================================
+       AWWARDS-STYLE ADDITIONS
+       ======================================================== */
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* ------- Lenis smooth scroll ------- */
+    const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 2,
+    });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    gsap.ticker.lagSmoothing(0);
+
+    /* ------- Scroll velocity skew ------- */
+    const skewWrap = document.getElementById('skewWrap');
+    let currentSkew = 0, targetSkew = 0;
+    lenis.on('scroll', ({ velocity }) => {
+        targetSkew = Math.max(-4, Math.min(4, velocity * 0.02));
+    });
+    function renderSkew() {
+        currentSkew += (targetSkew - currentSkew) * 0.1;
+        targetSkew *= 0.95;
+        skewWrap.style.transform = `skewY(${currentSkew}deg)`;
+        requestAnimationFrame(renderSkew);
+    }
+    renderSkew();
+
+    /* ------- Scroll progress bar (top) ------- */
+    const scrollProgress = document.getElementById('scrollProgress');
+    const sideProgress   = document.getElementById('sideProgress');
+    ScrollTrigger.create({
+        trigger: document.body,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+            scrollProgress.style.transform = `scaleX(${self.progress})`;
+            sideProgress.style.transform   = `scaleY(${self.progress})`;
+        }
+    });
+
+    /* ------- Word reveal ------- */
+    document.querySelectorAll('[data-word-reveal]').forEach(el => {
+        const text = el.textContent.trim();
+        el.innerHTML = text.split(' ').map(w =>
+            `<span class="word"><span class="word-inner">${w}</span></span>`
+        ).join(' ');
+    });
+
+    /* ------- Char reveal (per-character big headings) ------- */
+    document.querySelectorAll('[data-char-reveal]').forEach(el => {
+        const text = el.textContent.trim();
+        el.innerHTML = text.split('').map(c =>
+            `<span class="char">${c === ' ' ? '&nbsp;' : c}</span>`
+        ).join('');
+        // stagger delays
+        el.querySelectorAll('.char').forEach((ch, i) => {
+            ch.style.transitionDelay = (i * 0.04) + 's';
+        });
+    });
+
+    /* ------- Horizontal film strip ------- */
+    const hstrip = document.getElementById('hstrip');
+    const hstripTrack = document.getElementById('hstripTrack');
+    if (hstrip && hstripTrack && window.innerWidth > 768) {
+        const getDistance = () => {
+            const trackW = hstripTrack.scrollWidth;
+            const viewW  = window.innerWidth;
+            return trackW - viewW + 80;
+        };
+
+        ScrollTrigger.create({
+            trigger: hstrip,
+            start: 'top top',
+            end: () => `+=${getDistance()}`,
+            pin: '.hstrip-track-wrap',
+            scrub: 1,
+            invalidateOnRefresh: true,
+            animation: gsap.to(hstripTrack, {
+                x: () => -getDistance(),
+                ease: 'none'
+            })
+        });
+    } else if (hstrip && hstripTrack) {
+        // mobile: simple horizontal scroll
+        hstrip.style.height = 'auto';
+        hstrip.querySelector('.hstrip-track-wrap').style.position = 'relative';
+        hstrip.querySelector('.hstrip-track-wrap').style.height = 'auto';
+        hstrip.querySelector('.hstrip-track-wrap').style.overflowX = 'auto';
+    }
+
+    /* ------- Parallax images (translate inside container) ------- */
+    gsap.utils.toArray('.parallax-img').forEach((img) => {
+        gsap.fromTo(img,
+            { yPercent: -8 },
+            {
+                yPercent: 8,
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: img.parentElement,
+                    start: 'top bottom',
+                    end: 'bottom top',
+                    scrub: true,
+                }
+            }
+        );
+    });
+
+    /* ------- Pinned featured section scale ------- */
+    const pinnedScale = document.querySelector('.pinned-scale');
+    if (pinnedScale && window.innerWidth > 768) {
+        gsap.fromTo(pinnedScale,
+            { scale: 1.15, filter: 'grayscale(1) blur(6px)' },
+            {
+                scale: 1,
+                filter: 'grayscale(0) blur(0px)',
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: '#featuredSection',
+                    start: 'top 80%',
+                    end: 'top 20%',
+                    scrub: 1.2,
+                }
+            }
+        );
+    }
+
+    /* ------- Counter animation ------- */
+    document.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count, 10);
+        const padLen = el.dataset.count.length;
+        const obj = { val: 0 };
+        ScrollTrigger.create({
+            trigger: el,
+            start: 'top 85%',
+            once: true,
+            onEnter: () => {
+                gsap.to(obj, {
+                    val: target,
+                    duration: 2.2,
+                    ease: 'power2.out',
+                    onUpdate: () => {
+                        el.textContent = String(Math.round(obj.val)).padStart(padLen, '0');
+                    }
+                });
+            }
+        });
+    });
+
+    /* ------- Marquee accelerate on scroll ------- */
+    const marqueeTrack = document.querySelector('.marquee-track');
+    if (marqueeTrack) {
+        let mSpeed = 1;
+        lenis.on('scroll', ({ velocity }) => {
+            mSpeed = 1 + Math.min(3, Math.abs(velocity) * 0.08);
+            marqueeTrack.style.animationDuration = (40 / mSpeed) + 's';
+        });
+    }
+
+    /* ------- Magnetic buttons ------- */
+    document.querySelectorAll('.magnetic-btn').forEach(btn => {
+        const inner = btn.querySelector('.m-inner');
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top  - rect.height / 2;
+            btn.style.transform   = `translate(${x * 0.25}px, ${y * 0.25}px)`;
+            if (inner) inner.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = '';
+            if (inner) inner.style.transform = '';
+        });
+    });
+
+    /* ------- Custom cursor grow on hover ------- */
+    const cursorDot = document.getElementById('cursorDot');
+    let cX = 0, cY = 0, tX = 0, tY = 0;
+    window.addEventListener('mousemove', (e) => {
+        tX = e.clientX; tY = e.clientY;
+    });
+    function renderCursor() {
+        cX += (tX - cX) * 0.25;
+        cY += (tY - cY) * 0.25;
+        cursorDot.style.transform = `translate(${cX}px, ${cY}px) translate(-50%, -50%)`;
+        requestAnimationFrame(renderCursor);
+    }
+    renderCursor();
+    document.querySelectorAll('a, button, .eye-frame, .img-hover-zoom, input').forEach(el => {
+        el.addEventListener('mouseenter', () => cursorDot.classList.add('grow'));
+        el.addEventListener('mouseleave', () => cursorDot.classList.remove('grow'));
+    });
+
+    /* ------- Refresh ScrollTrigger on resize ------- */
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
+    });
+</script>
+
+</body>
+</html>

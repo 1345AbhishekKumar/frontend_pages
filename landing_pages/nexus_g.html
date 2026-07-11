@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Perception Infrastructure</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0908;
+    --bg-warm:#f4f3f1;
+    --ink:#f4f3f1;
+    --ink-dark:#141312;
+    --muted:rgba(244,243,241,.55);
+    --muted-dk:rgba(20,19,18,.55);
+    --line:rgba(244,243,241,.1);
+    --line-dk:rgba(20,19,18,.1);
+    --accent:#d4ff3a;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:'ss01','ss02','cv11';
+    letter-spacing:-0.01em;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--accent);color:var(--bg)}
+
+  /* Cursor */
+  .cursor{
+    position:fixed;width:28px;height:28px;
+    border:1.5px solid var(--ink);border-radius:50%;
+    pointer-events:none;z-index:9999;
+    mix-blend-mode:difference;
+    transform:translate(-50%,-50%);
+    transition:width .4s var(--ease),height .4s var(--ease),background .3s;
+  }
+  .cursor.hover{width:64px;height:64px;background:var(--ink)}
+  .cursor-dot{
+    position:fixed;width:4px;height:4px;
+    background:var(--ink);border-radius:50%;
+    pointer-events:none;z-index:9999;
+    transform:translate(-50%,-50%);
+    mix-blend-mode:difference;
+  }
+
+  /* Navigation */
+  nav{
+    position:fixed;top:24px;left:50%;transform:translateX(-50%);
+    z-index:1000;
+    display:flex;align-items:center;gap:32px;
+    padding:12px 14px 12px 22px;
+    background:rgba(10,9,8,.55);
+    backdrop-filter:blur(24px) saturate(140%);
+    -webkit-backdrop-filter:blur(24px) saturate(140%);
+    border:1px solid rgba(244,243,241,.08);
+    border-radius:100px;
+    transition:all .5s var(--ease);
+  }
+  nav.scrolled{
+    background:rgba(10,9,8,.85);
+    border-color:rgba(244,243,241,.12);
+    box-shadow:0 8px 32px rgba(0,0,0,.3);
+  }
+  .nav-logo{
+    font-weight:600;font-size:.95rem;
+    display:flex;align-items:center;gap:10px;
+    letter-spacing:-0.02em;
+  }
+  .nav-logo::before{
+    content:'';width:8px;height:8px;
+    background:var(--accent);border-radius:50%;
+    box-shadow:0 0 12px var(--accent);
+    animation:pulse 2.4s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.5;transform:scale(1.3)}
+  }
+  .nav-links{display:flex;gap:2px;list-style:none}
+  .nav-links a{
+    padding:8px 14px;border-radius:100px;
+    font-size:.87rem;opacity:.75;
+    transition:all .3s ease;
+    position:relative;
+  }
+  .nav-links a:hover{opacity:1;background:rgba(244,243,241,.08)}
+  .nav-cta{
+    padding:9px 18px;background:var(--ink);color:var(--bg);
+    border-radius:100px;font-size:.87rem;font-weight:500;
+    display:flex;align-items:center;gap:6px;
+    transition:transform .4s var(--ease);
+  }
+  .nav-cta:hover{transform:translateY(-1px)}
+  .nav-cta::after{content:'→';transition:transform .4s var(--ease)}
+  .nav-cta:hover::after{transform:translateX(3px)}
+
+  /* Hero */
+  .hero{
+    min-height:100vh;position:relative;
+    display:flex;align-items:center;
+    padding:140px 40px 80px;
+    overflow:hidden;
+  }
+  #hero-canvas{
+    position:absolute;inset:0;
+    z-index:1;
+    filter:contrast(1.08) brightness(1.05);
+  }
+  .hero-overlay{
+    position:absolute;inset:0;z-index:2;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 50%, transparent 0%, rgba(10,9,8,.3) 40%, rgba(10,9,8,.85) 100%),
+      linear-gradient(180deg, rgba(10,9,8,.3) 0%, transparent 30%, transparent 70%, rgba(10,9,8,.9) 100%);
+    pointer-events:none;
+  }
+  .hero-grid{
+    position:absolute;inset:0;z-index:2;
+    background-image:
+      linear-gradient(rgba(244,243,241,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(244,243,241,.035) 1px,transparent 1px);
+    background-size:88px 88px;
+    mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);
+    pointer-events:none;
+  }
+  .hero-content{
+    position:relative;z-index:3;
+    max-width:1400px;margin:0 auto;width:100%;
+  }
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:6px 16px 6px 6px;
+    background:rgba(244,243,241,.04);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(244,243,241,.1);
+    border-radius:100px;
+    font-size:.82rem;
+    margin-bottom:36px;
+    opacity:0;transform:translateY(24px);
+  }
+  .hero-badge-inner{
+    background:var(--accent);color:var(--bg);
+    padding:3px 10px;border-radius:100px;
+    font-weight:600;font-size:.7rem;
+    letter-spacing:.04em;
+  }
+  .hero-title{
+    font-size:clamp(3rem,8.5vw,7.5rem);
+    font-weight:400;line-height:.98;
+    letter-spacing:-0.04em;
+    margin-bottom:32px;
+    max-width:1200px;
+  }
+  .hero-title .line{display:block;overflow:hidden}
+  .hero-title .word{
+    display:inline-block;transform:translateY(110%);
+  }
+  .hero-title em{
+    font-style:italic;font-weight:300;
+    color:var(--accent);
+    font-variation-settings:'slnt' -12;
+  }
+  .hero-description{
+    font-size:1.2rem;line-height:1.55;
+    max-width:620px;
+    color:var(--muted);
+    margin-bottom:48px;
+    opacity:0;transform:translateY(24px);
+  }
+  .hero-actions{
+    display:flex;gap:12px;flex-wrap:wrap;
+    opacity:0;transform:translateY(24px);
+  }
+
+  /* Buttons */
+  .btn{
+    padding:15px 24px;border-radius:14px;
+    font-size:.92rem;font-weight:500;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:all .4s var(--ease);
+    cursor:pointer;border:none;
+    position:relative;overflow:hidden;
+  }
+  .btn-primary{background:var(--ink);color:var(--bg)}
+  .btn-primary::before{
+    content:'';position:absolute;inset:0;
+    background:var(--accent);
+    transform:translateY(100%);
+    transition:transform .5s var(--ease);
+    z-index:-1;
+  }
+  .btn-primary:hover::before{transform:translateY(0)}
+  .btn-primary:hover{color:var(--bg)}
+  .btn-secondary{
+    background:transparent;color:var(--ink);
+    border:1px solid rgba(244,243,241,.15);
+  }
+  .btn-secondary:hover{
+    background:rgba(244,243,241,.06);
+    border-color:rgba(244,243,241,.3);
+  }
+  .btn-primary .btn-arrow{transition:transform .4s var(--ease)}
+  .btn-primary:hover .btn-arrow{transform:translate(4px,-4px)}
+
+  /* Stats */
+  .stats{
+    background:var(--bg-warm);color:var(--ink-dark);
+    padding:120px 40px;
+    position:relative;
+  }
+  .stats-wrap{max-width:1400px;margin:0 auto}
+  .stats-head{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:80px;align-items:end;
+    padding-bottom:80px;
+    border-bottom:1px solid var(--line-dk);
+  }
+  .stats-label{
+    font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;
+    opacity:.5;margin-bottom:18px;font-weight:500;
+  }
+  .stats-title{
+    font-size:clamp(2rem,4.2vw,3.4rem);
+    font-weight:400;letter-spacing:-0.025em;
+    line-height:1.05;
+  }
+  .stats-sub{font-size:1.05rem;line-height:1.55;opacity:.65;max-width:500px}
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+  }
+  .stat{
+    padding:80px 40px 40px;
+    border-right:1px solid var(--line-dk);
+    position:relative;
+    overflow:hidden;
+  }
+  .stat:last-child{border-right:none}
+  .stat-num{
+    font-size:clamp(3.2rem,6.5vw,5.8rem);
+    font-weight:300;letter-spacing:-0.045em;
+    line-height:1;margin-bottom:20px;
+    font-variant-numeric:tabular-nums;
+    display:flex;align-items:baseline;gap:4px;
+  }
+  .stat-num .accent{color:var(--accent);background:var(--bg);padding:0 8px;border-radius:8px;font-size:.85em}
+  .stat-label{font-size:.95rem;opacity:.65;line-height:1.55;max-width:340px}
+
+  /* Features / Tabs */
+  .features{
+    padding:160px 40px;
+    background:var(--bg);
+    position:relative;
+  }
+  .features-wrap{max-width:1400px;margin:0 auto}
+  .features-head{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:80px;align-items:end;
+    margin-bottom:80px;
+    padding-bottom:80px;
+    border-bottom:1px solid var(--line);
+  }
+  .features-title{
+    font-size:clamp(2rem,4.2vw,3.4rem);
+    font-weight:400;letter-spacing:-0.025em;
+    line-height:1.05;
+  }
+  .features-sub{font-size:1.05rem;line-height:1.55;color:var(--muted);max-width:500px}
+
+  .tabs{
+    display:flex;gap:6px;flex-wrap:wrap;
+    padding:6px;background:rgba(244,243,241,.03);
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:32px;
+  }
+  .tab{
+    padding:11px 20px;border-radius:10px;
+    font-size:.88rem;cursor:pointer;
+    transition:all .35s var(--ease);
+    background:transparent;border:none;color:var(--ink);
+    opacity:.65;font-family:inherit;
+    font-weight:500;
+  }
+  .tab:hover{opacity:1}
+  .tab.active{
+    background:var(--ink);color:var(--bg);
+    opacity:1;
+  }
+  .tab-panels{position:relative;min-height:560px}
+  .tab-panel{
+    display:grid;grid-template-columns:1fr 1fr;
+    border:1px solid var(--line);
+    border-radius:24px;
+    overflow:hidden;
+    opacity:0;position:absolute;inset:0;
+    transition:opacity .5s ease;
+    pointer-events:none;
+  }
+  .tab-panel.active{opacity:1;position:relative;pointer-events:auto}
+  .tab-content{
+    padding:64px 56px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    min-height:560px;
+  }
+  .tab-visual{
+    background:linear-gradient(135deg,#1a1817 0%,#0f0e0d 100%);
+    position:relative;
+    min-height:560px;
+    overflow:hidden;
+  }
+  .tab-visual canvas{position:absolute;inset:0;width:100%;height:100%}
+  .tab-tag{
+    font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;
+    opacity:.5;margin-bottom:24px;font-weight:500;
+  }
+  .tab-panel-title{
+    font-size:clamp(1.8rem,3.5vw,2.8rem);
+    font-weight:400;letter-spacing:-0.025em;
+    line-height:1.08;margin-bottom:24px;
+  }
+  .tab-text{
+    font-size:1rem;line-height:1.6;color:var(--muted);
+    margin-bottom:48px;max-width:480px;
+  }
+  .tab-metrics{
+    display:flex;gap:48px;padding-top:32px;
+    border-top:1px solid var(--line);
+  }
+  .tab-metric-val{
+    font-size:1.8rem;font-weight:300;
+    letter-spacing:-0.03em;margin-bottom:4px;
+  }
+  .tab-metric-label{
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;
+    opacity:.5;
+  }
+
+  /* Capabilities Grid */
+  .caps{
+    background:var(--bg-warm);color:var(--ink-dark);
+    padding:160px 40px;
+    position:relative;
+  }
+  .caps-wrap{max-width:1400px;margin:0 auto}
+  .caps-head{text-align:center;max-width:820px;margin:0 auto 80px}
+  .caps-title{
+    font-size:clamp(2.2rem,4.5vw,3.6rem);
+    font-weight:400;letter-spacing:-0.03em;line-height:1.05;
+    margin-bottom:24px;
+  }
+  .caps-sub{font-size:1.1rem;line-height:1.5;opacity:.6}
+  .caps-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  .cap{
+    background:var(--bg);color:var(--ink);
+    padding:40px;border-radius:22px;
+    position:relative;overflow:hidden;
+    min-height:380px;
+    display:flex;flex-direction:column;
+    transition:transform .6s var(--ease);
+    border:1px solid rgba(244,243,241,.06);
+  }
+  .cap:hover{transform:translateY(-6px)}
+  .cap.tall{grid-row:span 2;min-height:776px}
+  .cap.wide{grid-column:span 2}
+  .cap::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%),rgba(212,255,58,.08),transparent 40%);
+    opacity:0;transition:opacity .4s ease;
+    pointer-events:none;
+  }
+  .cap:hover::before{opacity:1}
+  .cap-icon{
+    width:52px;height:52px;
+    background:rgba(244,243,241,.06);
+    border:1px solid rgba(244,243,241,.08);
+    border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:28px;
+  }
+  .cap-icon svg{width:24px;height:24px;stroke:var(--ink);fill:none;stroke-width:1.3}
+  .cap-name{
+    font-size:1.4rem;font-weight:500;
+    margin-bottom:12px;letter-spacing:-0.015em;
+  }
+  .cap-desc{
+    font-size:.94rem;line-height:1.55;opacity:.65;
+    margin-bottom:32px;flex:1;
+  }
+  .cap-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .cap-tag{
+    padding:4px 11px;background:rgba(244,243,241,.06);
+    border:1px solid rgba(244,243,241,.08);
+    border-radius:100px;font-size:.7rem;
+    letter-spacing:.02em;
+  }
+  .cap-visual{
+    margin-top:28px;height:220px;border-radius:14px;
+    background:linear-gradient(135deg,#1a1817,#0a0908);
+    position:relative;overflow:hidden;
+    border:1px solid rgba(244,243,241,.06);
+  }
+  .cap.tall .cap-visual{height:360px;margin-top:auto}
+  .cap-visual canvas{width:100%;height:100%}
+
+  /* Solutions */
+  .solutions{
+    padding:160px 40px;
+    background:var(--bg);
+    position:relative;
+  }
+  .sol-wrap{max-width:1400px;margin:0 auto}
+  .sol-head{
+    text-align:center;max-width:800px;margin:0 auto 64px;
+  }
+  .sol-title{
+    font-size:clamp(2rem,4vw,3.2rem);
+    font-weight:400;letter-spacing:-0.025em;line-height:1.08;
+    margin-bottom:24px;
+  }
+  .sol-sub{font-size:1.05rem;line-height:1.55;color:var(--muted)}
+  .sol-cards{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:20px;
+  }
+  .sol-card{
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    aspect-ratio:4/5;
+    cursor:pointer;
+    transition:transform .6s var(--ease);
+  }
+  .sol-card:hover{transform:translateY(-8px)}
+  .sol-bg{
+    position:absolute;inset:0;
+    background-size:cover;background-position:center;
+    transition:transform 1.2s var(--ease);
+  }
+  .sol-card:hover .sol-bg{transform:scale(1.08)}
+  .sol-overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 30%,rgba(10,9,8,.95) 100%);
+  }
+  .sol-body{
+    position:absolute;inset:0;
+    padding:40px;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    z-index:2;
+  }
+  .sol-name{
+    font-size:1.6rem;font-weight:500;
+    letter-spacing:-0.02em;margin-bottom:12px;
+  }
+  .sol-desc{
+    font-size:.92rem;line-height:1.55;
+    opacity:.85;margin-bottom:20px;
+  }
+  .sol-link{
+    font-size:.88rem;font-weight:500;
+    display:inline-flex;align-items:center;gap:6px;
+    transition:gap .4s var(--ease);
+  }
+  .sol-link:hover{gap:12px}
+  .sol-link::after{content:'→'}
+
+  /* Testimonials */
+  .testimonials{
+    padding:160px 0;
+    background:var(--bg);
+    overflow:hidden;
+  }
+  .test-head{
+    max-width:1400px;margin:0 auto 64px;
+    padding:0 40px;text-align:center;
+  }
+  .test-title{
+    font-size:clamp(2rem,4vw,3.2rem);
+    font-weight:400;letter-spacing:-0.025em;
+    margin-bottom:16px;
+  }
+  .test-sub{opacity:.55;font-size:.95rem}
+  .test-track{
+    display:flex;gap:20px;
+    width:max-content;
+    will-change:transform;
+  }
+  .test-card{
+    flex:0 0 460px;
+    background:rgba(244,243,241,.03);
+    border:1px solid var(--line);
+    backdrop-filter:blur(8px);
+    border-radius:22px;
+    padding:44px;
+    min-height:340px;
+    display:flex;flex-direction:column;
+    transition:all .4s var(--ease);
+  }
+  .test-card:hover{
+    background:rgba(244,243,241,.06);
+    transform:translateY(-4px);
+    border-color:rgba(244,243,241,.2);
+  }
+  .test-quote{
+    font-size:1.05rem;line-height:1.55;
+    margin-bottom:36px;flex:1;
+  }
+  .test-quote::before{
+    content:'"';font-size:3.2rem;line-height:.5;
+    color:var(--accent);display:block;margin-bottom:20px;
+    font-weight:300;
+  }
+  .test-author{display:flex;align-items:center;gap:14px}
+  .test-avatar{
+    width:46px;height:46px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),#8bc34a);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;color:var(--bg);font-size:.85rem;
+  }
+  .test-name{font-weight:500;font-size:.9rem;margin-bottom:3px}
+  .test-role{font-size:.78rem;opacity:.5}
+
+  /* CTA */
+  .cta{
+    padding:200px 40px;
+    background:var(--bg);
+    position:relative;overflow:hidden;
+  }
+  .cta-wrap{
+    max-width:920px;margin:0 auto;
+    text-align:center;position:relative;z-index:2;
+  }
+  .cta-title{
+    font-size:clamp(2.5rem,5.5vw,4.8rem);
+    font-weight:400;letter-spacing:-0.03em;line-height:1.02;
+    margin-bottom:24px;
+  }
+  .cta-sub{
+    font-size:1.15rem;opacity:.6;
+    margin-bottom:48px;max-width:580px;
+    margin-left:auto;margin-right:auto;
+  }
+  .cta-actions{
+    display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+  }
+  #cta-canvas{
+    position:absolute;inset:0;z-index:1;
+    opacity:.7;
+  }
+
+  /* Ticker */
+  .ticker{
+    padding:40px 0;
+    background:var(--bg);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+  }
+  .ticker-track{
+    display:flex;gap:80px;
+    animation:ticker 60s linear infinite;
+    width:max-content;
+  }
+  .ticker-item{
+    font-size:1.4rem;font-weight:500;
+    letter-spacing:-0.015em;
+    opacity:.5;white-space:nowrap;
+    display:flex;align-items:center;gap:80px;
+    color:var(--ink);
+  }
+  .ticker-item::after{
+    content:'◆';opacity:.3;font-size:.7em;
+    color:var(--accent);
+  }
+  @keyframes ticker{
+    to{transform:translateX(-50%)}
+  }
+
+  /* Footer */
+  footer{
+    padding:120px 40px 40px;
+    background:var(--bg);
+    border-top:1px solid var(--line);
+    position:relative;
+  }
+  .foot-wrap{max-width:1400px;margin:0 auto}
+  .foot-grid{
+    display:grid;grid-template-columns:2fr repeat(4,1fr);
+    gap:48px;padding-bottom:80px;
+  }
+  .foot-brand-desc{
+    font-size:.88rem;opacity:.5;line-height:1.5;
+    max-width:300px;margin-top:14px;
+  }
+  .foot-col h5{
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;
+    opacity:.5;margin-bottom:22px;font-weight:500;
+  }
+  .foot-col ul{list-style:none}
+  .foot-col li{margin-bottom:12px}
+  .foot-col a{
+    font-size:.88rem;opacity:.7;
+    transition:opacity .3s ease,transform .3s var(--ease);
+    display:inline-block;
+  }
+  .foot-col a:hover{opacity:1;transform:translateX(2px)}
+  .foot-bottom{
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:40px;border-top:1px solid var(--line);
+    font-size:.8rem;opacity:.45;
+    flex-wrap:wrap;gap:16px;
+  }
+  .foot-social{display:flex;gap:8px}
+  .foot-social a{
+    width:36px;height:36px;border-radius:50%;
+    background:rgba(244,243,241,.05);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .3s ease;
+  }
+  .foot-social a:hover{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+
+  /* Scroll progress */
+  .scroll-progress{
+    position:fixed;top:0;left:0;
+    width:100%;height:1px;
+    background:var(--accent);
+    z-index:10000;
+    transform-origin:left;transform:scaleX(0);
+    pointer-events:none;
+  }
+
+  /* Responsive */
+  @media(max-width:1024px){
+    nav{gap:12px;padding:10px 12px 10px 18px}
+    .nav-links{display:none}
+    .stats-grid,.caps-grid,.sol-cards{grid-template-columns:1fr}
+    .stat{border-right:none;border-bottom:1px solid var(--line-dk)}
+    .cap.tall{grid-row:auto;min-height:auto}
+    .cap.wide{grid-column:auto}
+    .features-head,.stats-head{grid-template-columns:1fr;gap:32px}
+    .tab-panel{grid-template-columns:1fr}
+    .tab-visual{min-height:320px}
+    .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
+    .test-card{flex:0 0 320px;padding:32px}
+  }
+  @media(max-width:640px){
+    .hero{padding:120px 20px 60px}
+    .stats,.features,.caps,.solutions,.testimonials,.cta,footer{padding-left:20px;padding-right:20px}
+    .foot-grid{grid-template-columns:1fr}
+    .tab{padding:9px 14px;font-size:.8rem}
+    .tab-content{padding:36px 28px}
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="scroll-progress" id="scroll-progress"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">NEXUS</div>
+  <ul class="nav-links">
+    <li><a href="#platform" data-hover>Platform</a></li>
+    <li><a href="#features" data-hover>Capabilities</a></li>
+    <li><a href="#solutions" data-hover>Solutions</a></li>
+    <li><a href="#developers" data-hover>Developers</a></li>
+    <li><a href="#company" data-hover>Company</a></li>
+  </ul>
+  <a href="#" class="nav-cta" data-hover>Start Building</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge" id="hero-badge">
+      <span class="hero-badge-inner">NEW</span>
+      <span>Nexus 2.0 — reasoning across 4-hour streams</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="line"><span class="word">Perception</span> <span class="word">that</span></span>
+      <span class="line"><span class="word">understands</span> <em>context,</em></span>
+      <span class="line"><span class="word">not</span> <span class="word">just</span> <span class="word">pixels.</span></span>
+    </h1>
+    <p class="hero-description" id="hero-desc">
+      The foundational infrastructure for visual intelligence. Transform raw streams, imagery, and audio into queryable knowledge — at any scale, in any language.
+    </p>
+    <div class="hero-actions" id="hero-actions">
+      <a href="#" class="btn btn-primary" data-hover><span>Try the Playground</span><span class="btn-arrow">↗</span></a>
+      <a href="#" class="btn btn-secondary" data-hover>Watch the demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-wrap">
+    <div class="stats-head">
+      <div>
+        <div class="stats-label">By the numbers</div>
+        <h2 class="stats-title">Built for scale.<br>Engineered for precision.</h2>
+      </div>
+      <p class="stats-sub">
+        Process, reason, and act on billions of visual moments daily. Infrastructure that doesn't flinch at the workload of the world's largest organizations.
+      </p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num"><span class="num" data-target="14.2">0</span><span class="accent">%</span></div>
+        <div class="stat-label">Higher accuracy than leading multimodal baselines on temporal reasoning benchmarks.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num"><span class="num" data-target="60">0</span><span class="accent">×</span></div>
+        <div class="stat-label">Faster than real-time ingestion. Index one hour of content in sixty seconds.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num"><span class="num" data-target="47">0</span></div>
+        <div class="stat-label">Languages supported natively across speech, on-screen text, and visual cues.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES / TABS -->
+<section class="features" id="features">
+  <div class="features-wrap">
+    <div class="features-head">
+      <h2 class="features-title">One platform.<br>Every capability.</h2>
+      <p class="features-sub">
+        From raw ingestion to reasoned action. Four primitives that compose into anything your workflow demands.
+      </p>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="embed">01 Embed</button>
+      <button class="tab" data-tab="search">02 Search</button>
+      <button class="tab" data-tab="reason">03 Reason</button>
+      <button class="tab" data-tab="orchestrate">04 Orchestrate</button>
+    </div>
+
+    <div class="tab-panels">
+      <div class="tab-panel active" data-panel="embed">
+        <div class="tab-content">
+          <div>
+            <div class="tab-tag">01 — Foundation</div>
+            <h3 class="tab-panel-title">Embed everything.<br>Find anything.</h3>
+            <p class="tab-text">
+              Transform every frame, utterance, and caption into dense spatiotemporal vectors. Searchable by what's actually there — not what someone tagged.
+            </p>
+          </div>
+          <div class="tab-metrics">
+            <div>
+              <div class="tab-metric-val">78.5%</div>
+              <div class="tab-metric-label">Composite accuracy</div>
+            </div>
+            <div>
+              <div class="tab-metric-val">47</div>
+              <div class="tab-metric-label">Languages</div>
+            </div>
+            <div>
+              <div class="tab-metric-val">∞</div>
+              <div class="tab-metric-label">Modality inputs</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-visual"><canvas data-variant="embed"></canvas></div>
+      </div>
+
+      <div class="tab-panel" data-panel="search">
+        <div class="tab-content">
+          <div>
+            <div class="tab-tag">02 — Discovery</div>
+            <h3 class="tab-panel-title">Search by meaning,<br>not metadata.</h3>
+            <p class="tab-text">
+              Ask natural questions across years of footage. Find the precise moment — actions, emotions, dialogue, visual composition — across entire archives in milliseconds.
+            </p>
+          </div>
+          <div class="tab-metrics">
+            <div>
+              <div class="tab-metric-val"><50ms</div>
+              <div class="tab-metric-label">Query latency</div>
+            </div>
+            <div>
+              <div class="tab-metric-val">10M+</div>
+              <div class="tab-metric-label">Hours indexed</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-visual"><canvas data-variant="search"></canvas></div>
+      </div>
+
+      <div class="tab-panel" data-panel="reason">
+        <div class="tab-content">
+          <div>
+            <div class="tab-tag">03 — Reasoning</div>
+            <h3 class="tab-panel-title">Reason across time,<br>not frames.</h3>
+            <p class="tab-text">
+              Continuous reasoning over temporal arcs up to four hours long. Track entities, causation, narrative shifts, and semantic intent — not isolated frames.
+            </p>
+          </div>
+          <div class="tab-metrics">
+            <div>
+              <div class="tab-metric-val">4 hrs</div>
+              <div class="tab-metric-label">Context window</div>
+            </div>
+            <div>
+              <div class="tab-metric-val">#1</div>
+              <div class="tab-metric-label">Video-MME</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-visual"><canvas data-variant="reason"></canvas></div>
+      </div>
+
+      <div class="tab-panel" data-panel="orchestrate">
+        <div class="tab-content">
+          <div>
+            <div class="tab-tag">04 — Orchestration</div>
+            <h3 class="tab-panel-title">From insight<br>to action.</h3>
+            <p class="tab-text">
+              Compose perception into workflows. Route, transform, and act on visual signals — connect to your stack, trigger automations, build agents that see.
+            </p>
+          </div>
+          <div class="tab-metrics">
+            <div>
+              <div class="tab-metric-val">150+</div>
+              <div class="tab-metric-label">Integrations</div>
+            </div>
+            <div>
+              <div class="tab-metric-val">Webhooks</div>
+              <div class="tab-metric-label">Event streaming</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-visual"><canvas data-variant="orchestrate"></canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="caps" id="platform">
+  <div class="caps-wrap">
+    <div class="caps-head">
+      <div class="stats-label" style="color:var(--muted-dk)">Capabilities</div>
+      <h2 class="caps-title">Built for the most demanding<br>visual workflows.</h2>
+      <p class="caps-sub">
+        Evidence management, creative intelligence, compliance, content operations — all in one perception stack.
+      </p>
+    </div>
+    <div class="caps-grid">
+      <div class="cap tall" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div>
+        <h3 class="cap-name">Temporal Reasoning</h3>
+        <p class="cap-desc">Track causality and narrative across hours of footage. Identify sequences, transformations, and causal chains that span time — not isolated snapshots.</p>
+        <div class="cap-visual"><canvas data-cap-canvas="temporal"></canvas></div>
+        <div class="cap-tags">
+          <span class="cap-tag">4hr context</span>
+          <span class="cap-tag">Causal chains</span>
+          <span class="cap-tag">Entity tracking</span>
+        </div>
+      </div>
+
+      <div class="cap" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg></div>
+        <h3 class="cap-name">Semantic Search</h3>
+        <p class="cap-desc">Natural language across billions of moments. Actions, emotions, objects, compositions — found instantly.</p>
+        <div class="cap-tags"><span class="cap-tag">Natural language</span><span class="cap-tag">Sub-50ms</span></div>
+      </div>
+
+      <div class="cap" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M5 19l14-14"/></svg></div>
+        <h3 class="cap-name">Multimodal Embeddings</h3>
+        <p class="cap-desc">Dense vectors from every modality — vision, audio, speech, on-screen text — unified into one searchable space.</p>
+        <div class="cap-tags"><span class="cap-tag">47 languages</span><span class="cap-tag">78.5% accuracy</span></div>
+      </div>
+
+      <div class="cap wide" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+        <h3 class="cap-name">Compliance & Moderation</h3>
+        <p class="cap-desc">Detect policy violations, sensitive content, and brand safety issues across millions of hours — with explainable reasoning that auditors trust.</p>
+        <div class="cap-tags"><span class="cap-tag">SOC 2 Type II</span><span class="cap-tag">Explainable AI</span><span class="cap-tag">Real-time</span></div>
+      </div>
+
+      <div class="cap" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 2 22 22 22"/></svg></div>
+        <h3 class="cap-name">Creative Workflows</h3>
+        <p class="cap-desc">Find any moment across decades of archive. Assemble rough cuts, surface highlights, and unlock creative reuse at scale.</p>
+        <div class="cap-tags"><span class="cap-tag">Media & Sports</span></div>
+      </div>
+
+      <div class="cap" data-cap>
+        <div class="cap-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.76 15.76l4.24 4.24M1 12h6M17 12h6"/></svg></div>
+        <h3 class="cap-name">Orchestration</h3>
+        <p class="cap-desc">Route visual signals into your stack. Webhooks, agents, automations — perception that acts.</p>
+        <div class="cap-tags"><span class="cap-tag">150+ integrations</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTIONS -->
+<section class="solutions" id="solutions">
+  <div class="sol-wrap">
+    <div class="sol-head">
+      <div class="stats-label">Solutions</div>
+      <h2 class="sol-title">Built for every<br>video workflow.</h2>
+      <p class="sol-sub">Video intelligence for teams in media, sports, advertising, government, security, and more.</p>
+    </div>
+    <div class="sol-cards">
+      <div class="sol-card" data-sol>
+        <div class="sol-bg" style="background-image:linear-gradient(135deg,#2a2826,#0a0908)"></div>
+        <div class="sol-overlay"></div>
+        <div class="sol-body">
+          <h3 class="sol-name">Public Sector</h3>
+          <p class="sol-desc">Evidence management, anomaly detection, after-incident reporting — all done in minutes.</p>
+          <a href="#" class="sol-link" data-hover>Learn more</a>
+        </div>
+      </div>
+      <div class="sol-card" data-sol>
+        <div class="sol-bg" style="background-image:linear-gradient(135deg,#1a1817,#0a0908)"></div>
+        <div class="sol-overlay"></div>
+        <div class="sol-body">
+          <h3 class="sol-name">Creative Industries</h3>
+          <p class="sol-desc">Turn archives from liabilities to strategic assets. Timestamped clips from every year, every shoot — in seconds.</p>
+          <a href="#" class="sol-link" data-hover>Learn more</a>
+        </div>
+      </div>
+      <div class="sol-card" data-sol>
+        <div class="sol-bg" style="background-image:linear-gradient(135deg,#262523,#0a0908)"></div>
+        <div class="sol-overlay"></div>
+        <div class="sol-body">
+          <h3 class="sol-name">AdTech & Marketing</h3>
+          <p class="sol-desc">Contextual targeting driven by understanding, not metadata. Brand-safe scenes only, no manual review.</p>
+          <a href="#" class="sol-link" data-hover>Learn more</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="test-head">
+    <div class="stats-label">Customer Stories</div>
+    <h2 class="test-title">Built for teams<br>that can't miss a moment.</h2>
+    <p class="test-sub">Trusted by the world's most demanding video organizations.</p>
+  </div>
+  <div class="test-track" id="test-track">
+    <div class="test-card">
+      <p class="test-quote">It's essential for our business to access exact moments across thousands of hours. Nexus surfaces content we never knew existed in our archive.</p>
+      <div class="test-author"><div class="test-avatar">BR</div><div><div class="test-name">Brad Reinhardt</div><div class="test-role">Senior Director, Media Operations</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">We reduced compliance review from days to minutes. The explainability is what made the difference — auditors trust what they can see.</p>
+      <div class="test-author"><div class="test-avatar">SK</div><div><div class="test-name">Sarah Kwan</div><div class="test-role">Head of Trust & Safety</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">The temporal reasoning is unlike anything else. It understands narrative arcs across two-hour streams the way a human editor would.</p>
+      <div class="test-author"><div class="test-avatar">MT</div><div><div class="test-name">Marcus Tanaka</div><div class="test-role">CTO, Meridian Studios</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">We're processing 40,000 hours of footage daily. The accuracy at scale is something we haven't seen from any other vendor.</p>
+      <div class="test-author"><div class="test-avatar">LP</div><div><div class="test-name">Lena Park</div><div class="test-role">VP Engineering</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">Integration took a weekend. Within a week we'd uncovered three years of underutilized content that reshaped our strategy.</p>
+      <div class="test-author"><div class="test-avatar">DR</div><div><div class="test-name">Daniel Rivera</div><div class="test-role">Director of Engineering</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">It's essential for our business to access exact moments across thousands of hours. Nexus surfaces content we never knew existed.</p>
+      <div class="test-author"><div class="test-avatar">BR</div><div><div class="test-name">Brad Reinhardt</div><div class="test-role">Senior Director, Media Ops</div></div></div>
+    </div>
+    <div class="test-card">
+      <p class="test-quote">We reduced compliance review from days to minutes. The explainability is what made the difference.</p>
+      <div class="test-author"><div class="test-avatar">SK</div><div><div class="test-name">Sarah Kwan</div><div class="test-role">Head of Trust & Safety</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <canvas id="cta-canvas"></canvas>
+  <div class="cta-wrap">
+    <h2 class="cta-title">Ready to see what your<br>archive actually <em style="font-style:italic;color:var(--accent);font-weight:300">knows?</em></h2>
+    <p class="cta-sub">Start in the Playground, or talk to our team about deploying at scale.</p>
+    <div class="cta-actions">
+      <a href="#" class="btn btn-primary" data-hover><span>Start Building</span><span class="btn-arrow">↗</span></a>
+      <a href="#" class="btn btn-secondary" data-hover>Talk to Sales</a>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<section class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item">MERIDIAN</span>
+    <span class="ticker-item">SIGNAL</span>
+    <span class="ticker-item">ATLAS</span>
+    <span class="ticker-item">STREAMCO</span>
+    <span class="ticker-item">NORTHWIND</span>
+    <span class="ticker-item">PARALLAX</span>
+    <span class="ticker-item">ARCHIVE.IO</span>
+    <span class="ticker-item">LUMEN</span>
+    <span class="ticker-item">HELIOS</span>
+    <span class="ticker-item">VERTEX</span>
+    <span class="ticker-item">OBSIDIAN</span>
+    <span class="ticker-item">KAIROS</span>
+    <span class="ticker-item">MERIDIAN</span>
+    <span class="ticker-item">SIGNAL</span>
+    <span class="ticker-item">ATLAS</span>
+    <span class="ticker-item">STREAMCO</span>
+    <span class="ticker-item">NORTHWIND</span>
+    <span class="ticker-item">PARALLAX</span>
+    <span class="ticker-item">ARCHIVE.IO</span>
+    <span class="ticker-item">LUMEN</span>
+    <span class="ticker-item">HELIOS</span>
+    <span class="ticker-item">VERTEX</span>
+    <span class="ticker-item">OBSIDIAN</span>
+    <span class="ticker-item">KAIROS</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="nav-logo">NEXUS</div>
+        <p class="foot-brand-desc">Perception infrastructure for the age of visual intelligence. Search, reason, and act on any visual signal.</p>
+        <div class="foot-social" style="margin-top:24px">
+          <a href="#" data-hover aria-label="Twitter"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" data-hover aria-label="LinkedIn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v12.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 22.227.792 23 1.771 23h20.451C22.2 23 23 22.227 23 21.271V1.729C23 .774 22.2 0 22.225 0z"/></svg></a>
+          <a href="#" data-hover aria-label="GitHub"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-2.02-4.042-2.097 0 0 0 0 0 0-.6-.249-1.3-1.12-1.3-1.12-.54-1.38-.33-1.8-.33-1.8-1.08-.74.08-.73.08-.73 1.205.08 1.84.63 1.84.63 1.08 1.86 2.84 1.32 3.53 1 .1-.78.42-1.32.76-1.62-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.1 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.42.36.81 1.1.81 2.22 0 1.61-.01 2.9-.01 3.29 0 .32.21.69.82.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h5>Platform</h5>
+        <ul>
+          <li><a href="#" data-hover>Overview</a></li>
+          <li><a href="#" data-hover>Embed</a></li>
+          <li><a href="#" data-hover>Search</a></li>
+          <li><a href="#" data-hover>Reason</a></li>
+          <li><a href="#" data-hover>Orchestrate</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Developers</h5>
+        <ul>
+          <li><a href="#" data-hover>Documentation</a></li>
+          <li><a href="#" data-hover>SDKs</a></li>
+          <li><a href="#" data-hover>API Reference</a></li>
+          <li><a href="#" data-hover>Playground</a></li>
+          <li><a href="#" data-hover>Status</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="#" data-hover>Media & Sports</a></li>
+          <li><a href="#" data-hover>Advertising</a></li>
+          <li><a href="#" data-hover>Public Sector</a></li>
+          <li><a href="#" data-hover>Enterprise</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#" data-hover>About</a></li>
+          <li><a href="#" data-hover>Careers</a></li>
+          <li><a href="#" data-hover>Research</a></li>
+          <li><a href="#" data-hover>Press</a></li>
+          <li><a href="#" data-hover>Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2021–2026 Nexus, Inc. All Rights Reserved.</span>
+      <span>Privacy · Terms · Security · SOC 2 Type II</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ──── CUSTOM CURSOR ──── */
+const cursor = document.getElementById('cursor');
+const dot = document.getElementById('cursor-dot');
+let mx=0,my=0,cx=0,cy=0,dx=0,dy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+(function loop(){
+  cx += (mx-cx)*0.18; cy += (my-cy)*0.18;
+  dx += (mx-dx)*0.4; dy += (my-dy)*0.4;
+  cursor.style.left=cx+'px';cursor.style.top=cy+'px';
+  dot.style.left=dx+'px';dot.style.top=dy+'px';
+  requestAnimationFrame(loop);
+})();
+if('ontouchstart' in window){cursor.style.display='none';dot.style.display='none';document.body.style.cursor='auto'}
+document.querySelectorAll('[data-hover], a, button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cursor.classList.add('hover'));
+  el.addEventListener('mouseleave',()=>cursor.classList.remove('hover'));
+});
+
+/* ──── HERO — flowing liquid-metal shader ──── */
+const heroCanvas = document.getElementById('hero-canvas');
+const heroScene = new THREE.Scene();
+const heroCam = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
+const heroR = new THREE.WebGLRenderer({canvas:heroCanvas, alpha:true, antialias:true});
+heroR.setSize(innerWidth,innerHeight);
+heroR.setPixelRatio(Math.min(devicePixelRatio,2));
+
+// Custom shader — liquid metallic sphere
+const shaderMat = new THREE.ShaderMaterial({
+  uniforms:{
+    uTime:{value:0},
+    uMouse:{value:new THREE.Vector2(0,0)},
+    uScroll:{value:0}
+  },
+  vertexShader:`
+    varying vec3 vPos;
+    varying vec3 vNorm;
+    uniform float uTime;
+    uniform vec2 uMouse;
+    // Simplex-ish noise
+    float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,311.7)))*43758.5453);}
+    float noise(vec3 p){
+      vec3 i=floor(p);vec3 f=fract(p);
+      f=f*f*(3.-2.*f);
+      float n=mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+                  mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);
+      return n;
+    }
+    float fbm(vec3 p){
+      float v=0.;float a=0.5;
+      for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}
+      return v;
+    }
+    void main(){
+      vec3 p=position;
+      float n=fbm(p*1.2+uTime*0.3);
+      float n2=fbm(p*2.5-uTime*0.2);
+      vec3 newPos=p+normal*(n*0.35+n2*0.15);
+      // mouse influence
+      newPos.x+=uMouse.x*0.15;
+      newPos.y+=-uMouse.y*0.15;
+      vPos=newPos;
+      vNorm=normal;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(newPos,1.);
+    }
+  `,
+  fragmentShader:`
+    varying vec3 vPos;
+    varying vec3 vNorm;
+    uniform float uTime;
+    void main(){
+      float fresnel=pow(1.-abs(dot(normalize(vNorm),vec3(0,0,1))),2.5);
+      float pulse=sin(uTime*0.5+vPos.y*2.)*0.5+0.5;
+      vec3 accent=vec3(0.769,1.,0.227); // #d4ff3a
+      vec3 base=vec3(0.956,0.953,0.945);
+      vec3 col=mix(base,accent,fresnel*0.4+pulse*0.1);
+      float edge=pow(fresnel,1.5);
+      float alpha=0.35+edge*0.55;
+      gl_FragColor=vec4(col,alpha);
+    }
+  `,
+  transparent:true,
+  blending:THREE.AdditiveBlending,
+  depthWrite:false
+});
+const heroSphere = new THREE.Mesh(new THREE.IcosahedronGeometry(2.4,64),shaderMat);
+heroSphere.position.set(2.5,0,0);
+heroScene.add(heroSphere);
+
+// Orbiting particles
+const pCount = 2500;
+const pPos = new Float32Array(pCount*3);
+const pVel = new Float32Array(pCount*3);
+for(let i=0;i<pCount;i++){
+  const t=Math.random()*Math.PI*2;
+  const p=Math.acos(Math.random()*2-1);
+  const r=3+Math.random()*2.5;
+  pPos[i*3]=r*Math.sin(p)*Math.cos(t);
+  pPos[i*3+1]=r*Math.sin(p)*Math.sin(t);
+  pPos[i*3+2]=r*Math.cos(p);
+  pVel[i*3]=(Math.random()-.5)*.002;
+  pVel[i*3+1]=(Math.random()-.5)*.002;
+  pVel[i*3+2]=(Math.random()-.5)*.002;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+const pMat = new THREE.PointsMaterial({
+  color:0xd4ff3a,size:0.025,transparent:true,opacity:0.7,
+  blending:THREE.AdditiveBlending,sizeAttenuation:true
+});
+const heroPts = new THREE.Points(pGeo,pMat);
+heroScene.add(heroPts);
+
+heroCam.position.set(2.5,0,6);
+
+let hmx=0,hmy=0,thmx=0,thmy=0;
+document.addEventListener('mousemove',e=>{
+  thmx=(e.clientX/innerWidth-.5)*2;
+  thmy=(e.clientY/innerHeight-.5)*2;
+});
+
+let scrollVal=0;
+window.addEventListener('scroll',()=>{scrollVal=scrollY});
+
+(function heroLoop(){
+  requestAnimationFrame(heroLoop);
+  hmx+=(thmx-hmx)*0.05;
+  hmy+=(thmy-hmy)*0.05;
+  const t=performance.now()*0.0004;
+  shaderMat.uniforms.uTime.value=t;
+  shaderMat.uniforms.uMouse.value.set(hmx,hmy);
+  shaderMat.uniforms.uScroll.value=scrollVal*0.001;
+
+  heroSphere.rotation.y=t*0.15+hmx*0.4;
+  heroSphere.rotation.x=hmy*0.2;
+  heroPts.rotation.y=t*0.1-hmx*0.2;
+  heroPts.rotation.x=-hmy*0.1;
+
+  heroCam.position.x=2.5+hmx*0.4;
+  heroCam.position.y=-hmy*0.3-scrollVal*0.0008;
+  heroCam.lookAt(2.5,0,0);
+
+  heroR.render(heroScene,heroCam);
+})();
+
+/* ──── TAB PANEL canvases ──── */
+const panels = document.querySelectorAll('.tab-panel');
+const panelScenes = [];
+panels.forEach(panel=>{
+  const canvas = panel.querySelector('.tab-visual canvas');
+  if(!canvas) return;
+  const variant = canvas.dataset.variant;
+  const pScene = new THREE.Scene();
+  const pCam = new THREE.PerspectiveCamera(60,1,0.1,100);
+  const pR = new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  const updateSize=()=>{
+    const r=canvas.parentElement.getBoundingClientRect();
+    pR.setSize(r.width,r.height);
+    pCam.aspect=r.width/r.height;
+    pCam.updateProjectionMatrix();
+  };
+  updateSize();
+  pR.setPixelRatio(Math.min(devicePixelRatio,2));
+
+  let obj;
+  if(variant==='embed'){
+    // grid of cubes — morphing
+    const g = new THREE.Group();
+    for(let x=-5;x<=5;x++)for(let y=-3;y<=3;y++){
+      const geo=new THREE.BoxGeometry(0.18,0.18,0.18);
+      const mat=new THREE.MeshBasicMaterial({color:0xd4ff3d,transparent:true,opacity:0.3+Math.random()*0.5,wireframe:Math.random()>0.5});
+      const c=new THREE.Mesh(geo,mat);
+      c.position.set(x*0.42,y*0.42,0);
+      c.userData={phase:Math.random()*Math.PI*2,bx:x*0.42,by:y*0.42};
+      g.add(c);
+    }
+    obj=g;
+  } else if(variant==='search'){
+    // radial rays
+    const g = new THREE.Group();
+    for(let i=0;i<60;i++){
+      const a=(i/60)*Math.PI*2;
+      const len=1+Math.random()*2.5;
+      const pts=[new THREE.Vector3(0,0,0),new THREE.Vector3(Math.cos(a)*len,Math.sin(a)*len,(Math.random()-.5)*2)];
+      const geo=new THREE.BufferGeometry().setFromPoints(pts);
+      const mat=new THREE.LineBasicMaterial({color:0xd4ff3d,transparent:true,opacity:0.5});
+      const l=new THREE.Line(geo,mat);
+      l.userData={angle:a,len};
+      g.add(l);
+    }
+    obj=g;
+  } else if(variant==='reason'){
+    // helix
+    const g = new THREE.Group();
+    const pts=[];
+    for(let i=0;i<300;i++){
+      const tt=i/300*Math.PI*6;
+      pts.push(new THREE.Vector3(Math.cos(tt)*2,(i/300-.5)*6,Math.sin(tt)*2));
+    }
+    const curve=new THREE.CatmullRomCurve3(pts);
+    const geo=new THREE.BufferGeometry().setFromPoints(curve.getPoints(300));
+    const mat=new THREE.LineBasicMaterial({color:0xd4ff3d,transparent:true,opacity:0.7});
+    g.add(new THREE.Line(geo,mat));
+    for(let i=0;i<12;i++){
+      const p=curve.getPoint(i/12);
+      const n=new THREE.Mesh(new THREE.SphereGeometry(0.09,16,16),new THREE.MeshBasicMaterial({color:0xd4ff3d}));
+      n.position.copy(p);
+      g.add(n);
+    }
+    obj=g;
+  } else if(variant==='orchestrate'){
+    // network
+    const g = new THREE.Group();
+    const nodes=[];
+    for(let i=0;i<25;i++){
+      const p=new THREE.Vector3((Math.random()-.5)*7,(Math.random()-.5)*5,(Math.random()-.5)*2);
+      nodes.push(p);
+      const n=new THREE.Mesh(new THREE.SphereGeometry(0.08,16,16),new THREE.MeshBasicMaterial({color:0xd4ff3d}));
+      n.position.copy(p);
+      g.add(n);
+    }
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      if(nodes[i].distanceTo(nodes[j])<2.8){
+        const lGeo=new THREE.BufferGeometry().setFromPoints([nodes[i],nodes[j]]);
+        const lMat=new THREE.LineBasicMaterial({color:0xd4ff3d,transparent:true,opacity:0.25});
+        g.add(new THREE.Line(lGeo,lMat));
+      }
+    }
+    obj=g;
+  }
+
+  if(obj) pScene.add(obj);
+  pCam.position.z=6;
+  panelScenes.push({scene:pScene,cam:pCam,renderer:pR,obj,canvas,updateSize});
+});
+
+function panelLoop(){
+  requestAnimationFrame(panelLoop);
+  const t=performance.now()*0.0004;
+  panelScenes.forEach((p,i)=>{
+    if(!p.obj) return;
+    p.obj.rotation.y=t*0.4+i;
+    p.obj.rotation.x=Math.sin(t+i)*0.3;
+    p.obj.children.forEach(c=>{
+      if(c.userData && c.userData.phase!==undefined){
+        c.position.z=Math.sin(t*2+c.userData.phase)*0.4;
+        c.rotation.y=t+c.userData.phase;
+      }
+    });
+    p.renderer.render(p.scene,p.cam);
+  });
+}
+panelLoop();
+
+/* ──── CAPABILITY canvases ──── */
+document.querySelectorAll('[data-cap-canvas]').forEach(cv=>{
+  const sc=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(60,1,0.1,100);
+  const r=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+  const update=()=>{
+    const b=cv.parentElement.getBoundingClientRect();
+    r.setSize(b.width,b.height);
+    cam.aspect=b.width/b.height;
+    cam.updateProjectionMatrix();
+  };
+  update();
+  r.setPixelRatio(Math.min(devicePixelRatio,2));
+
+  // temporal — sine wave of dots
+  const g=new THREE.Group();
+  const pts=[];
+  for(let i=0;i<120;i++){
+    const tt=i/120;
+    pts.push(new THREE.Vector3((tt-.5)*8,Math.sin(tt*Math.PI*3)*1.5,0));
+  }
+  const c=new THREE.CatmullRomCurve3(pts);
+  const cGeo=new THREE.BufferGeometry().setFromPoints(c.getPoints(200));
+  const cMat=new THREE.LineBasicMaterial({color:0xd4ff3d,transparent:true,opacity:0.6});
+  g.add(new THREE.Line(cGeo,cMat));
+  for(let i=0;i<8;i++){
+    const p=c.getPoint(i/8);
+    const n=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,12),new THREE.MeshBasicMaterial({color:0xd4ff3d}));
+    n.position.copy(p);
+    g.add(n);
+  }
+  sc.add(g);
+  cam.position.z=5;
+
+  function loop(){
+    requestAnimationFrame(loop);
+    const t=performance.now()*0.0005;
+    g.rotation.y=t*0.4;
+    g.rotation.x=Math.sin(t)*0.2;
+    r.render(sc,cam);
+  }
+  loop();
+  window.addEventListener('resize',update);
+});
+
+/* ──── CTA canvas — soft floating orbs ──── */
+const ctaCanvas = document.getElementById('cta-canvas');
+const ctaSc = new THREE.Scene();
+const ctaCam = new THREE.PerspectiveCamera(60,innerWidth/600,0.1,100);
+const ctaR = new THREE.WebGLRenderer({canvas:ctaCanvas,alpha:true});
+ctaR.setSize(innerWidth,600);
+ctaR.setPixelRatio(Math.min(devicePixelRatio,2));
+const ctaOrbs=[];
+for(let i=0;i<8;i++){
+  const g=new THREE.SphereGeometry(0.3+Math.random()*0.6,32,32);
+  const m=new THREE.MeshBasicMaterial({color:i%2?0xd4ff3d:0xf4f3f1,transparent:true,opacity:0.12});
+  const o=new THREE.Mesh(g,m);
+  o.position.set((Math.random()-.5)*12,(Math.random()-.5)*5,(Math.random()-.5)*3);
+  o.userData={vx:(Math.random()-.5)*.008,vy:(Math.random()-.5)*.008};
+  ctaSc.add(o);ctaOrbs.push(o);
+}
+ctaCam.position.z=5;
+(function ctaLoop(){
+  requestAnimationFrame(ctaLoop);
+  ctaOrbs.forEach(o=>{
+    o.position.x+=o.userData.vx;
+    o.position.y+=o.userData.vy;
+    if(Math.abs(o.position.x)>7)o.userData.vx*=-1;
+    if(Math.abs(o.position.y)>3)o.userData.vy*=-1;
+  });
+  ctaR.render(ctaSc,ctaCam);
+})();
+
+/* ──── HERO ENTRANCE ──── */
+const heroTL = gsap.timeline({delay:0.3});
+heroTL
+  .to('#hero-badge',{opacity:1,y:0,duration:0.9,ease:'power3.out'})
+  .to('.hero-title .word',{y:0,duration:1.3,stagger:0.08,ease:'power4.out'},'-=0.4')
+  .to('#hero-desc',{opacity:1,y:0,duration:0.9,ease:'power3.out'},'-=0.6')
+  .to('#hero-actions',{opacity:1,y:0,duration:0.9,ease:'power3.out'},'-=0.5');
+
+/* ──── SCROLL PROGRESS ──── */
+gsap.to('#scroll-progress',{
+  scaleX:1,ease:'none',
+  scrollTrigger:{trigger:'body',start:'top top',end:'bottom bottom',scrub:0.3}
+});
+
+/* ──── REVEAL ANIMATIONS ──── */
+gsap.utils.toArray('.stats-title, .stats-sub, .features-title, .features-sub, .caps-title, .caps-sub, .sol-title, .sol-sub, .test-title, .test-sub, .cta-title, .cta-sub').forEach(el=>{
+  gsap.from(el,{
+    y:40,opacity:0,duration:1.1,ease:'power3.out',
+    scrollTrigger:{trigger:el,start:'top 85%'}
+  });
+});
+
+/* ──── STAT COUNTERS ──── */
+document.querySelectorAll('.num').forEach(el=>{
+  const target=parseFloat(el.dataset.target);
+  ScrollTrigger.create({
+    trigger:el,start:'top 80%',
+    onEnter:()=>{
+      gsap.to({v:0},{v:target,duration:2,ease:'power2.out',
+        onUpdate:function(){
+          const v=this.targets()[0].v;
+          el.textContent = target%1===0 ? Math.floor(v) : v.toFixed(1);
+        }
+      });
+    }
+  });
+});
+
+/* ──── CAP CARD reveals ──── */
+gsap.utils.toArray('.cap').forEach((c,i)=>{
+  gsap.from(c,{
+    y:80,opacity:0,duration:1,delay:i*0.06,ease:'power3.out',
+    scrollTrigger:{trigger:c,start:'top 85%'}
+  });
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();
+    c.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    c.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+/* ──── SOL CARD reveals ──── */
+gsap.utils.toArray('.sol-card').forEach((c,i)=>{
+  gsap.from(c,{
+    y:80,opacity:0,duration:1,delay:i*0.1,ease:'power3.out',
+    scrollTrigger:{trigger:c,start:'top 85%'}
+  });
+});
+
+/* ──── TEST CARD reveal ──── */
+gsap.utils.toArray('.test-card').forEach((c,i)=>{
+  gsap.from(c,{
+    y:60,opacity:0,duration:1,delay:i*0.05,ease:'power3.out',
+    scrollTrigger:{trigger:c.parentElement,start:'top 80%'}
+  });
+});
+
+/* ──── TAB SWITCHING ──── */
+const tabBtns=document.querySelectorAll('.tab');
+const tabPanels=document.querySelectorAll('.tab-panel');
+tabBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target=btn.dataset.tab;
+    tabPanels.forEach(p=>{
+      p.classList.remove('active');
+      if(p.dataset.panel===target){
+        p.classList.add('active');
+        gsap.from(p.querySelectorAll('.tab-content > *'),{
+          y:30,opacity:0,stagger:0.08,duration:0.7,ease:'power3.out'
+        });
+      }
+    });
+  });
+});
+
+/* ──── NAV SCROLL ──── */
+window.addEventListener('scroll',()=>{
+  const n=document.getElementById('nav');
+  if(scrollY>60) n.classList.add('scrolled');
+  else n.classList.remove('scrolled');
+});
+
+/* ──── MAGNETIC BUTTONS ──── */
+document.querySelectorAll('.btn').forEach(b=>{
+  b.addEventListener('mousemove',e=>{
+    const r=b.getBoundingClientRect();
+    const x=e.clientX-r.left-r.width/2;
+    const y=e.clientY-r.top-r.height/2;
+    gsap.to(b,{x:x*0.25,y:y*0.25,duration:0.4,ease:'power2.out'});
+  });
+  b.addEventListener('mouseleave',()=>{
+    gsap.to(b,{x:0,y:0,duration:0.6,ease:'elastic.out(1,0.4)'});
+  });
+});
+
+/* ──── PARALLAX on sections ──── */
+gsap.utils.toArray('.hero-grid').forEach(g=>{
+  gsap.to(g,{
+    backgroundPosition:'0 -200px',
+    ease:'none',
+    scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}
+  });
+});
+
+gsap.to('.hero-sphere-scale',{
+  scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}
+});
+
+/* ──── SECTION TRANSITIONS (light<->dark) ──── */
+gsap.utils.toArray('.stats, .caps').forEach(sec=>{
+  gsap.from(sec,{
+    scrollTrigger:{trigger:sec,start:'top 90%',toggleActions:'play none none none'},
+    opacity:0,duration:0.8
+  });
+});
+
+/* ──── RESIZE ──── */
+window.addEventListener('resize',()=>{
+  heroCam.aspect=innerWidth/innerHeight;
+  heroCam.updateProjectionMatrix();
+  heroR.setSize(innerWidth,innerHeight);
+  panelScenes.forEach(p=>p.updateSize());
+  ctaR.setSize(innerWidth,600);
+  ctaCam.aspect=innerWidth/600;
+  ctaCam.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>
