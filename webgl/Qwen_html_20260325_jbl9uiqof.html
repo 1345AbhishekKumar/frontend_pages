@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaleidoscopic Mirror Realm</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            cursor: crosshair;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            pointer-events: none;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Move mouse to create ripples</div>
+    <canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let width, height, centerX, centerY;
+let particles = [];
+let ripples = [];
+let mouse = { x: 0, y: 0, lastX: 0, lastY: 0 };
+const particleCount = 520;
+const symmetryOrder = 8; // 8-way kaleidoscopic symmetry
+const baseRadius = 200;
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    centerX = width / 2;
+    centerY = height / 2;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Ripple class for recursive echoes
+class Ripple {
+    constructor(x, y, intensity) {
+        this.x = x;
+        this.y = y;
+        this.radius = 0;
+        this.maxRadius = 300;
+        this.speed = 8;
+        this.intensity = intensity;
+        this.alpha = 1;
+        this.decay = 0.015;
+        this.recursiveLevel = 0;
+        this.maxRecursiveLevel = 3;
+    }
+
+    update() {
+        this.radius += this.speed;
+        this.alpha -= this.decay;
+        
+        // Create recursive echoes at diminishing intensity
+        if (this.recursiveLevel < this.maxRecursiveLevel && this.alpha > 0.5) {
+            if (Math.random() < 0.02) {
+                ripples.push(new Ripple(
+                    this.x + (Math.random() - 0.5) * 100,
+                    this.y + (Math.random() - 0.5) * 100,
+                    this.intensity * 0.6
+                ));
+                this.recursiveLevel++;
+            }
+        }
+    }
+
+    draw() {
+        if (this.alpha <= 0) return;
+        
+        ctx.save();
+        ctx.globalAlpha = this.alpha * 0.3;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
+        ctx.lineWidth = 2 * this.intensity;
+        ctx.shadowBlur = 20 * this.intensity;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw mirror reflections of the ripple
+        for (let i = 1; i < symmetryOrder; i++) {
+            const angle = (Math.PI * 2 / symmetryOrder) * i;
+            const dx = this.x - centerX;
+            const dy = this.y - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const baseAngle = Math.atan2(dy, dx);
+            
+            const newX = centerX + Math.cos(baseAngle + angle) * dist;
+            const newY = centerY + Math.sin(baseAngle + angle) * dist;
+            
+            ctx.beginPath();
+            ctx.arc(newX, newY, this.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+}
+
+// Particle class with mirrored pairs
+class Particle {
+    constructor(id) {
+        this.id = id;
+        this.angle = (id / particleCount) * Math.PI * 2;
+        this.baseRadius = baseRadius + (Math.random() - 0.5) * 150;
+        this.orbitSpeed = (Math.random() - 0.5) * 0.02;
+        this.size = 1.5 + Math.random() * 2;
+        this.z = (Math.random() - 0.5) * 100; // Depth for 3D effect
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        
+        // Current position
+        this.x = 0;
+        this.y = 0;
+        
+        // Mirror position
+        this.mx = 0;
+        this.my = 0;
+    }
+
+    update(time) {
+        // Orbital movement with slight wobble
+        this.angle += this.orbitSpeed;
+        const wobble = Math.sin(time * 0.001 + this.id) * 20;
+        const currentRadius = this.baseRadius + wobble;
+        
+        // Calculate primary position
+        this.x = centerX + Math.cos(this.angle) * currentRadius;
+        this.y = centerY + Math.sin(this.angle) * currentRadius * 0.6; // Elliptical orbit
+        
+        // Calculate mirror position (180 degree rotation / point symmetry)
+        this.mx = centerX - (this.x - centerX);
+        this.my = centerY - (this.y - centerY);
+        
+        // Apply ripple effects
+        ripples.forEach(ripple => {
+            const dx = this.x - ripple.x;
+            const dy = this.y - ripple.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (Math.abs(dist - ripple.radius) < 30) {
+                const force = (1 - Math.abs(dist - ripple.radius) / 30) * ripple.intensity;
+                const angle = Math.atan2(dy, dx);
+                this.x += Math.cos(angle) * force * 10;
+                this.y += Math.sin(angle) * force * 10;
+            }
+            
+            // Also affect mirror
+            const mdx = this.mx - ripple.x;
+            const mdy = this.my - ripple.y;
+            const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+            
+            if (Math.abs(mDist - ripple.radius) < 30) {
+                const force = (1 - Math.abs(mDist - ripple.radius) / 30) * ripple.intensity;
+                const angle = Math.atan2(mdy, mdx);
+                this.mx += Math.cos(angle) * force * 10;
+                this.my += Math.sin(angle) * force * 10;
+            }
+        });
+        
+        this.pulsePhase += 0.05;
+    }
+
+    draw() {
+        const pulse = Math.sin(this.pulsePhase) * 0.5 + 0.5;
+        const alpha = 0.4 + pulse * 0.6;
+        
+        ctx.fillStyle = `rgba(240, 248, 255, ${alpha})`;
+        ctx.shadowBlur = 10 * pulse;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        
+        // Draw primary particle
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw mirror particle
+        ctx.beginPath();
+        ctx.arc(this.mx, this.my, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw kaleidoscopic reflections
+        for (let i = 1; i < symmetryOrder / 2; i++) {
+            const angle = (Math.PI * 2 / symmetryOrder) * i;
+            
+            // Rotate primary
+            const dx = this.x - centerX;
+            const dy = this.y - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const baseAngle = Math.atan2(dy, dx);
+            
+            const rx = centerX + Math.cos(baseAngle + angle) * dist;
+            const ry = centerY + Math.sin(baseAngle + angle) * dist;
+            
+            ctx.globalAlpha = alpha * 0.5;
+            ctx.beginPath();
+            ctx.arc(rx, ry, this.size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Rotate mirror
+            const mdx = this.mx - centerX;
+            const mdy = this.my - centerY;
+            const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+            const mBaseAngle = Math.atan2(mdy, mdx);
+            
+            const mrx = centerX + Math.cos(mBaseAngle + angle) * mDist;
+            const mry = centerY + Math.sin(mBaseAngle + angle) * mDist;
+            
+            ctx.beginPath();
+            ctx.arc(mrx, mry, this.size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+        
+        ctx.shadowBlur = 0;
+    }
+}
+
+// Draw geometric mandala connections
+function drawConnections() {
+    ctx.lineWidth = 0.5;
+    
+    // Connect particles to form mandala patterns
+    for (let i = 0; i < particles.length; i += 2) {
+        const p1 = particles[i];
+        const p2 = particles[(i + 1) % particles.length];
+        
+        // Connect primary to primary
+        const dx1 = p1.x - p2.x;
+        const dy1 = p1.y - p2.y;
+        const dist1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+        
+        if (dist1 < 100) {
+            const alpha = (1 - dist1 / 100) * 0.3;
+            ctx.strokeStyle = `rgba(200, 220, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+        
+        // Connect mirror to mirror
+        const dx2 = p1.mx - p2.mx;
+        const dy2 = p1.my - p2.my;
+        const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        
+        if (dist2 < 100) {
+            const alpha = (1 - dist2 / 100) * 0.3;
+            ctx.strokeStyle = `rgba(200, 220, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(p1.mx, p1.my);
+            ctx.lineTo(p2.mx, p2.my);
+            ctx.stroke();
+        }
+        
+        // Connect primary to its mirror (creates radial lines)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p1.mx, p1.my);
+        ctx.stroke();
+    }
+    
+    // Draw geometric patterns connecting to center
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < particles.length; i += 20) {
+        const p = particles[i];
+        
+        // Primary to center
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(centerX, centerY);
+        ctx.stroke();
+        
+        // Mirror to center
+        ctx.beginPath();
+        ctx.moveTo(p.mx, p.my);
+        ctx.lineTo(centerX, centerY);
+        ctx.stroke();
+    }
+}
+
+// Draw mirror edge glow
+function drawMirrorEdges() {
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) * 0.7);
+    gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.02)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw subtle mirror frame
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, width - 20, height - 20);
+}
+
+// Mouse interaction
+canvas.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    
+    const dx = mouse.x - mouse.lastX;
+    const dy = mouse.y - mouse.lastY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > 5) {
+        const intensity = Math.min(dist / 50, 1);
+        ripples.push(new Ripple(mouse.x, mouse.y, intensity));
+    }
+    
+    mouse.lastX = mouse.x;
+    mouse.lastY = mouse.y;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    mouse.x = touch.clientX;
+    mouse.y = touch.clientY;
+    
+    const dx = mouse.x - mouse.lastX;
+    const dy = mouse.y - mouse.lastY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist > 5) {
+        const intensity = Math.min(dist / 50, 1);
+        ripples.push(new Ripple(mouse.x, mouse.y, intensity));
+    }
+    
+    mouse.lastX = mouse.x;
+    mouse.lastY = mouse.y;
+}, { passive: false });
+
+// Initialize particles
+function init() {
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(i));
+    }
+}
+
+// Animation loop
+let time = 0;
+function animate() {
+    time++;
+    
+    // Obsidian black background with slight fade for trails
+    ctx.fillStyle = 'rgba(5, 5, 10, 0.3)';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw mirror edges
+    drawMirrorEdges();
+    
+    // Update and draw ripples
+    ripples = ripples.filter(ripple => {
+        ripple.update();
+        ripple.draw();
+        return ripple.alpha > 0;
+    });
+    
+    // Draw connections (mandala geometry)
+    drawConnections();
+    
+    // Update and draw particles
+    particles.forEach(particle => {
+        particle.update(time);
+        particle.draw();
+    });
+    
+    // Central glow
+    const centerGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 100);
+    centerGlow.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+    centerGlow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = centerGlow;
+    ctx.fillRect(0, 0, width, height);
+    
+    requestAnimationFrame(animate);
+}
+
+init();
+animate();
+</script>
+</body>
+</html>

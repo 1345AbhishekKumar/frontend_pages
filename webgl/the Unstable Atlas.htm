@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Unstable Atlas — nine strange attractors, etched live</title>
+<meta name="description" content="A living treatise: nine strange attractors computed and etched in real time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4eee1; --surround:#d9d0ba;
+    --ink:#221d14; --ink-60:#4d463a; --ink-40:#6b6350; --ink-30:#8a8170;
+    --hair:#cfc5ab; --hair-2:#a99e82;
+    --red:#9e2b25;
+    --serif:"Fraunces",Georgia,'Times New Roman',serif;
+    --mono:"Space Mono",ui-monospace,Menlo,monospace;
+    --pad:clamp(10px,1.8vw,26px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{color-scheme:light}
+  html,body{height:100%}
+  body{background:var(--surround);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased;padding:var(--pad)}
+  ::selection{background:var(--red);color:var(--paper)}
+
+  /* paper grain, laid over everything (ink multiplies with it too) */
+  .grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.1;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");}
+
+  /* the folio spread */
+  .spread{background:var(--paper);border:1px solid #b3a88c;max-width:1560px;margin:0 auto;
+    height:calc(100vh - 2*var(--pad));height:calc(100dvh - 2*var(--pad));min-height:660px;
+    display:grid;grid-template-columns:minmax(330px,35fr) 65fr;grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:"head head" "vhead recto" "vbody recto";}
+
+  .running-head{grid-area:head;position:relative;display:flex;justify-content:space-between;align-items:center;gap:16px;
+    padding:13px clamp(18px,2.4vw,34px) 11px;border-bottom:2px solid var(--ink);
+    font:400 9.5px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
+  .running-head::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:var(--ink)}
+  .rh-right{display:flex;align-items:center;white-space:nowrap}
+  .pulse{display:inline-block;width:7px;height:7px;background:var(--red);margin-right:9px;animation:beat 2.6s ease-in-out infinite}
+  @keyframes beat{0%,100%{opacity:1}50%{opacity:.25}}
+  body.paused .pulse{animation:none;background:var(--hair-2)}
+  @media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+  /* left page — masthead */
+  .verso-head{grid-area:vhead;padding:clamp(24px,3vw,44px) clamp(22px,2.6vw,38px) 6px;border-right:3px double var(--hair-2)}
+  h1{font-family:var(--serif);font-optical-sizing:auto;font-weight:560;font-size:clamp(44px,4.8vw,72px);line-height:.96;letter-spacing:-.022em}
+  h1 .l{display:block}
+  h1 em{font-style:italic;font-weight:460;color:var(--red)}
+  .orn{width:132px;height:1px;background:var(--ink);margin:26px 0 0;position:relative}
+  .orn::after{content:"";position:absolute;left:50%;top:-2.5px;width:6px;height:6px;background:var(--red);transform:translateX(-50%) rotate(45deg)}
+  .subtitle{margin-top:18px;font:400 15px/1.55 var(--serif);color:var(--ink-60);max-width:34ch}
+
+  /* right page — the plate */
+  .recto{grid-area:recto;min-width:0;min-height:0;display:flex;flex-direction:column;gap:13px;padding:clamp(16px,2.6vw,38px)}
+  .plate{flex:1;min-height:240px;display:flex;border:1px solid var(--ink);padding:8px}
+  .plate-inner{position:relative;flex:1;min-width:0;background:var(--paper);border:1px solid var(--hair-2);overflow:hidden}
+  #plateCanvas{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:multiply;touch-action:none;cursor:grab;display:block}
+  #plateCanvas:active{cursor:grabbing}
+  /* printer's registration marks */
+  .reg{position:absolute;width:9px;height:9px;pointer-events:none;z-index:2}
+  .reg::before,.reg::after{content:"";position:absolute;background:var(--red)}
+  .reg::before{left:0;right:0;top:4px;height:1px}
+  .reg::after{top:0;bottom:0;left:4px;width:1px}
+  .reg-tl{top:9px;left:9px}.reg-tr{top:9px;right:9px}.reg-bl{bottom:9px;left:9px}.reg-br{bottom:9px;right:9px}
+
+  .caption{display:flex;justify-content:space-between;align-items:baseline;gap:8px 18px;flex-wrap:wrap}
+  .cap-main{font:italic 500 16px/1.35 var(--serif)}
+  .cap-live{font:400 9.5px/1.7 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-40);text-align:right}
+  #liveWord{color:var(--ink)}
+  body.paused #liveWord{color:var(--red)}
+
+  .fignote{display:none;font:italic 400 14px/1.55 var(--serif);color:#7a2b23;border-left:2px solid var(--red);padding:2px 0 2px 12px}
+  .fignote.show{display:block;animation:rise .45s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+  .toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:4px 22px;border-top:1px solid var(--hair);padding-top:10px}
+  .cmd{font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-40);background:none;border:0;
+    padding:6px 0 3px;border-bottom:1px solid transparent;cursor:pointer;transition:color .2s,border-color .2s}
+  .cmd:hover{color:var(--ink);border-bottom-color:var(--hair-2)}
+  .cmd[aria-pressed="true"]{color:var(--red)}
+  .cmd[aria-pressed="true"]::before{content:"";display:inline-block;width:6px;height:6px;background:var(--red);margin-right:7px;vertical-align:1px}
+  .cmd:focus-visible,.row:focus-visible,input[type=range]:focus-visible{outline:1px dashed var(--red);outline-offset:3px}
+  .inkctl{display:flex;align-items:center;gap:10px;font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-40);margin-left:auto}
+  .inkctl input{width:110px}
+  #inkVal{font-size:9.5px;letter-spacing:.08em;min-width:5ch;text-align:right;color:var(--ink)}
+  .hintline{font:400 9px/1.8 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-30)}
+
+  /* left page — contents, notes, colophon */
+  .verso-body{grid-area:vbody;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
+    padding:10px clamp(22px,2.6vw,38px) 24px;border-right:3px double var(--hair-2);
+    scrollbar-width:thin;scrollbar-color:var(--hair-2) transparent}
+  .verso-body::-webkit-scrollbar{width:8px}
+  .verso-body::-webkit-scrollbar-thumb{background:var(--hair-2);border:2px solid var(--paper)}
+
+  .epigraph{margin:6px 0 28px;padding-left:14px;border-left:2px solid var(--hair-2)}
+  .epigraph p{font:italic 400 16px/1.55 var(--serif);color:var(--ink-60)}
+  .epigraph cite{display:block;margin-top:8px;font:400 9.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-30);font-style:normal}
+
+  .index h2,.notes h3{font:400 10px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--ink);padding-bottom:10px;border-bottom:1px solid var(--ink)}
+  .row{display:grid;grid-template-columns:3.2rem 1fr auto;align-items:baseline;gap:8px;width:100%;padding:8px 2px;
+    background:none;border:0;border-bottom:1px solid var(--hair);cursor:pointer;text-align:left;transition:background .25s}
+  .row .num{font:italic 500 15px/1 var(--serif);color:var(--ink-30);transition:color .25s}
+  .row .name{font:400 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+  .row .epi{font:italic 400 13.5px/1 var(--serif);color:var(--ink-30)}
+  .row:hover{background:rgba(34,29,20,.04)}
+  .row.active{background:rgba(158,43,37,.055)}
+  .row.active .num{color:var(--red);font-weight:600}
+  .row.active .name{font-weight:700}
+  .row.active .epi{color:var(--ink-60)}
+
+  .notes{margin-top:34px}
+  .eq{display:flex;flex-wrap:wrap;gap:6px 26px;margin:16px 0 4px;font-size:17px}
+  .eq .t{white-space:nowrap}
+  .eq i{font-style:italic}
+  .ov{position:relative;padding-right:1px}
+  .ov::before{content:"";position:absolute;top:-.05em;left:52%;transform:translateX(-50%);width:.1em;height:.1em;border-radius:50%;background:currentColor}
+  .figtext{font:italic 400 14.5px/1.6 var(--serif);color:var(--ink-60);border-left:2px solid var(--red);padding:2px 0 2px 12px;margin:16px 0 6px}
+  .notes h4{margin-top:22px;font:400 9.5px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-30)}
+
+  .prow{display:grid;grid-template-columns:2.4rem 1fr 5ch;gap:12px;align-items:center;padding:6px 0;border-bottom:1px dotted var(--hair);cursor:ew-resize}
+  .prow .sym{font:italic 400 15px/1 var(--serif)}
+  .prow .val{font:400 10.5px/1 var(--mono);text-align:right;color:var(--ink-60)}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;background:transparent;cursor:ew-resize;margin:0}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--ink-40)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:8px;height:15px;margin-top:-7px;background:var(--paper);border:1px solid var(--ink);border-radius:0}
+  input[type=range]:hover::-webkit-slider-thumb{border-color:var(--red)}
+  input[type=range]::-moz-range-track{height:1px;background:var(--ink-40)}
+  input[type=range]::-moz-range-thumb{width:8px;height:15px;background:var(--paper);border:1px solid var(--ink);border-radius:0}
+
+  .colophon{margin-top:auto;padding-top:14px;border-top:1px solid var(--ink)}
+  .colophon p{font:400 9.5px/1.8 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-30)}
+
+  /* single-column folio on narrow screens */
+  @media (max-width:1020px){
+    .spread{height:auto;min-height:0;grid-template-columns:1fr;grid-template-rows:auto;
+      grid-template-areas:"head" "vhead" "recto" "vbody"}
+    .verso-head,.verso-body{border-right:0}
+    .verso-body{overflow:visible;display:block;border-top:1px solid var(--hair);padding-top:24px;margin-top:8px}
+    .colophon{margin-top:34px}
+    .plate{flex:none;height:clamp(340px,88vw,540px)}
+    .running-head{padding:12px 18px 10px}
+  }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="spread">
+  <header class="running-head">
+    <span>Bureau of Dynamic Systems</span>
+    <span class="rh-right"><span class="pulse" aria-hidden="true"></span>Plate Room · <span id="rhState">Live</span></span>
+  </header>
+
+  <section class="verso-head">
+    <h1><span class="l">The</span><span class="l"><em>Unstable</em></span><span class="l">Atlas</span></h1>
+    <div class="orn" aria-hidden="true"></div>
+    <p class="subtitle">Being a collection of nine strange attractors — systems that never repeat, never settle, and never leave this page.</p>
+  </section>
+
+  <section class="recto">
+    <figure class="plate">
+      <div class="plate-inner" id="plateInner">
+        <canvas id="plateCanvas" aria-label="Live etching of a strange attractor. Drag to orbit, scroll to zoom."></canvas>
+        <span class="reg reg-tl" aria-hidden="true"></span><span class="reg reg-tr" aria-hidden="true"></span>
+        <span class="reg reg-bl" aria-hidden="true"></span><span class="reg reg-br" aria-hidden="true"></span>
+      </div>
+    </figure>
+    <div class="caption">
+      <p class="cap-main" id="capMain"></p>
+      <p class="cap-live">Azimuth <span id="capAz">000</span>° · Elevation <span id="capEl">+00</span>° · <span id="capCnt"></span> trajectories · <span id="liveWord">Etching</span></p>
+    </div>
+    <p class="fignote" id="figNote" role="status"></p>
+    <div class="toolbar">
+      <button type="button" class="cmd" id="cmdPause" aria-pressed="false" title="Space">Pause</button>
+      <button type="button" class="cmd" id="cmdReseed" title="R">Reseed</button>
+      <button type="button" class="cmd" id="cmdClear" title="C">Clear plate</button>
+      <button type="button" class="cmd" id="cmdOrbit" aria-pressed="true" title="O">Auto-orbit</button>
+      <button type="button" class="cmd" id="cmdSave" title="S">Save plate</button>
+      <label class="inkctl">Ink <input type="range" id="inkRange" min="0.3" max="2.4" step="0.05" value="1"><span id="inkVal">1.00×</span></label>
+    </div>
+    <p class="hintline">Drag to orbit · scroll or pinch to zoom · double-click resets the view · keys 1–9 turn the plates · space pauses</p>
+  </section>
+
+  <section class="verso-body">
+    <blockquote class="epigraph">
+      <p>“Does the flap of a butterfly’s wings in Brazil set off a tornado in Texas?”</p>
+      <cite>Edward N. Lorenz — title of a talk, 1972</cite>
+    </blockquote>
+    <nav class="index" aria-label="Figure index">
+      <h2>Contents</h2>
+      <div id="indexList"></div>
+    </nav>
+    <section class="notes">
+      <h3 id="notesTitle"></h3>
+      <div class="eq" id="eqBox"></div>
+      <p class="figtext" id="figText"></p>
+      <h4>Parameters · live</h4>
+      <div id="paramsBox"></div>
+    </section>
+    <footer class="colophon">
+      <p>Set in Fraunces &amp; Space Mono · every figure is recomputed on this page sixty times a second — nothing prerendered, nothing leaves your browser.</p>
+    </footer>
+  </section>
+</main>
+
+<noscript><p style="font:400 12px/1.6 monospace;padding:20px;text-align:center">This atlas is drawn live and needs JavaScript.</p></noscript>
+
+<script>
+(() => {
+'use strict';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const TAU=Math.PI*2;
+const wrapAngle=d=>{d=((d%TAU)+TAU)%TAU;if(d>Math.PI)d-=TAU;return d};
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MOBILE=matchMedia('(max-width: 760px)').matches;
+
+/* ---------- typographic helpers for the equations ---------- */
+const ov=s=>`<span class="ov"><i>${s}</i></span>`;
+const V=s=>`<i>${s}</i>`;
+const T=s=>`<span class="t">${s}</span>`;
+
+/* ---------- the catalogue: nine strange attractors ---------- */
+const SYSTEMS=[
+{ id:'lorenz',numeral:'I',name:'Lorenz',epithet:'the butterfly',
+  eq:T(`${ov('x')} = ${V('σ')}(${V('y')} − ${V('x')}`)+T(`${ov('y')} = ${V('x')}(${V('ρ')} − ${V('z')}) − ${V('y')}`)+T(`${ov('z')} = ${V('x')}${V('y')} − ${V('β')}${V('z')}`),
+  note:'The founding figure of the atlas. Below ρ ≈ 24.7 the two wings fold shut and the flow settles into stillness; above it, the orbit hops between the wings forever, never repeating.',
+  params:[{k:'sigma',sym:'σ',min:2,max:30,step:.1,def:10},{k:'rho',sym:'ρ',min:0,max:60,step:.1,def:28},{k:'beta',sym:'β',min:.2,max:5,step:.01,def:2.667}],
+  dt:.0035,center:[0,0,26],R:34,seedR:4,view:{yaw:1.05,pitch:.3},
+  f(x,y,z,v,o){o[0]=v.sigma*(y-x);o[1]=x*(v.rho-z)-y;o[2]=x*y-v.beta*z} },
+
+{ id:'rossler',numeral:'II',name:'Rössler',epithet:'the funnel',
+  eq:T(`${ov('x')} = −${V('y')} − ${V('z')}`)+T(`${ov('y')} = ${V('x')} + ${V('a')}${V('y')}`)+T(`${ov('z')} = ${V('b')} + ${V('z')}(${V('x')} − ${V('c')})`),
+  note:'Nearly all of the motion rides a single band that folds over itself once per turn — the simplest known knot of chaos.',
+  params:[{k:'a',sym:'a',min:.05,max:.38,step:.005,def:.2},{k:'b',sym:'b',min:.05,max:.38,step:.005,def:.2},{k:'c',sym:'c',min:1,max:16,step:.05,def:5.7}],
+  dt:.02,center:[0,0,5],R:15,seedR:5,view:{yaw:-.4,pitch:.55},
+  f(x,y,z,v,o){o[0]=-y-z;o[1]=x+v.a*y;o[2]=v.b+z*(x-v.c)} },
+
+{ id:'aizawa',numeral:'III',name:'Aizawa',epithet:'the lantern',
+  eq:T(`${ov('x')} = (${V('z')} − ${V('b')})${V('x')} − ${V('d')}${V('y')}`)+T(`${ov('y')} = ${V('d')}${V('x')} + (${V('z')} − ${V('b')})${V('y')}`)+T(`${ov('z')} = ${V('c')} + ${V('a')}${V('z')} − ${V('z')}³/3 − (${V('x')}² + ${V('y')}²)(1 + ${V('e')}${V('z')}) + ${V('f')}${V('z')}${V('x')}³`),
+  note:'A lantern of meridians hung about a hidden pole; the pole itself wanders, which is what keeps the weave from closing.',
+  params:[{k:'a',sym:'a',min:.3,max:1.4,step:.01,def:.95},{k:'b',sym:'b',min:.4,max:1.1,step:.01,def:.7},{k:'c',sym:'c',min:.2,max:1,step:.01,def:.6},{k:'d',sym:'d',min:1,max:6,step:.05,def:3.5},{k:'e',sym:'e',min:.05,max:.6,step:.01,def:.25},{k:'f',sym:'f',min:.01,max:.3,step:.005,def:.1}],
+  dt:.012,center:[0,0,0],R:1.8,seedR:.5,view:{yaw:.55,pitch:.75},
+  f(x,y,z,v,o){o[0]=(z-v.b)*x-v.d*y;o[1]=v.d*x+(z-v.b)*y;o[2]=v.c+v.a*z-z*z*z/3-(x*x+y*y)*(1+v.e*z)+v.f*z*x*x*x} },
+
+{ id:'thomas',numeral:'IV',name:'Thomas',epithet:'the weave',
+  eq:T(`${ov('x')} = sin ${V('y')} − ${V('b')}${V('x')}`)+T(`${ov('y')} = sin ${V('z')} − ${V('b')}${V('y')}`)+T(`${ov('z')} = sin ${V('x')} − ${V('b')}${V('z')}`),
+  note:'Perfectly symmetric under any swap of x, y and z. As b tends to zero the lace unwinds and drifts off toward infinity.',
+  params:[{k:'b',sym:'b',min:.05,max:.33,step:.002,def:.19}],
+  dt:.07,center:[0,0,0],R:6.5,seedR:1.5,view:{yaw:.65,pitch:.6},
+  f(x,y,z,v,o){o[0]=Math.sin(y)-v.b*x;o[1]=Math.sin(z)-v.b*y;o[2]=Math.sin(x)-v.b*z} },
+
+{ id:'halvorsen',numeral:'V',name:'Halvorsen',epithet:'the triskelion',
+  eq:T(`${ov('x')} = −${V('a')}${V('x')} − 4${V('y')} − 4${V('z')} − ${V('y')}²`)+T(`${ov('y')} = −${V('a')}${V('y')} − 4${V('z')} − 4${V('x')} − ${V('z')}²`)+T(`${ov('z')} = −${V('a')}${V('z')} − 4${V('x')} − 4${V('y')} − ${V('x')}²`),
+  note:'Threefold symmetry: turn the plate 120° about its diagonal and the figure maps onto itself.',
+  params:[{k:'a',sym:'a',min:1.1,max:2.6,step:.01,def:1.89}],
+  dt:.004,center:[-1,-1,-1],R:16,seedR:3,view:{yaw:.8,pitch:.4},
+  f(x,y,z,v,o){o[0]=-v.a*x-4*y-4*z-y*y;o[1]=-v.a*y-4*z-4*x-z*z;o[2]=-v.a*z-4*x-4*y-x*x} },
+
+{ id:'chen',numeral:'VI',name:'Chen',epithet:'the twin scrolls',
+  eq:T(`${ov('x')} = ${V('a')}(${V('y')} − ${V('x')}`)+T(`${ov('y')} = (${V('c')} − ${V('a')})${V('x')} + ${V('c')}${V('y')} − ${V('x')}${V('z')}`)+T(`${ov('z')} = ${V('x')}${V('y')} − ${V('b')}${V('z')}`),
+  note:'Announced in 1999 as “yet another chaotic attractor” — a cousin of Lorenz with sharper creases, found by hunting between the known folds.',
+  params:[{k:'a',sym:'a',min:25,max:45,step:.5,def:35},{k:'b',sym:'b',min:1,max:6,step:.05,def:3},{k:'c',sym:'c',min:20,max:36,step:.5,def:28}],
+  dt:.0013,center:[0,0,25],R:40,seedR:5,view:{yaw:1.25,pitch:.33},
+  f(x,y,z,v,o){o[0]=v.a*(y-x);o[1]=(v.c-v.a)*x+v.c*y-x*z;o[2]=x*y-v.b*z} },
+
+{ id:'dadras',numeral:'VII',name:'Dadras',epithet:'the braid',
+  eq:T(`${ov('x')} = ${V('y')} − ${V('a')}${V('x')} + ${V('b')}${V('y')}${V('z')}`)+T(`${ov('y')} = ${V('c')}${V('y')} − ${V('x')}${V('z')} + ${V('z')}`)+T(`${ov('z')} = ${V('d')}${V('x')}${V('y')} − ${V('e')}${V('z')}`),
+  note:'Ribbons of current braid about an invisible axis; tighten e and the braid draws in, loosen it and the strands fray apart.',
+  params:[{k:'a',sym:'a',min:1,max:5,step:.05,def:3},{k:'b',sym:'b',min:1.5,max:4,step:.05,def:2.7},{k:'c',sym:'c',min:.5,max:3,step:.05,def:1.7},{k:'d',sym:'d',min:.8,max:3,step:.05,def:2},{k:'e',sym:'e',min:4,max:14,step:.1,def:9}],
+  dt:.006,center:[0,0,0],R:12,seedR:2.5,view:{yaw:.9,pitch:.3},
+  f(x,y,z,v,o){o[0]=y-v.a*x+v.b*y*z;o[1]=v.c*y-x*z+z;o[2]=v.d*x*y-v.e*z} },
+
+{ id:'fourwing',numeral:'VIII',name:'Four-Wing',epithet:'the quartet',
+  eq:T(`${ov('x')} = ${V('a')}${V('x')} + ${V('y')}${V('z')}`)+T(`${ov('y')} = ${V('b')}${V('x')} + ${V('c')}${V('y')} − ${V('x')}${V('z')}`)+T(`${ov('z')} = −${V('z')} − ${V('d')}${V('x')}${V('y')}`),
+  note:'Four wings pinned to a single crossing point — the only figure in the atlas with a fourfold heart.',
+  params:[{k:'a',sym:'a',min:.05,max:.4,step:.005,def:.2},{k:'b',sym:'b',min:0,max:.05,step:.001,def:.01},{k:'c',sym:'c',min:-.8,max:0,step:.01,def:-.4},{k:'d',sym:'d',min:.4,max:1.6,step:.01,def:1}],
+  dt:.028,center:[0,0,0],R:3.4,seedR:.6,view:{yaw:.25,pitch:.6},
+  f(x,y,z,v,o){o[0]=v.a*x+y*z;o[1]=v.b*x+v.c*y-x*z;o[2]=-z-v.d*x*y} },
+
+{ id:'chenlee',numeral:'IX',name:'Chen–Lee',epithet:'the orb',
+  eq:T(`${ov('x')} = ${V('a')}${V('x')} − ${V('y')}${V('z')}`)+T(`${ov('y')} = ${V('b')}${V('y')} + ${V('x')}${V('z')}`)+T(`${ov('z')} = ${V('c')}${V('z')} − ${V('x')}${V('y')}/3`),
+  note:'Born of anti-control — the deliberate search for chaos rather than the avoidance of it — its scrolls wrap round into a sphere.',
+  params:[{k:'a',sym:'a',min:3,max:7,step:.05,def:5},{k:'b',sym:'b',min:-14,max:-6,step:.1,def:-10},{k:'c',sym:'c',min:-.8,max:-.1,step:.005,def:-.38}],
+  dt:.0025,center:[0,0,0],R:25,seedR:4,view:{yaw:1,pitch:.5},
+  f(x,y,z,v,o){o[0]=v.a*x-y*z;o[1]=v.b*y+x*z;o[2]=v.c*z-x*y/3} }
+];
+SYSTEMS.forEach(s=>s.vals={});
+
+/* ---------- state ---------- */
+const CV=$('#plateCanvas'),ictx=CV.getContext('2d'),inner=$('#plateInner');
+const N=MOBILE?4500:(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4?6000:9000);
+const TRAILCAP=REDUCED?160:(MOBILE?380:720);
+const P=new Float32Array(N*3),Q=new Float32Array(N*3),OUT=[0,0,0];
+let cur=0,running=true,orbit=!REDUCED,inkMul=1;
+let cssW=0,cssH=0,dpr=1;
+const cam={yaw:.4,pitch:.3,zoom:1,cz:[0,0,26],R:20};
+let targetC=[0,0,26],targetR=20,zoomT=1,vYaw=0,vPitch=0,trans=null;
+let tr={x:0,y:0,z:0},trail=[];
+let meanStep=1,msS=1e9,escAcc=0,escVote=-2,restVote=-2,noteState=null,statsHold=60;
+let frameCount=0,tick=0,acc=0,last=performance.now();
+const pr=[0,0,0];
+/* projection scratch, refreshed each frame */
+let _cyw=1,_syw=0,_cp=1,_sp=0,_sc=1,_ox=0,_oy=0,_R=20,_ccx=0,_ccy=0,_ccz=0,_dist=3.1;
+
+/* ---------- projection & drawing ---------- */
+function proj(x,y,z){
+  const x0=x-_ccx,y0=y-_ccy,z0=z-_ccz;
+  const x1=x0*_cyw-z0*_syw, z1=x0*_syw+z0*_cyw;
+  const y2=y0*_cp-z1*_sp,  z2=y0*_sp+z1*_cp;
+  const zn=z2/_R;
+  let f=_dist/(_dist-zn); if(!(f>0.2))f=0.2; if(f>2.4)f=2.4;
+  pr[0]=_ox+x1*f*_sc; pr[1]=_oy-y2*f*_sc; pr[2]=zn;
+}
+
+const NB=5,ALPHA=[.05,.075,.105,.14,.18],LW=[.65,.75,.9,1.05,1.3],paths=new Array(NB);
+
+function draw(dtms){
+  if(!cssW)return;
+  ictx.setTransform(dpr,0,0,dpr,0,0);
+  /* let the old ink sink back into the paper */
+  const fa=clamp(.034*dtms/16.7,.008,.09);
+  ictx.globalCompositeOperation='destination-out';
+  ictx.fillStyle='rgba(0,0,0,'+fa+')';
+  ictx.fillRect(0,0,cssW,cssH);
+  ictx.globalCompositeOperation='source-over';
+  ictx.lineCap='round';ictx.lineJoin='round';
+
+  const half=Math.min(cssW,cssH)*.5;
+  _sc=half/cam.R*cam.zoom*.97;
+  _cyw=Math.cos(cam.yaw);_syw=Math.sin(cam.yaw);
+  _cp=Math.cos(cam.pitch);_sp=Math.sin(cam.pitch);
+  _ox=cssW/2;_oy=cssH/2;_R=cam.R;_ccx=cam.cz[0];_ccy=cam.cz[1];_ccz=cam.cz[2];
+  const maxLen2=(half*2.6)*(half*2.6);
+
+  for(let b=0;b<NB;b++)paths[b]=new Path2D();
+  for(let i=0;i<N;i++){
+    const j=i*3;
+    proj(Q[j],Q[j+1],Q[j+2]); const x1=pr[0],y1=pr[1],zn1=pr[2];
+    proj(P[j],P[j+1],P[j+2]); const x2=pr[0],y2=pr[1];
+    const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy;
+    if(l2>.02&&l2<maxLen2){
+      const b=clamp(((zn1+1)*.5*NB)|0,0,NB-1);
+      const p=paths[b];p.moveTo(x1,y1);p.lineTo(x2,y2);
+    }
+  }
+  for(let b=0;b<NB;b++){
+    const a=Math.min(.85,ALPHA[b]*inkMul);
+    ictx.strokeStyle='rgba(34,29,20,'+a.toFixed(3)+')';
+    ictx.lineWidth=LW[b];
+    ictx.stroke(paths[b]);
+  }
+  /* the annotated trajectory, in madder red */
+  if(trail.length>2){
+    ictx.beginPath();
+    for(let k=0;k<trail.length;k+=3){
+      proj(trail[k],trail[k+1],trail[k+2]);
+      if(k===0)ictx.moveTo(pr[0],pr[1]);else ictx.lineTo(pr[0],pr[1]);
+    }
+    ictx.strokeStyle='rgba(158,43,37,.5)';ictx.lineWidth=1.3;ictx.stroke();
+  }
+  proj(tr.x,tr.y,tr.z);
+  ictx.fillStyle='#9e2b25';
+  ictx.beginPath();ictx.arc(pr[0],pr[1],2.3,0,TAU);ictx.fill();
+  ictx.strokeStyle='rgba(158,43,37,.8)';ictx.lineWidth=1;
+  ictx.beginPath();ictx.arc(pr[0],pr[1],4.5,0,TAU);ictx.stroke();
+}
+
+/* ---------- the physics ---------- */
+function integrate(){
+  const s=SYSTEMS[cur],v=s.vals,dt=s.dt,f=s.f,o=OUT;
+  const ccx=cam.cz[0],ccy=cam.cz[1],ccz=cam.cz[2];
+  const scx=s.center[0],scy=s.center[1],scz=s.center[2];
+  const gr=Math.max(s.R*7,cam.R*6)+3,guard2=gr*gr;
+  let sum=0,esc=0;
+  for(let i=0;i<N;i++){
+    const j=i*3;
+    const x=P[j],y=P[j+1],z=P[j+2];
+    f(x,y,z,v,o);
+    const nx=x+o[0]*dt,ny=y+o[1]*dt,nz=z+o[2]*dt;
+    const dx=nx-ccx,dy=ny-ccy,dz=nz-ccz;
+    if(!((dx*dx+dy*dy+dz*dz)<guard2)){        // escaped or NaN — reseed
+      P[j]=scx+(Math.random()*2-1)*s.seedR;
+      P[j+1]=scy+(Math.random()*2-1)*s.seedR;
+      P[j+2]=scz+(Math.random()*2-1)*s.seedR;
+      Q[j]=P[j];Q[j+1]=P[j+1];Q[j+2]=P[j+2];
+      esc++;continue;
+    }
+    sum+=Math.abs(o[0])+Math.abs(o[1])+Math.abs(o[2]);
+    Q[j]=x;Q[j+1]=y;Q[j+2]=z;
+    P[j]=nx;P[j+1]=ny;P[j+2]=nz;
+  }
+  meanStep=sum*dt/N;escAcc+=esc;frameCount++;
+}
+
+function tracerStep(){
+  const s=SYSTEMS[cur],v=s.vals,o=OUT;
+  s.f(tr.x,tr.y,tr.z,v,o);
+  tr.x+=o[0]*s.dt;tr.y+=o[1]*s.dt;tr.z+=o[2]*s.dt;
+  const dx=tr.x-cam.cz[0],dy=tr.y-cam.cz[1],dz=tr.z-cam.cz[2];
+  const gr=Math.max(s.R*7,cam.R*6)+3;
+  if(!(dx*dx+dy*dy+dz*dz<gr*gr)){
+    tr.x=s.center[0]+(Math.random()*2-1)*s.seedR*.5;
+    tr.y=s.center[1]+(Math.random()*2-1)*s.seedR*.5;
+    tr.z=s.center[2]+(Math.random()*2-1)*s.seedR*.5;
+    trail.length=0;
+  }
+  trail.push(tr.x,tr.y,tr.z);
+  if(trail.length>TRAILCAP*3)trail.splice(0,trail.length-TRAILCAP*3);
+}
+
+/* ---------- auto-framing & figure condition ---------- */
+function statsCycle(){
+  if(!running)return;
+  if(statsHold>0){statsHold--;escAcc=0;return}
+  const s=SYSTEMS[cur];
+  let mnx=1e30,mny=1e30,mnz=1e30,mxx=-1e30,mxy=-1e30,mxz=-1e30,cnt=0;
+  const lim=(cam.R*3.5)*(cam.R*3.5),cx=cam.cz[0],cy=cam.cz[1],cz=cam.cz[2];
+  for(let i=0;i<N;i++){
+    const j=i*3,x=P[j],y=P[j+1],z=P[j+2];
+    const dx=x-cx,dy=y-cy,dz=z-cz;
+    if(dx*dx+dy*dy+dz*dz>lim)continue;
+    cnt++;
+    if(x<mnx)mnx=x;if(x>mxx)mxx=x;
+    if(y<mny)mny=y;if(y>mxy)mxy=y;
+    if(z<mnz)mnz=z;if(z>mxz)mxz=z;
+  }
+  if(cnt>N*.4){
+    targetC[0]=(mnx+mxx)/2;targetC[1]=(mny+mxy)/2;targetC[2]=(mnz+mxz)/2;
+    const hd=Math.hypot(mxx-mnx,mxy-mny,mxz-mnz);
+    targetR=clamp(hd*.51,s.R*.18,s.R*8);
+  }
+  const escRate=escAcc/36/N;escAcc=0;
+  msS=msS*.6+meanStep*.4;
+  const restA=msS<cam.R*4.5e-4,escA=escRate>.02;
+  escVote=escA?Math.min(escVote+1,6):Math.max(escVote-1,-2);
+  restVote=(restA&&!escA)?Math.min(restVote+1,6):Math.max(restVote-1,-2);
+  let want=null;
+  if(escVote>=3)want='escape';else if(restVote>=3)want='rest';
+  if(want!==noteState){noteState=want;renderNote()}
+}
+function renderNote(){
+  const el=$('#figNote');
+  if(!noteState){el.classList.remove('show');return}
+  el.textContent=noteState==='rest'
+    ?'The flow has come to rest — every trajectory has settled onto a fixed point. Stir the parameters below to wake the figure.'
+    :'Trajectories are escaping the plate and being reseeded at its centre. The parameters have wandered beyond the basin of attraction.';
+  el.classList.add('show');
+}
+
+/* ---------- camera ---------- */
+function updateCamera(now,dtms){
+  const k=clamp(dtms/16.7,.2,4);
+  if(trans){
+    const t=clamp((now-trans.t0)/trans.dur,0,1);
+    const e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    cam.yaw=trans.from.yaw+(trans.to.yaw-trans.from.yaw)*e;
+    cam.pitch=trans.from.pitch+(trans.to.pitch-trans.from.pitch)*e;
+    cam.zoom=trans.from.zoom+(trans.to.zoom-trans.from.zoom)*e;
+    zoomT=trans.to.zoom;
+    if(t>=1)trans=null;
+  }else{
+    if(pointers.size===0){
+      cam.yaw+=vYaw*k;cam.pitch+=vPitch*k;
+      vYaw*=Math.pow(.93,k);vPitch*=Math.pow(.9,k);
+      if(Math.abs(vYaw)<1e-4)vYaw=0;if(Math.abs(vPitch)<1e-4)vPitch=0;
+      if(orbit)cam.yaw+=.0034*k;
+    }
+    cam.zoom+=(zoomT-cam.zoom)*Math.min(1,.14*k);
+  }
+  cam.pitch=clamp(cam.pitch,-1.35,1.35);
+  cam.zoom=clamp(cam.zoom,.45,3.4);
+  cam.cz[0]+=(targetC[0]-cam.cz[0])*Math.min(1,.05*k);
+  cam.cz[1]+=(targetC[1]-cam.cz[1])*Math.min(1,.05*k);
+  cam.cz[2]+=(targetC[2]-cam.cz[2])*Math.min(1,.05*k);
+  const mx=cam.R*.014*k,dr=targetR-cam.R;
+  cam.R+=clamp(dr,-mx,mx);
+}
+
+/* ---------- main loop ---------- */
+function loop(now){
+  requestAnimationFrame(loop);
+  let dtms=now-last;last=now;
+  if(dtms>100)dtms=100;if(dtms<0)dtms=0;
+  updateCamera(now,dtms);
+  if(running){
+    acc+=dtms;let it=0;
+    while(acc>=16.7&&it<3){integrate();tracerStep();acc-=16.7;it++}
+    if(it===3)acc=0;
+  }else acc=0;
+  draw(dtms);
+  if(++tick%3===0)updateAzEl();
+  if(frameCount%36===0)statsCycle();
+}
+function updateAzEl(){
+  const az=Math.round(((cam.yaw*180/Math.PI)%360+360)%360);
+  const el=Math.round(cam.pitch*180/Math.PI);
+  $('#capAz').textContent=String(az).padStart(3,'0');
+  $('#capEl').textContent=(el<0?'−':'+')+String(Math.abs(el)).padStart(2,'0');
+}
+
+/* ---------- plate management ---------- */
+function reseedAll(){
+  const s=SYSTEMS[cur];
+  for(let i=0;i<N;i++){
+    const j=i*3;
+    P[j]=s.center[0]+(Math.random()*2-1)*s.seedR;
+    P[j+1]=s.center[1]+(Math.random()*2-1)*s.seedR;
+    P[j+2]=s.center[2]+(Math.random()*2-1)*s.seedR;
+    Q[j]=P[j];Q[j+1]=P[j+1];Q[j+2]=P[j+2];
+  }
+  tr.x=s.center[0]+(Math.random()*2-1)*s.seedR*.5;
+  tr.y=s.center[1]+(Math.random()*2-1)*s.seedR*.5;
+  tr.z=s.center[2]+(Math.random()*2-1)*s.seedR*.5;
+  trail.length=0;msS=1e9;escAcc=0;
+}
+function clearInk(){
+  ictx.setTransform(1,0,0,1,0,0);
+  ictx.clearRect(0,0,CV.width,CV.height);
+}
+function buildParams(sys){
+  const box=$('#paramsBox');box.innerHTML='';
+  sys.params.forEach(p=>{
+    sys.vals[p.k]=p.def;
+    const row=document.createElement('label');row.className='prow';
+    row.innerHTML=`<span class="sym">${p.sym}</span><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}" aria-label="parameter ${p.sym}"><span class="val"></span>`;
+    const inp=row.querySelector('input'),val=row.querySelector('.val');
+    const dec=p.step<.01?3:p.step<.1?2:p.step<1?1:0;
+    const show=()=>val.textContent=(+inp.value).toFixed(dec);
+    show();
+    inp.addEventListener('input',()=>{sys.vals[p.k]=parseFloat(inp.value);show()});
+    box.appendChild(row);
+  });
+}
+
+function setSystem(i){
+  cur=i;const s=SYSTEMS[i];
+  if(!running)setRunning(true);
+  buildParams(s);reseedAll();clearInk();
+  const ty=cam.yaw+wrapAngle(s.view.yaw-cam.yaw);
+  trans={t0:performance.now(),dur:REDUCED?1:950,
+    from:{yaw:cam.yaw,pitch:cam.pitch,zoom:cam.zoom},
+    to:{yaw:ty,pitch:s.view.pitch,zoom:1}};
+  zoomT=1;
+  cam.cz=[...s.center];targetC=[...s.center];cam.R=s.R;targetR=s.R;
+  statsHold=60;escVote=-2;restVote=-2;noteState=null;renderNote();
+  document.querySelectorAll('#indexList .row').forEach((r,k)=>r.classList.toggle('active',k===i));
+  $('#notesTitle').textContent=`Notes on Fig. ${s.numeral} — ${s.name}`;
+  $('#eqBox').innerHTML=s.eq;
+  $('#figText').textContent=s.note;
+  $('#capMain').innerHTML=`Fig. ${s.numeral} · ${s.name} — <em>${s.epithet}</em>`;
+  document.title=`Fig. ${s.numeral} · ${s.name} — The Unstable Atlas`;
+}
+
+/* ---------- controls ---------- */
+function setRunning(r){
+  running=r;
+  document.body.classList.toggle('paused',!r);
+  $('#cmdPause').textContent=r?'Pause':'Resume';
+  $('#cmdPause').setAttribute('aria-pressed',String(!r));
+  $('#liveWord').textContent=r?'Etching':'Paused';
+  $('#rhState').textContent=r?'Live':'Paused';
+}
+function setOrbit(o){orbit=o;$('#cmdOrbit').setAttribute('aria-pressed',String(o))}
+
+ $('#cmdPause').addEventListener('click',e=>{setRunning(!running);if(e.detail>0)e.currentTarget.blur()});
+ $('#cmdReseed').addEventListener('click',e=>{reseedAll();if(e.detail>0)e.currentTarget.blur()});
+ $('#cmdClear').addEventListener('click',e=>{clearInk();if(e.detail>0)e.currentTarget.blur()});
+ $('#cmdOrbit').addEventListener('click',e=>{setOrbit(!orbit);if(e.detail>0)e.currentTarget.blur()});
+ $('#cmdSave').addEventListener('click',e=>{savePlate();if(e.detail>0)e.currentTarget.blur()});
+ $('#inkRange').addEventListener('input',e=>{
+  inkMul=parseFloat(e.target.value);
+  $('#inkVal').textContent=inkMul.toFixed(2)+'×';
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.target instanceof HTMLInputElement)return;
+  if(e.code==='Space'){e.preventDefault();setRunning(!running)}
+  else if(e.code==='KeyR')reseedAll();
+  else if(e.code==='KeyC')clearInk();
+  else if(e.code==='KeyO')setOrbit(!orbit);
+  else if(e.code==='KeyS')savePlate();
+  else if(/^Digit[1-9]$/.test(e.code))setSystem(+e.code.slice(5)-1);
+});
+
+/* ---------- pointer: orbit, inertia, pinch ---------- */
+const pointers=new Map();let pinchD=0;
+CV.addEventListener('pointerdown',e=>{
+  CV.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  trans=null;vYaw=0;vPitch=0;
+  if(pointers.size===2){const a=[...pointers.values()];pinchD=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}
+});
+CV.addEventListener('pointermove',e=>{
+  const p=pointers.get(e.pointerId);if(!p)return;
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;
+  if(pointers.size===1){
+    cam.yaw-=dx*.0055;
+    cam.pitch=clamp(cam.pitch+dy*.0042,-1.35,1.35);
+    vYaw=clamp(-dx*.0055,-.11,.11);
+    vPitch=clamp(dy*.0042,-.06,.06);
+    setOrbit(false);
+  }
+  p.x=e.clientX;p.y=e.clientY;
+  if(pointers.size===2){
+    const a=[...pointers.values()];
+    const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+    if(pinchD>0)zoomT=clamp(zoomT*d/pinchD,.45,3.4);
+    pinchD=d;
+  }
+});
+const endP=e=>{pointers.delete(e.pointerId);if(pointers.size<2)pinchD=0};
+CV.addEventListener('pointerup',endP);
+CV.addEventListener('pointercancel',endP);
+CV.addEventListener('dblclick',()=>{
+  const s=SYSTEMS[cur],ty=cam.yaw+wrapAngle(s.view.yaw-cam.yaw);
+  trans={t0:performance.now(),dur:600,from:{yaw:cam.yaw,pitch:cam.pitch,zoom:cam.zoom},to:{yaw:ty,pitch:s.view.pitch,zoom:1}};
+  zoomT=1;
+});
+CV.addEventListener('wheel',e=>{
+  e.preventDefault();
+  zoomT=clamp(zoomT*Math.exp(-e.deltaY*.0011),.45,3.4);
+},{passive:false});
+
+/* ---------- export the plate as a PNG print ---------- */
+function savePlate(){
+  const s=SYSTEMS[cur];
+  const w=CV.width,h=CV.height;if(!w)return;
+  const m=Math.round(18*dpr),capH=Math.round(58*dpr);
+  const out=document.createElement('canvas');
+  out.width=w+2*m;out.height=h+m+capH;
+  const c=out.getContext('2d');
+  c.fillStyle='#f4eee1';c.fillRect(0,0,out.width,out.height);
+  c.drawImage(CV,m,m);
+  c.strokeStyle='rgba(34,29,20,.65)';c.lineWidth=1*dpr;
+  c.strokeRect(m+.5,m+.5,w-1,h-1);
+  c.strokeStyle='#9e2b25';
+  const reg=(x,y)=>{c.beginPath();c.moveTo(x-5*dpr,y);c.lineTo(x+5*dpr,y);c.moveTo(x,y-5*dpr);c.lineTo(x,y+5*dpr);c.stroke()};
+  reg(m+12*dpr,m+12*dpr);reg(m+w-12*dpr,m+12*dpr);reg(m+12*dpr,m+h-12*dpr);reg(m+w-12*dpr,m+h-12*dpr);
+  const az=Math.round(((cam.yaw*180/Math.PI)%360+360)%360);
+  const el=Math.round(cam.pitch*180/Math.PI);
+  c.textAlign='left';c.textBaseline='alphabetic';
+  c.fillStyle='#4d463a';c.font=`${10*dpr}px "Space Mono",monospace`;
+  c.fillText(`FIG. ${s.numeral} — ${s.name.toUpperCase()} · ${s.epithet.toUpperCase()}`,m,h+m+26*dpr);
+  c.fillStyle='#8a8170';
+  c.fillText(`AZIMUTH ${az}° · ELEVATION ${el}° · ${N.toLocaleString('en-US')} TRAJECTORIES · THE UNSTABLE ATLAS`,m,h+m+44*dpr);
+  const a=document.createElement('a');
+  a.download=`unstable-atlas-fig-${cur+1}-${s.id}.png`;
+  a.href=out.toDataURL('image/png');
+  a.click();
+}
+
+/* ---------- sizing (preserves the etching across resizes) ---------- */
+let resizeTO=0;
+function fitCanvas(){
+  const r=inner.getBoundingClientRect();
+  const w=Math.max(2,Math.round(r.width)),h=Math.max(2,Math.round(r.height));
+  if(Math.abs(w-cssW)<2&&Math.abs(h-cssH)<2)return;
+  let old=null;
+  if(CV.width>0&&cssW>2){
+    old=document.createElement('canvas');old.width=CV.width;old.height=CV.height;
+    old.getContext('2d').drawImage(CV,0,0);
+  }
+  cssW=w;cssH=h;dpr=Math.min(window.devicePixelRatio||1,2);
+  CV.width=Math.round(w*dpr);CV.height=Math.round(h*dpr);
+  ictx.setTransform(dpr,0,0,dpr,0,0);
+  if(old){ictx.setTransform(1,0,0,1,0,0);ictx.drawImage(old,0,0,CV.width,CV.height);ictx.setTransform(dpr,0,0,dpr,0,0)}
+}
+new ResizeObserver(()=>{clearTimeout(resizeTO);resizeTO=setTimeout(fitCanvas,120)}).observe(inner);
+
+/* ---------- boot ---------- */
+const list=$('#indexList');
+SYSTEMS.forEach((s,i)=>{
+  const b=document.createElement('button');b.type='button';b.className='row';
+  b.innerHTML=`<span class="num">${s.numeral}</span><span class="name">${s.name}</span><span class="epi">${s.epithet}</span>`;
+  b.addEventListener('click',()=>setSystem(i));
+  list.appendChild(b);
+});
+ $('#capCnt').textContent=N.toLocaleString('en-US');
+setOrbit(orbit);
+setSystem(0);
+/* a slow cinematic settle into the first plate */
+if(!REDUCED){
+  cam.yaw=SYSTEMS[0].view.yaw-.7;cam.pitch=SYSTEMS[0].view.pitch+.25;cam.zoom=.55;
+  trans={t0:performance.now()+150,dur:1600,
+    from:{yaw:cam.yaw,pitch:cam.pitch,zoom:.55},
+    to:{yaw:SYSTEMS[0].view.yaw,pitch:SYSTEMS[0].view.pitch,zoom:1}};
+}
+fitCanvas();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

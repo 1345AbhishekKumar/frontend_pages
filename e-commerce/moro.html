@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURO Type-01 — Hand-Stitched Osaka Leather</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@500;700;800;900&family=Space+Mono:wght@400;700&family=Archivo:wght@300;400;500;600;700&family=Bodoni+Moda:ital,wght@1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cotton:#EFE9E3;
+    --cotton-warm:#E8E1D8;
+    --cotton-shadow:#DCD4C9;
+    --cotton-dark:#C9BFB1;
+    --graphite:#2B2B2B;
+    --graphite-soft:#383838;
+    --graphite-dim:#1F1F1F;
+    --graphite-void:#181818;
+    --bronze:#B07D5B;
+    --bronze-light:#C89476;
+    --bronze-dim:#8A5F44;
+    --bronze-glow:#D4A582;
+    --paper:#F5F1EB;
+    --alabaster:#FAF7F2;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+  body{
+    background:var(--cotton);
+    color:var(--graphite);
+    font-family:'Archivo',sans-serif;
+    font-weight:400;
+    overflow-x:hidden;
+    text-rendering:optimizeLegibility;
+  }
+  /* Grain noise overlay — fixed across entire page */
+  body::after{
+    content:'';
+    position:fixed;inset:0;
+    pointer-events:none;
+    z-index:9999;
+    opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 500 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:multiply;
+  }
+  /* Vignette */
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    pointer-events:none;
+    z-index:9998;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(43,43,43,0.07) 100%);
+  }
+
+  .stencil{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;
+    letter-spacing:-.02em;
+    line-height:.82;
+    text-transform:uppercase;
+  }
+  .stencil-700{font-weight:700}
+  .stencil-800{font-weight:800}
+  .mono{
+    font-family:'Space Mono',monospace;
+    font-weight:400;
+    letter-spacing:.04em;
+  }
+  .mono-bold{font-weight:700}
+  .label-mono{
+    font-family:'Space Mono',monospace;
+    font-size:10px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--graphite-soft);
+    font-weight:400;
+  }
+  .label-mono-bronze{color:var(--bronze)}
+  .label-mono-light{color:rgba(250,247,242,.65)}
+  .serif-it{font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400}
+
+  .mech-border{border:2px solid var(--graphite)}
+  .mech-border-bronze{border:2px solid var(--bronze)}
+  .mech-border-light{border:2px solid rgba(250,247,242,.3)}
+  .hairline{border:1px solid var(--graphite)}
+  .hairline-bronze{border:1px solid var(--bronze)}
+
+  /* Easing variable — heavy mechanical drag */
+  :root{
+    --mech:cubic-bezier(0.22,1,0.36,1);
+    --snap:cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* Brand mark */
+  .brand{
+    position:fixed;top:22px;left:24px;z-index:100;
+    mix-blend-mode:multiply;
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .brand .stencil{font-size:24px;letter-spacing:.04em}
+  .brand .label-mono{font-size:8px;letter-spacing:.32em}
+  .brand-right{
+    position:fixed;top:22px;right:24px;z-index:100;
+    mix-blend-mode:multiply;text-align:right;
+  }
+  .brand-right .label-mono{font-size:8px;letter-spacing:.32em;display:block}
+
+  /* Massive block CTA */
+  .block-cta{
+    display:inline-flex;align-items:center;gap:18px;
+    padding:18px 36px;
+    background:var(--graphite);color:var(--alabaster);
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:800;font-size:18px;letter-spacing:.18em;text-transform:uppercase;
+    text-decoration:none;border:2px solid var(--graphite);
+    cursor:pointer;position:relative;overflow:visible;
+    transition:transform .9s var(--mech),background .9s var(--mech),box-shadow .9s var(--mech);
+  }
+  .block-cta .arrow{
+    display:inline-block;width:22px;height:2px;background:currentColor;
+    position:relative;transition:width .9s var(--mech);
+  }
+  .block-cta .arrow::after{
+    content:'';position:absolute;right:-1px;top:50%;
+    width:8px;height:8px;border-right:2px solid currentColor;border-top:2px solid currentColor;
+    transform:translateY(-50%) rotate(45deg);
+  }
+  .block-cta:hover{
+    transform:translateY(-4px);
+    background:var(--graphite-dim);
+    box-shadow:0 12px 0 -2px var(--bronze),0 24px 40px -8px rgba(0,0,0,.4);
+  }
+  .block-cta:hover .arrow{width:34px}
+  .block-cta-light{background:transparent;color:var(--alabaster);border-color:var(--alabaster)}
+  .block-cta-light:hover{background:var(--alabaster);color:var(--graphite);box-shadow:0 12px 0 -2px var(--bronze),0 24px 40px -8px rgba(0,0,0,.5)}
+  .block-cta-bronze{background:var(--bronze);border-color:var(--bronze);color:var(--alabaster)}
+  .block-cta-bronze:hover{background:var(--bronze-dim);border-color:var(--bronze-dim)}
+
+  /* Particle burst container */
+  .particle-burst{
+    position:absolute;inset:0;pointer-events:none;overflow:visible;
+  }
+  .particle{
+    position:absolute;width:4px;height:4px;
+    background:var(--bronze);border-radius:50%;
+    opacity:0;
+  }
+  .block-cta:hover .particle{
+    animation:particleBurst .9s var(--mech) forwards;
+  }
+  @keyframes particleBurst{
+    0%{opacity:1;transform:translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}
+  }
+
+  section{position:relative;padding:11vh 5vw}
+
+  /* ============ SECTION 1: HERO ============ */
+  .hero{
+    min-height:100vh;
+    padding:0 5vw 8vh;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    overflow:hidden;position:relative;
+  }
+  .hero-bg-text{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%) rotate(-5deg);
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;
+    font-size:clamp(120px,15vw,260px);
+    letter-spacing:-.02em;line-height:.8;
+    color:var(--graphite);
+    opacity:.06;
+    white-space:nowrap;
+    pointer-events:none;
+    z-index:1;
+    text-transform:uppercase;
+  }
+  .hero-bg-text .accent{color:var(--bronze);opacity:1}
+  .hero-stage{
+    position:relative;z-index:2;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:end;gap:4vw;
+    width:100%;
+  }
+  .hero-side-left{
+    display:flex;flex-direction:column;gap:32px;
+    padding-bottom:40px;
+  }
+  .hero-edition{
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .hero-edition .num{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:64px;line-height:.85;color:var(--graphite);
+  }
+  .hero-edition .num .of{color:var(--bronze);font-size:32px}
+  .hero-model-wrap{
+    position:relative;
+    transform:rotate(-5deg);
+    transition:transform .9s var(--mech);
+    max-width:46vw;
+  }
+  .hero-model{
+    position:relative;
+    aspect-ratio:3/4;
+    border:2px solid var(--graphite);
+    overflow:hidden;
+    background:var(--graphite);
+    box-shadow:14px 14px 0 -2px var(--bronze),30px 30px 60px -10px rgba(0,0,0,.25);
+  }
+  .hero-model-img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    filter:contrast(1.08) brightness(.95) grayscale(.05);
+    transition:opacity .9s var(--mech);
+  }
+  .hero-blueprint{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    opacity:0;
+    transition:opacity .9s var(--mech);
+    mix-blend-mode:screen;
+    filter:brightness(1.4) contrast(1.5);
+  }
+  .hero-model::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(to top,rgba(43,43,43,.35) 0%,transparent 50%);
+    pointer-events:none;
+  }
+  .hero-model-label{
+    position:absolute;top:14px;left:14px;
+    color:var(--alabaster);
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+    z-index:3;
+    display:flex;align-items:center;gap:8px;
+    text-shadow:0 1px 4px rgba(0,0,0,.6);
+  }
+  .hero-model-label::before{content:'';width:14px;height:1px;background:var(--bronze-light)}
+  .hero-model-coords{
+    position:absolute;bottom:14px;right:14px;
+    color:rgba(250,247,242,.7);
+    font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;
+    z-index:3;text-align:right;line-height:1.6;
+  }
+  .hero-side-right{
+    display:flex;flex-direction:column;gap:28px;
+    padding-bottom:40px;align-items:flex-start;
+  }
+  .hero-title-block{
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .hero-title-block .stencil{
+    font-size:clamp(56px,8vw,128px);
+    color:var(--graphite);line-height:.82;
+  }
+  .hero-title-block .stencil .bronze{color:var(--bronze)}
+  .hero-tagline{
+    font-family:'Space Mono',monospace;font-size:11px;line-height:1.8;
+    color:var(--graphite-soft);max-width:280px;letter-spacing:.04em;
+  }
+  .hero-tagline .bronze{color:var(--bronze)}
+
+  /* Pattern Toggle */
+  .pattern-toggle{
+    position:absolute;
+    bottom:32px;left:5vw;
+    z-index:5;
+    display:flex;align-items:center;gap:16px;
+    background:var(--cotton);
+    border:2px solid var(--graphite);
+    padding:10px 16px 10px 14px;
+    transition:transform .9s var(--mech);
+  }
+  .pattern-toggle:hover{transform:translateY(-2px)}
+  .pattern-toggle .label-mono{font-size:9px}
+  .pattern-switch{
+    position:relative;width:52px;height:24px;
+    background:var(--cotton-shadow);
+    border:2px solid var(--graphite);
+    cursor:pointer;
+    transition:background .9s var(--mech);
+  }
+  .pattern-switch::before{
+    content:'';position:absolute;
+    top:1px;left:1px;
+    width:18px;height:18px;
+    background:var(--graphite);
+    transition:transform .9s var(--snap);
+  }
+  .pattern-switch.on{background:var(--bronze)}
+  .pattern-switch.on::before{transform:translateX(26px);background:var(--alabaster)}
+
+  /* Hero corner crosshairs */
+  .crosshair{
+    position:absolute;width:18px;height:18px;
+    z-index:4;pointer-events:none;
+  }
+  .crosshair::before,.crosshair::after{
+    content:'';position:absolute;background:var(--bronze);
+  }
+  .crosshair::before{top:0;left:50%;width:1px;height:100%;transform:translateX(-50%)}
+  .crosshair::after{top:50%;left:0;width:100%;height:1px;transform:translateY(-50%)}
+  .ch-tl{top:8px;left:8px}
+  .ch-tr{top:8px;right:8px}
+  .ch-bl{bottom:8px;left:8px}
+  .ch-br{bottom:8px;right:8px}
+
+  /* Hero scroll cue */
+  .hero-cue{
+    position:absolute;bottom:32px;right:5vw;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    z-index:5;
+  }
+  .hero-cue .label-mono{font-size:9px;writing-mode:vertical-rl;letter-spacing:.4em}
+  .hero-cue .line{width:1px;height:48px;background:var(--graphite);position:relative;overflow:hidden}
+  .hero-cue .line::after{
+    content:'';position:absolute;top:0;left:0;width:100%;height:50%;
+    background:var(--bronze);
+    animation:cueLine 2.2s ease-in-out infinite;
+  }
+  @keyframes cueLine{
+    0%{transform:translateY(-100%)}
+    100%{transform:translateY(200%)}
+  }
+
+  /* ============ SECTION 2: BLUEPRINT GRID ============ */
+  .blueprint{
+    padding:14vh 5vw;
+    display:grid;grid-template-columns:1.1fr 1fr;gap:6vw;align-items:center;
+  }
+  .blueprint-header{grid-column:1 / -1;margin-bottom:4vh;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+  .blueprint-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(48px,7vw,108px);line-height:.82;letter-spacing:-.02em;
+    text-transform:uppercase;color:var(--graphite);
+  }
+  .blueprint-header h2 .bronze{color:var(--bronze)}
+  .blueprint-header .meta{text-align:right;display:flex;flex-direction:column;gap:6px}
+  .blueprint-header .meta .mono{font-size:11px;color:var(--graphite-soft)}
+  .blueprint-header .meta .big{font-family:'Big Shoulders Stencil Display',sans-serif;font-size:28px;font-weight:800;color:var(--bronze)}
+
+  .macro-cluster{
+    position:relative;
+    aspect-ratio:1/1;
+  }
+  .macro-cutout{
+    position:absolute;
+    border:2px solid var(--graphite);
+    overflow:hidden;
+    background:var(--graphite);
+    transition:transform .9s var(--mech),box-shadow .9s var(--mech);
+    cursor:none;
+  }
+  .macro-cutout img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    filter:contrast(1.1) brightness(.93);
+  }
+  .macro-cutout:hover{
+    box-shadow:8px 8px 0 -2px var(--bronze),16px 16px 30px -8px rgba(0,0,0,.3);
+    z-index:10;
+  }
+  .macro-cutout .cutout-label{
+    position:absolute;top:8px;left:8px;
+    color:var(--alabaster);
+    font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.28em;text-transform:uppercase;
+    z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7);
+  }
+  .macro-cutout .cutout-dim{
+    position:absolute;bottom:8px;right:8px;
+    color:var(--bronze-light);
+    font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;
+    z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7);
+  }
+  .mc-1{top:0;left:0;width:62%;height:58%;transform:rotate(-3deg);z-index:2}
+  .mc-2{top:8%;right:0;width:42%;height:46%;transform:rotate(4deg);z-index:3}
+  .mc-3{bottom:0;left:12%;width:50%;height:48%;transform:rotate(-2deg);z-index:1}
+  .mc-1:hover{transform:rotate(-3deg) translateY(-6px)}
+  .mc-2:hover{transform:rotate(4deg) translateY(-6px)}
+  .mc-3:hover{transform:rotate(-2deg) translateY(-6px)}
+
+  .magnifier-lens{
+    position:absolute;
+    width:200px;height:200px;border-radius:50%;
+    border:2px solid var(--bronze);
+    pointer-events:none;opacity:0;
+    background-repeat:no-repeat;
+    box-shadow:0 0 0 2px var(--graphite),0 16px 40px rgba(0,0,0,.5),inset 0 0 0 6px rgba(43,43,43,.85);
+    z-index:20;
+    transition:opacity .4s var(--mech);
+  }
+  .magnifier-lens::after{
+    content:'';position:absolute;inset:6px;border-radius:50%;
+    border:1px solid rgba(176,125,91,.4);
+  }
+  .magnifier-lens::before{
+    content:'';position:absolute;
+    top:50%;left:50%;width:12px;height:12px;
+    transform:translate(-50%,-50%);
+    border:1px solid var(--bronze-light);border-radius:50%;
+    z-index:2;
+  }
+  .magnifier-lens.active{opacity:1}
+
+  .spec-sheet{
+    background:var(--paper);
+    border:2px solid var(--graphite);
+    padding:36px 32px;
+    position:relative;
+    box-shadow:8px 8px 0 -2px var(--bronze);
+  }
+  .spec-sheet::before{
+    content:'';position:absolute;top:8px;left:8px;right:8px;bottom:8px;
+    border:1px dashed rgba(43,43,43,.15);
+    pointer-events:none;
+  }
+  .spec-sheet-title{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:800;font-size:22px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--graphite);
+    padding-bottom:18px;border-bottom:2px solid var(--graphite);
+    margin-bottom:24px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .spec-sheet-title .code{
+    font-family:'Space Mono',monospace;font-size:10px;font-weight:400;
+    color:var(--bronze);letter-spacing:.2em;
+  }
+  .spec-row{
+    display:grid;grid-template-columns:120px 1fr auto;
+    gap:16px;padding:14px 0;
+    border-bottom:1px solid rgba(43,43,43,.12);
+    align-items:baseline;
+  }
+  .spec-row:last-child{border-bottom:none}
+  .spec-row .key{
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--graphite-soft);
+  }
+  .spec-row .val{
+    font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+    color:var(--graphite);letter-spacing:.02em;
+  }
+  .spec-row .val .bronze{color:var(--bronze)}
+  .spec-row .unit{
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;
+    color:var(--bronze);text-transform:uppercase;
+  }
+
+  /* ============ SECTION 3: MATERIAL LIBRARY ============ */
+  .materials{padding:14vh 5vw}
+  .materials-header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:6vh;gap:32px;flex-wrap:wrap;
+  }
+  .materials-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(44px,6.5vw,96px);line-height:.82;letter-spacing:-.02em;
+    text-transform:uppercase;
+  }
+  .materials-header h2 .bronze{color:var(--bronze)}
+  .materials-header .meta{
+    text-align:right;display:flex;flex-direction:column;gap:6px;
+  }
+  .materials-header .meta .mono{font-size:11px;color:var(--graphite-soft)}
+  .swatch-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+    margin-bottom:6vh;
+  }
+  .swatch{
+    cursor:pointer;
+    transition:transform .9s var(--mech);
+  }
+  .swatch:hover{transform:translateY(-8px)}
+  .swatch-img{
+    aspect-ratio:1/1;
+    border:2px solid var(--graphite);
+    overflow:hidden;
+    background:var(--graphite);
+    position:relative;
+    box-shadow:6px 6px 0 -2px var(--bronze);
+    transition:box-shadow .9s var(--mech);
+  }
+  .swatch:hover .swatch-img{box-shadow:10px 10px 0 -2px var(--bronze)}
+  .swatch-img img{
+    width:100%;height:100%;object-fit:cover;
+    filter:contrast(1.08);
+    transition:transform .9s var(--mech);
+  }
+  .swatch:hover .swatch-img img{transform:scale(1.08)}
+  .swatch-img .corner{
+    position:absolute;top:8px;left:8px;
+    color:var(--alabaster);
+    font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;
+    text-shadow:0 1px 3px rgba(0,0,0,.7);
+    z-index:2;
+  }
+  .swatch-info{
+    padding-top:14px;
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  }
+  .swatch-name{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:800;font-size:18px;letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .swatch-code{
+    font-family:'Space Mono',monospace;font-size:9px;
+    color:var(--bronze);letter-spacing:.2em;
+  }
+  .swatch-desc{
+    font-family:'Space Mono',monospace;font-size:9px;
+    color:var(--graphite-soft);letter-spacing:.1em;
+    margin-top:4px;
+  }
+  .materials-footer{
+    border-top:2px solid var(--graphite);
+    padding-top:4vh;
+    display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;
+  }
+  .materials-footer .stencil{
+    font-size:clamp(28px,3.6vw,52px);
+    line-height:.95;letter-spacing:-.01em;
+    text-transform:uppercase;
+  }
+  .materials-footer .stencil .bronze{color:var(--bronze)}
+  .materials-footer .stencil em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;letter-spacing:-.01em;
+  }
+  .materials-footer .meta{
+    text-align:right;display:flex;flex-direction:column;gap:4px;
+  }
+  .materials-footer .meta .mono{font-size:10px;color:var(--graphite-soft)}
+
+  /* ============ SECTION 4: WEIGHT & DRAPE ============ */
+  .drape{padding:14vh 0 14vh 5vw;overflow:hidden;position:relative}
+  .drape-header{
+    padding-right:5vw;margin-bottom:6vh;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;
+  }
+  .drape-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(44px,6.5vw,96px);line-height:.82;letter-spacing:-.02em;
+    text-transform:uppercase;
+  }
+  .drape-header h2 .bronze{color:var(--bronze)}
+  .drape-header .meta{
+    text-align:right;display:flex;flex-direction:column;gap:6px;
+  }
+  .drape-carousel{
+    display:flex;gap:28px;
+    overflow-x:auto;scroll-snap-type:x mandatory;
+    padding-bottom:40px;padding-right:5vw;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .drape-carousel::-webkit-scrollbar{display:none}
+  .drape-clip{
+    flex:0 0 56%;max-width:640px;
+    aspect-ratio:4/5;scroll-snap-align:start;
+    position:relative;border:2px solid var(--graphite);
+    overflow:hidden;background:var(--graphite);
+    box-shadow:8px 8px 0 -2px var(--bronze);
+  }
+  .drape-clip img{
+    width:100%;height:100%;object-fit:cover;
+    animation:drapeZoom 18s ease-in-out infinite alternate;
+    filter:contrast(1.1) brightness(.92);
+  }
+  @keyframes drapeZoom{
+    0%{transform:scale(1) translate(0,0)}
+    100%{transform:scale(1.12) translate(-2%,-2%)}
+  }
+  .drape-clip-info{
+    position:absolute;top:18px;left:18px;right:18px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+    color:var(--alabaster);
+    z-index:2;
+  }
+  .drape-clip-info .num{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:38px;line-height:.85;
+    color:var(--bronze-light);
+  }
+  .drape-clip-info .name{
+    font-family:'Space Mono',monospace;font-size:9px;
+    letter-spacing:.28em;text-transform:uppercase;
+    text-align:right;line-height:1.7;
+    text-shadow:0 1px 4px rgba(0,0,0,.7);
+  }
+  .drape-clip-info .name .strong{color:var(--bronze-light);font-weight:700;display:block;margin-bottom:4px}
+  .drape-clip-spec{
+    position:absolute;bottom:18px;left:18px;
+    color:rgba(250,247,242,.7);
+    font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;
+    z-index:2;
+    text-shadow:0 1px 3px rgba(0,0,0,.7);
+  }
+  .drape-footer{
+    padding-right:5vw;margin-top:4vh;
+    display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap;
+  }
+  .drape-tagline{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;
+    font-size:clamp(32px,5vw,72px);
+    letter-spacing:-.01em;line-height:.85;text-transform:uppercase;
+  }
+  .drape-tagline .bronze{color:var(--bronze)}
+  .drape-tagline em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;
+  }
+  .drape-thumbs{display:flex;gap:10px;align-items:center}
+  .drape-thumb{
+    width:48px;height:14px;
+    background:var(--cotton-shadow);
+    border:2px solid var(--graphite);
+    cursor:pointer;
+    transition:all .9s var(--mech);
+    padding:0;
+  }
+  .drape-thumb.active{background:var(--graphite);width:80px}
+
+  /* ============ SECTION 5: HEIRLOOM TIMELINE ============ */
+  .timeline{padding:14vh 5vw;background:var(--graphite);color:var(--alabaster);overflow:hidden}
+  .timeline-header{
+    text-align:center;margin-bottom:8vh;
+  }
+  .timeline-header .label-mono{color:var(--bronze-light);margin-bottom:24px;display:inline-flex;align-items:center;gap:12px}
+  .timeline-header .label-mono::before,.timeline-header .label-mono::after{content:'';width:24px;height:1px;background:var(--bronze)}
+  .timeline-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(44px,8vw,128px);line-height:.85;letter-spacing:-.02em;
+    text-transform:uppercase;color:var(--alabaster);
+  }
+  .timeline-header h2 .bronze{color:var(--bronze-light)}
+  .timeline-header h2 em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze-light);text-transform:none;
+  }
+  .accordion{
+    display:flex;height:60vh;min-height:480px;gap:8px;
+  }
+  .acc-panel{
+    flex:1;position:relative;overflow:hidden;
+    cursor:pointer;
+    transition:flex .9s var(--mech);
+    border:2px solid var(--graphite-soft);
+    background:var(--graphite);
+  }
+  .acc-panel.active{flex:5}
+  .acc-panel-img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    filter:contrast(1.1) brightness(.7);
+    transition:filter .9s var(--mech),transform 1.2s var(--mech);
+  }
+  .acc-panel.active .acc-panel-img{filter:contrast(1.1) brightness(.85);transform:scale(1.04)}
+  .acc-panel::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(to top,rgba(24,24,24,.85) 0%,transparent 50%);
+    pointer-events:none;
+  }
+  .acc-panel-num{
+    position:absolute;top:24px;left:24px;
+    color:var(--bronze-light);
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:48px;line-height:.85;
+    z-index:3;
+  }
+  .acc-panel-title{
+    position:absolute;bottom:24px;left:24px;right:24px;
+    color:var(--alabaster);
+    z-index:3;
+  }
+  .acc-panel-title .stencil{
+    font-size:clamp(22px,2.4vw,36px);
+    color:var(--alabaster);
+    display:block;
+  }
+  .acc-panel-title .mono{
+    font-size:10px;letter-spacing:.2em;
+    color:var(--bronze-light);
+    display:block;margin-top:8px;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .9s var(--mech) .2s,transform .9s var(--mech) .2s;
+  }
+  .acc-panel.active .acc-panel-title .mono{opacity:1;transform:translateY(0)}
+  .acc-panel-title .desc{
+    font-family:'Space Mono',monospace;font-size:11px;line-height:1.7;
+    color:rgba(250,247,242,.75);letter-spacing:.02em;
+    margin-top:14px;max-width:380px;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .9s var(--mech) .35s,transform .9s var(--mech) .35s;
+  }
+  .acc-panel.active .acc-panel-title .desc{opacity:1;transform:translateY(0)}
+  .acc-panel-hours{
+    position:absolute;top:24px;right:24px;
+    color:var(--bronze-light);
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;
+    text-align:right;
+    z-index:3;
+    opacity:0;transform:translateY(-8px);
+    transition:opacity .9s var(--mech) .25s,transform .9s var(--mech) .25s;
+  }
+  .acc-panel.active .acc-panel-hours{opacity:1;transform:translateY(0)}
+  .acc-panel-hours .big{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:28px;color:var(--alabaster);
+    display:block;line-height:1;margin-top:4px;
+  }
+
+  /* ============ SECTION 6: VISUAL PHILOSOPHY ============ */
+  .philosophy{
+    padding:0;
+    display:grid;grid-template-columns:1fr 1fr;
+    min-height:90vh;
+    background:var(--cotton);
+    overflow:hidden;
+  }
+  .philo-left{
+    position:relative;
+    display:flex;align-items:center;
+    padding:0 4vw;
+    overflow:hidden;
+    background:var(--cotton);
+    border-right:2px solid var(--graphite);
+  }
+  .philo-text{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;
+    font-size:clamp(96px,16vw,260px);
+    line-height:.78;letter-spacing:-.04em;
+    text-transform:uppercase;
+    color:var(--graphite);
+    transform:translateX(-2vw);
+  }
+  .philo-text .bronze{color:var(--bronze)}
+  .philo-text .outline{
+    -webkit-text-stroke:2px var(--graphite);
+    color:transparent;
+  }
+  .philo-left::before{
+    content:'01 / ETHOS';
+    position:absolute;top:32px;left:32px;
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;
+    color:var(--bronze);
+  }
+  .philo-left::after{
+    content:'— FORM FOLLOWS FLESH';
+    position:absolute;bottom:32px;left:32px;
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;
+    color:var(--graphite-soft);
+  }
+  .philo-right{
+    position:relative;
+    background:var(--graphite-void);
+    overflow:hidden;
+    border-left:2px solid var(--graphite);
+  }
+  .philo-right img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    animation:slowPan 24s ease-in-out infinite alternate;
+    filter:contrast(1.15) brightness(.75) grayscale(.3);
+  }
+  @keyframes slowPan{
+    0%{transform:scale(1.08) translate(0,0)}
+    100%{transform:scale(1.2) translate(-3%,-3%)}
+  }
+  .philo-right::after{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at center,transparent 30%,rgba(24,24,24,.7) 100%);
+    pointer-events:none;
+  }
+  .philo-caption{
+    position:absolute;bottom:32px;right:32px;
+    color:var(--alabaster);
+    font-family:'Space Mono',monospace;font-size:11px;line-height:1.7;letter-spacing:.04em;
+    z-index:2;max-width:280px;text-align:right;
+  }
+  .philo-caption .bronze{color:var(--bronze-light)}
+
+  /* ============ SECTION 7: PATINA ARCHIVE ============ */
+  .patina{padding:14vh 5vw}
+  .patina-header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:6vh;gap:32px;flex-wrap:wrap;
+  }
+  .patina-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(44px,6.5vw,96px);line-height:.82;letter-spacing:-.02em;
+    text-transform:uppercase;
+  }
+  .patina-header h2 .bronze{color:var(--bronze)}
+  .patina-header h2 em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;
+  }
+  .patina-header .meta{text-align:right;display:flex;flex-direction:column;gap:6px}
+  .patina-header .meta .mono{font-size:11px;color:var(--graphite-soft)}
+
+  .patina-slider-wrap{
+    position:relative;
+    aspect-ratio:16/9;
+    border:2px solid var(--graphite);
+    overflow:hidden;
+    background:var(--graphite);
+    box-shadow:10px 10px 0 -2px var(--bronze);
+    cursor:ew-resize;user-select:none;
+    max-width:1400px;margin:0 auto;
+  }
+  .patina-img{
+    position:absolute;inset:0;
+    width:100%;height:100%;object-fit:cover;
+    pointer-events:none;
+  }
+  .patina-new{filter:contrast(1.08) brightness(.92) saturate(.85)}
+  .patina-worn{
+    filter:sepia(.5) contrast(1.2) brightness(.82) saturate(.7);
+    z-index:2;
+    clip-path:inset(0 0 0 50%);
+  }
+  .patina-divider{
+    position:absolute;top:0;bottom:0;left:50%;
+    width:2px;background:var(--alabaster);
+    transform:translateX(-50%);
+    z-index:5;pointer-events:none;
+    box-shadow:0 0 20px rgba(0,0,0,.6);
+  }
+  .patina-handle{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:64px;height:64px;border-radius:50%;
+    background:var(--alabaster);
+    border:2px solid var(--graphite);
+    display:flex;align-items:center;justify-content:center;
+    cursor:ew-resize;z-index:6;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+    transition:transform .5s var(--snap);
+  }
+  .patina-handle::before,.patina-handle::after{
+    content:'';position:absolute;
+    width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;
+  }
+  .patina-handle::before{border-right:8px solid var(--graphite);left:20px}
+  .patina-handle::after{border-left:8px solid var(--graphite);right:20px}
+  .patina-handle:hover{transform:translate(-50%,-50%) scale(1.08)}
+  .patina-handle:active{transform:translate(-50%,-50%) scale(.95)}
+  .patina-labels{
+    position:absolute;top:24px;left:24px;right:24px;
+    display:flex;justify-content:space-between;
+    pointer-events:none;z-index:4;
+  }
+  .patina-labels span{
+    background:rgba(24,24,24,.7);
+    backdrop-filter:blur(6px);
+    color:var(--alabaster);
+    padding:8px 14px;
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+    border:1px solid rgba(176,125,91,.5);
+  }
+  .patina-labels .right{color:var(--bronze-light)}
+  .patina-corners{
+    position:absolute;bottom:24px;left:24px;right:24px;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    pointer-events:none;z-index:4;
+    color:rgba(250,247,242,.65);
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;
+  }
+  .patina-footer{
+    margin-top:5vh;text-align:center;
+    display:flex;flex-direction:column;gap:10px;align-items:center;
+  }
+  .patina-footer .mono{
+    font-size:13px;line-height:1.8;color:var(--bronze);letter-spacing:.18em;text-transform:uppercase;
+  }
+  .patina-footer .mono .strong{font-weight:700;color:var(--graphite)}
+
+  /* ============ SECTION 8: LIVING STORIES ============ */
+  .stories{padding:14vh 5vw;overflow:hidden;position:relative}
+  .stories-header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:8vh;gap:32px;flex-wrap:wrap;
+  }
+  .stories-header h2{
+    font-family:'Big Shoulders Stencil Display',sans-serif;font-weight:900;
+    font-size:clamp(44px,6.5vw,96px);line-height:.82;letter-spacing:-.02em;
+    text-transform:uppercase;
+  }
+  .stories-header h2 .bronze{color:var(--bronze)}
+  .stories-header h2 em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;
+  }
+  .stories-header .meta{
+    text-align:right;display:flex;flex-direction:column;gap:6px;
+  }
+  .stories-header .meta .mono{font-size:11px;color:var(--graphite-soft)}
+
+  .collage{
+    position:relative;
+    height:80vh;min-height:600px;
+    margin:0 auto;max-width:1400px;
+  }
+  .collage-item{
+    position:absolute;
+    border:2px solid var(--graphite);
+    overflow:hidden;
+    background:var(--graphite);
+    transition:transform .9s var(--mech),box-shadow .9s var(--mech);
+    box-shadow:6px 6px 0 -2px var(--bronze),12px 12px 30px -8px rgba(0,0,0,.3);
+  }
+  .collage-item img{
+    width:100%;height:100%;object-fit:cover;
+    filter:contrast(1.08) brightness(.95);
+    transition:transform .9s var(--mech);
+  }
+  .collage-item:hover{
+    z-index:10;
+    box-shadow:10px 10px 0 -2px var(--bronze),20px 20px 50px -10px rgba(0,0,0,.4);
+  }
+  .collage-item:hover img{transform:scale(1.06)}
+  .collage-item .ci-num{
+    position:absolute;top:10px;left:10px;
+    color:var(--alabaster);
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:24px;
+    z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.7);
+  }
+  .ci-1{top:0;left:5%;width:32%;height:55%;transform:rotate(-5deg)}
+  .ci-2{top:8%;left:32%;width:28%;height:48%;transform:rotate(4deg);z-index:2}
+  .ci-3{top:0;right:5%;width:30%;height:60%;transform:rotate(-3deg)}
+  .ci-4{bottom:0;left:14%;width:34%;height:50%;transform:rotate(3deg);z-index:3}
+  .ci-5{bottom:5%;right:8%;width:32%;height:52%;transform:rotate(-4deg);z-index:2}
+  .ci-1:hover{transform:rotate(-5deg) translateY(-8px) scale(1.02)}
+  .ci-2:hover{transform:rotate(4deg) translateY(-8px) scale(1.02)}
+  .ci-3:hover{transform:rotate(-3deg) translateY(-8px) scale(1.02)}
+  .ci-4:hover{transform:rotate(3deg) translateY(-8px) scale(1.02)}
+  .ci-5:hover{transform:rotate(-4deg) translateY(-8px) scale(1.02)}
+
+  .stories-footer{
+    margin-top:6vh;display:flex;justify-content:flex-end;
+  }
+  .stories-link{
+    display:inline-flex;align-items:center;gap:14px;
+    color:var(--bronze);text-decoration:none;
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    transition:gap .9s var(--mech),color .9s var(--mech);
+    border-bottom:1px solid var(--bronze);
+    padding-bottom:6px;
+  }
+  .stories-link .arrow{display:inline-block;width:24px;height:1px;background:currentColor;position:relative;transition:width .9s var(--mech)}
+  .stories-link .arrow::after{content:'';position:absolute;right:0;top:50%;width:6px;height:6px;border-right:1px solid currentColor;border-top:1px solid currentColor;transform:translateY(-50%) rotate(45deg)}
+  .stories-link:hover{gap:20px;color:var(--graphite)}
+  .stories-link:hover .arrow{width:36px}
+
+  /* ============ SECTION 9: THE MAKER ============ */
+  .maker{
+    position:relative;
+    min-height:100vh;
+    padding:0;
+    overflow:hidden;
+    background:var(--graphite-void);
+  }
+  .maker-img-wrap{
+    position:absolute;inset:0;
+    overflow:hidden;
+  }
+  .maker-img-wrap img{
+    width:100%;height:100%;object-fit:cover;
+    filter:grayscale(.7) contrast(1.15) brightness(.85) sepia(.15);
+    animation:slowPan 30s ease-in-out infinite alternate;
+  }
+  .maker-img-wrap::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(to top,rgba(24,24,24,.6) 0%,transparent 40%),
+               linear-gradient(to right,rgba(24,24,24,.4) 0%,transparent 50%);
+    pointer-events:none;
+  }
+  .maker-crosshair-tl,.maker-crosshair-tr{
+    position:absolute;top:32px;
+    color:var(--bronze-light);
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+    z-index:5;
+    display:flex;align-items:center;gap:8px;
+  }
+  .maker-crosshair-tl{left:32px}
+  .maker-crosshair-tr{right:32px}
+  .maker-crosshair-tl::before,.maker-crosshair-tr::after{content:'';width:20px;height:1px;background:var(--bronze-light)}
+
+  .maker-bounding{
+    position:absolute;
+    bottom:0;left:0;right:0;
+    padding:5vh 6vw;
+    background:var(--cotton);
+    border-top:2px solid var(--graphite);
+    z-index:4;
+    clip-path:polygon(0 12%, 100% 0, 100% 100%, 0 100%);
+    display:grid;grid-template-columns:1fr 1fr;gap:6vw;align-items:end;
+  }
+  .maker-bounding::before{
+    content:'';position:absolute;top:32px;left:32px;
+    width:24px;height:24px;
+    border-top:2px solid var(--bronze);
+    border-left:2px solid var(--bronze);
+  }
+  .maker-info{
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .maker-info .label-mono{color:var(--bronze)}
+  .maker-name{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:clamp(48px,7vw,108px);
+    line-height:.85;letter-spacing:-.02em;
+    text-transform:uppercase;color:var(--graphite);
+  }
+  .maker-name .bronze{color:var(--bronze)}
+  .maker-name em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;
+  }
+  .maker-quote{
+    font-family:'Space Mono',monospace;font-size:12px;line-height:1.8;
+    color:var(--graphite-soft);max-width:420px;letter-spacing:.02em;
+  }
+  .maker-quote .bronze{color:var(--bronze);font-weight:700}
+  .maker-stats{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:24px;align-self:end;
+  }
+  .maker-stat{
+    display:flex;flex-direction:column;gap:6px;
+    padding-top:14px;border-top:2px solid var(--graphite);
+  }
+  .maker-stat .label-mono{font-size:9px}
+  .maker-stat .val{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:36px;line-height:.9;color:var(--graphite);
+  }
+  .maker-stat .val .bronze{color:var(--bronze)}
+  .maker-stat .val em{
+    font-family:'Bodoni Moda',serif;font-style:italic;font-weight:400;
+    color:var(--bronze);text-transform:none;font-size:.6em;
+  }
+
+  /* ============ SECTION 10: FOOTER ============ */
+  .footer{
+    background:var(--graphite-void);
+    color:var(--alabaster);
+    padding:18vh 5vw 6vh;
+    position:relative;
+    overflow:hidden;
+  }
+  .footer::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 30%,rgba(176,125,91,.06) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .footer-grain{
+    position:absolute;inset:0;
+    pointer-events:none;
+    opacity:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:screen;
+    transition:opacity .9s var(--mech);
+  }
+  .footer:hover .footer-grain{opacity:.12;animation:grainShift 1.4s steps(4) infinite}
+  @keyframes grainShift{
+    0%{transform:translate(0,0)}
+    25%{transform:translate(-4px,2px)}
+    50%{transform:translate(3px,-3px)}
+    75%{transform:translate(-2px,4px)}
+    100%{transform:translate(0,0)}
+  }
+  .footer-label{
+    display:flex;align-items:center;justify-content:center;gap:16px;
+    margin-bottom:5vh;position:relative;
+  }
+  .footer-label::before,.footer-label::after{content:'';width:32px;height:1px;background:var(--bronze)}
+  .footer-label .label-mono{color:var(--bronze-light)}
+  .footer-headline{
+    font-family:'Space Mono',monospace;font-weight:700;
+    font-size:clamp(36px,7vw,128px);
+    letter-spacing:.04em;line-height:.9;
+    text-align:center;
+    color:var(--alabaster);
+    margin-bottom:8vh;
+    text-transform:uppercase;
+    position:relative;
+  }
+  .footer-headline .bronze{color:var(--bronze-light)}
+  .footer-headline .dot{color:var(--bronze)}
+  .footer-cta-row{
+    display:flex;justify-content:center;margin-bottom:5vh;position:relative;
+  }
+  .footer-stock{
+    text-align:center;margin-bottom:10vh;
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    color:rgba(250,247,242,.5);
+    position:relative;
+  }
+  .footer-stock .bronze{color:var(--bronze-light)}
+  .footer-stock .num{
+    font-family:'Big Shoulders Stencil Display',sans-serif;
+    font-weight:900;font-size:20px;color:var(--bronze-light);
+    letter-spacing:.04em;
+  }
+  .footer-nav{
+    display:flex;justify-content:center;gap:0;flex-wrap:wrap;
+    border-top:1px solid rgba(250,247,242,.1);
+    border-bottom:1px solid rgba(250,247,242,.1);
+    margin-bottom:8vh;position:relative;
+  }
+  .footer-nav a{
+    flex:1;min-width:120px;
+    padding:24px 16px;
+    color:rgba(250,247,242,.55);
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+    text-decoration:none;text-align:center;
+    border-right:1px solid rgba(250,247,242,.08);
+    transition:color .9s var(--mech),background .9s var(--mech);
+  }
+  .footer-nav a:last-child{border-right:none}
+  .footer-nav a:hover{color:var(--bronze-light);background:rgba(176,125,91,.06)}
+  .footer-bottom{
+    text-align:center;position:relative;
+  }
+  .footer-copyright{
+    font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+    color:rgba(250,247,242,.3);
+    cursor:pointer;
+    transition:color .9s var(--mech);
+    display:inline-block;padding:8px 16px;
+  }
+  .footer-copyright:hover{color:var(--bronze-light)}
+
+  /* Scroll reveal */
+  .reveal{opacity:0;transform:translateY(50px);transition:opacity 1.1s var(--mech),transform 1.1s var(--mech)}
+  .reveal.in{opacity:1;transform:translateY(0)}
+  .reveal-delay-1{transition-delay:.15s}
+  .reveal-delay-2{transition-delay:.3s}
+  .reveal-delay-3{transition-delay:.45s}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:32px;left:50%;
+    transform:translateX(-50%) translateY(120px);
+    background:var(--graphite);color:var(--alabaster);
+    padding:14px 28px;
+    border:2px solid var(--bronze);
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    z-index:10000;
+    transition:transform .9s var(--mech);
+    box-shadow:6px 6px 0 -2px var(--bronze);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width:1024px){
+    .hero-stage{grid-template-columns:1fr;gap:5vh}
+    .hero-side-left,.hero-side-right{padding-bottom:0}
+    .hero-model-wrap{max-width:100%;transform:rotate(-3deg)}
+    .hero-bg-text{font-size:18vw}
+    .blueprint{grid-template-columns:1fr;gap:5vh}
+    .swatch-grid{grid-template-columns:repeat(2,1fr)}
+    .materials-footer{grid-template-columns:1fr;gap:24px}
+    .materials-footer .meta{text-align:left}
+    .drape-clip{flex:0 0 75%}
+    .philo-text{font-size:14vw}
+    .acc-panel{flex:1}
+    .acc-panel.active{flex:4}
+    .maker-bounding{grid-template-columns:1fr;gap:4vh}
+    .footer-nav{flex-direction:column}
+    .footer-nav a{border-right:none;border-bottom:1px solid rgba(250,247,242,.08);flex:none}
+    .footer-nav a:last-child{border-bottom:none}
+    .timeline-header h2{font-size:clamp(40px,10vw,80px)}
+  }
+  @media (max-width:768px){
+    section{padding:9vh 6vw}
+    .brand{top:18px;left:18px}
+    .brand .stencil{font-size:20px}
+    .brand-right{top:18px;right:18px}
+    .hero{padding:14vh 6vw 8vh;min-height:auto}
+    .hero-stage{grid-template-columns:1fr;gap:4vh}
+    .hero-model-wrap{transform:rotate(0deg) !important;max-width:100%}
+    .hero-bg-text{font-size:22vw;transform:translate(-50%,-50%) rotate(0deg)}
+    .hero-side-left,.hero-side-right{padding-bottom:0}
+    .pattern-toggle{bottom:auto;top:14vh;left:6vw}
+    .hero-cue{display:none}
+    .blueprint{padding:11vh 6vw}
+    .macro-cutout{transform:rotate(0deg) !important}
+    .mc-1{width:60%;height:55%}
+    .mc-2{width:45%;height:42%}
+    .mc-3{width:55%;height:45%}
+    .macro-cutout:hover{transform:rotate(0deg) translateY(-4px) !important}
+    .swatch-grid{grid-template-columns:1fr 1fr;gap:16px}
+    .drape-clip{flex:0 0 85%}
+    .drape-clip{transform:rotate(0deg)}
+    .accordion{flex-direction:column;height:auto;min-height:auto}
+    .acc-panel{flex:none !important;height:80px;overflow:hidden}
+    .acc-panel.active{height:480px}
+    .acc-panel-title{bottom:16px}
+    .acc-panel-num{font-size:24px;top:16px;left:16px}
+    .philo-text{font-size:24vw;transform:translateX(0)}
+    .philosophy{grid-template-columns:1fr;min-height:auto}
+    .philo-left{padding:8vh 6vw;min-height:50vh;border-right:none;border-bottom:2px solid var(--graphite)}
+    .philo-right{min-height:60vh}
+    .patina-slider-wrap{aspect-ratio:4/5}
+    .collage{height:auto;min-height:auto;display:flex;flex-direction:column;gap:24px}
+    .collage-item{position:relative !important;width:100% !important;height:60vh !important;transform:rotate(0deg) !important;inset:auto !important;top:auto !important;left:auto !important;right:auto !important;bottom:auto !important}
+    .collage-item:hover{transform:rotate(0deg) translateY(-4px) !important}
+    .maker-bounding{clip-path:none;padding:6vh 6vw;position:relative;background:var(--cotton)}
+    .maker{min-height:auto}
+    .maker-img-wrap{position:relative;min-height:70vh}
+    .maker-bounding{margin-top:-2px}
+    .footer{padding:14vh 6vw 6vh}
+    .footer-headline{font-size:clamp(32px,10vw,72px)}
+    .footer-nav{gap:0}
+    .magnifier-lens{width:140px;height:140px}
+  }
+  @media (max-width:480px){
+    .hero-title-block .stencil{font-size:14vw}
+    .hero-edition .num{font-size:48px}
+    .blueprint-header h2,.materials-header h2,.drape-header h2,.patina-header h2,.stories-header h2{font-size:14vw}
+    .timeline-header h2{font-size:16vw}
+    .footer-headline{font-size:12vw}
+    .maker-name{font-size:16vw}
+    .drape-tagline{font-size:12vw}
+    .swatch-grid{grid-template-columns:1fr}
+    .spec-row{grid-template-columns:1fr;gap:4px}
+    .spec-row .unit{text-align:left}
+  }
+  @media (min-width:1920px){
+    section{padding:14vh 8vw}
+    .hero{padding:0 8vw 10vh}
+    .hero-bg-text{font-size:18vw}
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- Brand mark -->
+<div class="brand">
+  <span class="stencil">MURO</span>
+  <span class="label-mono">Osaka · Est. 1962</span>
+</div>
+<div class="brand-right">
+  <span class="label-mono">Type-01 / Ed. 002</span>
+  <span class="label-mono" style="color:var(--bronze)">N° 048 / 100</span>
+</div>
+
+<!-- ============ SECTION 1: HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero-bg-text">TYPE<span class="accent">—</span>01</div>
+
+  <div class="hero-stage">
+    <div class="hero-side-left">
+      <div class="hero-edition">
+        <span class="label-mono">Edition</span>
+        <span class="num">002<span class="of">/100</span></span>
+      </div>
+      <div class="hero-edition">
+        <span class="label-mono">Formation</span>
+        <span class="num">700<span class="of">hrs</span></span>
+      </div>
+    </div>
+
+    <div class="hero-model-wrap" id="heroModel">
+      <div class="hero-model">
+        <span class="crosshair ch-tl"></span>
+        <span class="crosshair ch-tr"></span>
+        <span class="crosshair ch-bl"></span>
+        <span class="crosshair ch-br"></span>
+        <span class="hero-model-label">Subject · Type-01</span>
+        <img class="hero-model-img" src="https://picsum.photos/seed/muroleatherbrutalistmodel/900/1200" alt="Model wearing MURO Type-01 leather jacket on plywood platform">
+        <svg class="hero-blueprint" id="heroBlueprint" viewBox="0 0 900 1200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#B07D5B" stroke-width="0.5" opacity="0.4"/>
+            </pattern>
+            <pattern id="gridFine" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#B07D5B" stroke-width="0.2" opacity="0.2"/>
+            </pattern>
+          </defs>
+          <rect width="900" height="1200" fill="url(#gridFine)"/>
+          <rect width="900" height="1200" fill="url(#grid)"/>
+          <!-- Jacket pattern pieces -->
+          <g fill="none" stroke="#D4A582" stroke-width="1.5" opacity="0.9">
+            <!-- Front panel -->
+            <path d="M 250 380 L 420 360 L 420 820 L 380 900 L 280 880 L 250 700 Z"/>
+            <path d="M 480 360 L 650 380 L 620 700 L 590 880 L 490 900 L 480 820 Z"/>
+            <!-- Sleeve -->
+            <path d="M 650 380 L 780 420 L 820 700 L 760 760 L 700 720 L 650 580 Z"/>
+            <path d="M 250 380 L 120 420 L 80 700 L 140 760 L 200 720 L 250 580 Z"/>
+            <!-- Collar -->
+            <path d="M 380 360 Q 450 320 520 360 L 510 340 Q 450 300 390 340 Z"/>
+            <!-- Back panel (dashed) -->
+            <path d="M 380 360 L 520 360 L 540 880 L 480 920 L 420 920 L 360 880 Z" stroke-dasharray="6 4" opacity="0.5"/>
+          </g>
+          <!-- Measurement lines -->
+          <g stroke="#B07D5B" stroke-width="0.8" opacity="0.7">
+            <line x1="100" y1="600" x2="800" y2="600" stroke-dasharray="3 3"/>
+            <line x1="100" y1="595" x2="100" y2="605"/>
+            <line x1="800" y1="595" x2="800" y2="605"/>
+            <line x1="450" y1="320" x2="450" y2="940" stroke-dasharray="3 3"/>
+            <line x1="445" y1="320" x2="455" y2="320"/>
+            <line x1="445" y1="940" x2="455" y2="940"/>
+          </g>
+          <!-- Measurement text -->
+          <g fill="#D4A582" font-family="Space Mono, monospace" font-size="11" opacity="0.9">
+            <text x="420" y="615" transform="rotate(0)">W 72.0cm</text>
+            <text x="460" y="640" transform="rotate(-90 460 640)">L 64.0cm</text>
+            <text x="60" y="370" font-size="9">A · FRONT</text>
+            <text x="780" y="370" font-size="9">B · SLEEVE</text>
+            <text x="380" y="950" font-size="9">C · BACK</text>
+          </g>
+          <!-- Notation marks -->
+          <g fill="#D4A582" font-family="Space Mono, monospace" font-size="8" opacity="0.8">
+            <text x="270" y="395">¬01</text>
+            <text x="630" y="395">¬02</text>
+            <text x="710" y="745">¬03</text>
+            <text x="160" y="745">¬04</text>
+          </g>
+        </svg>
+        <span class="hero-model-coords">34.6937° N<br>135.5023° E<br>Osa · 18°C</span>
+      </div>
+    </div>
+
+    <div class="hero-side-right">
+      <div class="hero-title-block">
+        <span class="stencil">Hand-<br>Stitched<br><span class="bronze">In Osaka</span></span>
+      </div>
+      <p class="hero-tagline">
+        One jacket. One hide. <span class="bronze">700 hours</span> of formation across six months. Made when you order — never before.
+      </p>
+      <a href="#footer" class="block-cta" id="orderBtn">
+        <span>Order Your Fit</span>
+        <span class="arrow"></span>
+        <span class="particle-burst"></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pattern Toggle -->
+  <div class="pattern-toggle" id="patternToggle">
+    <span class="label-mono">Pattern View</span>
+    <div class="pattern-switch" id="patternSwitch" role="switch" aria-checked="false"></div>
+  </div>
+
+  <div class="hero-cue">
+    <span class="label-mono">Scroll</span>
+    <span class="line"></span>
+  </div>
+</section>
+
+<!-- ============ SECTION 2: BLUEPRINT GRID ============ -->
+<section class="blueprint" id="blueprint">
+  <div class="blueprint-header reveal">
+    <h2>The <span class="bronze">Blueprint</span><br>Of One Jacket</h2>
+    <div class="meta">
+      <span class="mono">02 / Anatomy</span>
+      <span class="big">17 PIECES</span>
+      <span class="mono">From hide to heirloom</span>
+    </div>
+  </div>
+
+  <div class="macro-cluster reveal" id="macroCluster">
+    <div class="macro-cutout mc-1" data-macro="https://picsum.photos/seed/muroleatherhidegrainmacro/900/900">
+      <span class="cutout-label">A · Raw Hide</span>
+      <span class="cutout-dim">1.8mm</span>
+      <img src="https://picsum.photos/seed/muroleatherhidegrainmacro/700/650" alt="Macro of raw horsehide grain">
+    </div>
+    <div class="macro-cutout mc-2" data-macro="https://picsum.photos/seed/muroleatherzipperpullbrass/800/800">
+      <span class="cutout-label">B · Hardware</span>
+      <span class="cutout-dim">YKK Excella</span>
+      <img src="https://picsum.photos/seed/muroleatherzipperpullbrass/600/600" alt="Macro of brass zipper pull">
+    </div>
+    <div class="macro-cutout mc-3" data-macro="https://picsum.photos/seed/muroleatherunderarmgussetstitch/900/900">
+      <span class="cutout-label">C · Gusset</span>
+      <span class="cutout-dim">8 spi</span>
+      <img src="https://picsum.photos/seed/muroleatherunderarmgussetstitch/700/650" alt="Macro of underarm gusset stitching">
+    </div>
+    <div class="magnifier-lens" id="magnifierLens"></div>
+  </div>
+
+  <div class="spec-sheet reveal reveal-delay-1">
+    <div class="spec-sheet-title">
+      <span>Technical Sheet</span>
+      <span class="code">TS-01 / REV.04</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Material</span>
+      <span class="val">Kobe <span class="bronze">Horsehide</span></span>
+      <span class="unit">1.8mm</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Tannery</span>
+      <span class="val">Shinki Hikaku</span>
+      <span class="unit">Hyōgo</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Tannage</span>
+      <span class="val">Vegetable · 6 mo</span>
+      <span class="unit">Pit</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Thread</span>
+      <span class="val">Methuen <span class="bronze">Waxed Linen</span></span>
+      <span class="unit">5ply</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Stitch Density</span>
+      <span class="val">8 per inch</span>
+      <span class="unit">Saddle</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Hardware</span>
+      <span class="val">YKK Excella Brass</span>
+      <span class="unit">Polished</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Edge</span>
+      <span class="val">Iron-Dyed · Burnished</span>
+      <span class="unit">3 coat</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Lining</span>
+      <span class="val">Wakayama Cotton</span>
+      <span class="unit">Herringbone</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Pattern Pieces</span>
+      <span class="val">17 cut · 1 hide</span>
+      <span class="unit">No patch</span>
+    </div>
+    <div class="spec-row">
+      <span class="key">Formation</span>
+      <span class="val"><span class="bronze">700 hours</span></span>
+      <span class="unit">6 months</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: MATERIAL LIBRARY ============ -->
+<section class="materials" id="materials">
+  <div class="materials-header reveal">
+    <h2>The Hide<br><span class="bronze">Library</span></h2>
+    <div class="meta">
+      <span class="mono">03 / Substrate</span>
+      <span class="mono">Four candidates</span>
+      <span class="mono">One selected per piece</span>
+    </div>
+  </div>
+
+  <div class="swatch-grid">
+    <div class="swatch reveal">
+      <div class="swatch-img">
+        <span class="corner">A-01</span>
+        <img src="https://picsum.photos/seed/murohorsehideswatchleather/600/600" alt="Horsehide swatch">
+      </div>
+      <div class="swatch-info">
+        <span class="swatch-name">Horsehide</span>
+        <span class="swatch-code">SH-01</span>
+      </div>
+      <div class="swatch-desc">Shinki Hikaku · 1.8mm · Kobe</div>
+    </div>
+    <div class="swatch reveal reveal-delay-1">
+      <div class="swatch-img">
+        <span class="corner">A-02</span>
+        <img src="https://picsum.photos/seed/murosteerhideswatchleather/600/600" alt="Steerhide swatch">
+      </div>
+      <div class="swatch-info">
+        <span class="swatch-name">Steerhide</span>
+        <span class="swatch-code">ST-02</span>
+      </div>
+      <div class="swatch-desc">Horween · 1.6mm · Chicago</div>
+    </div>
+    <div class="swatch reveal reveal-delay-2">
+      <div class="swatch-img">
+        <span class="corner">A-03</span>
+        <img src="https://picsum.photos/seed/murodeerskinswatchleather/600/600" alt="Deerskin swatch">
+      </div>
+      <div class="swatch-info">
+        <span class="swatch-name">Deerskin</span>
+        <span class="swatch-code">DK-03</span>
+      </div>
+      <div class="swatch-desc">Ezo · 1.2mm · Hokkaido</div>
+    </div>
+    <div class="swatch reveal reveal-delay-3">
+      <div class="swatch-img">
+        <span class="corner">A-04</span>
+        <img src="https://picsum.photos/seed/muroshellcordovanswatchleather/600/600" alt="Shell cordovan swatch">
+      </div>
+      <div class="swatch-info">
+        <span class="swatch-name">Cordovan</span>
+        <span class="swatch-code">SC-04</span>
+      </div>
+      <div class="swatch-desc">Shell · 2.0mm · Hyōgo</div>
+    </div>
+  </div>
+
+  <div class="materials-footer reveal">
+    <h3 class="stencil">A hide selected for its<br><em>durability</em> and <span class="bronze">unique grain</span>.</h3>
+    <div class="meta">
+      <span class="mono">Each hide</span>
+      <span class="mono">hand-picked ·</span>
+      <span class="mono">never duplicated</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: WEIGHT & DRAPE ============ -->
+<section class="drape" id="drape">
+  <div class="drape-header reveal">
+    <h2>Weight &<br><span class="bronze">Drape</span></h2>
+    <div class="meta">
+      <span class="mono">04 / Behaviour</span>
+      <span class="mono">In slow motion</span>
+    </div>
+  </div>
+
+  <div class="drape-carousel" id="drapeCarousel">
+    <div class="drape-clip">
+      <span class="drape-clip-info">
+        <span class="num">01</span>
+        <span class="name"><span class="strong">On Hanger</span>Cedar wood · 4kg</span>
+      </span>
+      <img src="https://picsum.photos/seed/muroleatherdrapedhangerwood/700/900" alt="Jacket draped on heavy wood hanger">
+      <span class="drape-clip-spec">F · 1.8mm · 4.2kg · Kobe Horsehide</span>
+    </div>
+    <div class="drape-clip">
+      <span class="drape-clip-info">
+        <span class="num">02</span>
+        <span class="name"><span class="strong">Folded</span>Slow motion · 0.5x</span>
+      </span>
+      <img src="https://picsum.photos/seed/muroleatherfoldeddrapedetail/700/900" alt="Jacket being slowly folded">
+      <span class="drape-clip-spec">F · 1.8mm · 4.2kg · Kobe Horsehide</span>
+    </div>
+    <div class="drape-clip">
+      <span class="drape-clip-info">
+        <span class="num">03</span>
+        <span class="name"><span class="strong">On Stone</span>Roll · Stone plinth</span>
+      </span>
+      <img src="https://picsum.photos/seed/muroleatherrolledstoneplinth/700/900" alt="Jacket rolled onto stone plinth">
+      <span class="drape-clip-spec">F · 1.8mm · 4.2kg · Kobe Horsehide</span>
+    </div>
+  </div>
+
+  <div class="drape-footer reveal">
+    <p class="drape-tagline">It folds like a <em>second skin</em><br><span class="bronze">— and falls like iron</span>.</p>
+    <div class="drape-thumbs" id="drapeThumbs">
+      <button class="drape-thumb active" aria-label="Clip 1"></button>
+      <button class="drape-thumb" aria-label="Clip 2"></button>
+      <button class="drape-thumb" aria-label="Clip 3"></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: HEIRLOOM TIMELINE ============ -->
+<section class="timeline" id="timeline">
+  <div class="timeline-header reveal">
+    <span class="label-mono">05 / Formation</span>
+    <h2>800 Hours,<br>6 Months,<br><em>1</em> <span class="bronze">Jacket</span>.</h2>
+  </div>
+
+  <div class="accordion" id="accordion">
+    <div class="acc-panel active" data-panel="0">
+      <img class="acc-panel-img" src="https://picsum.photos/seed/murohideselectionartisanprocess/900/1100" alt="Hide selection process">
+      <span class="acc-panel-num">01</span>
+      <span class="acc-panel-hours">Phase 01<span class="big">120h</span></span>
+      <div class="acc-panel-title">
+        <span class="stencil">Hide Selection</span>
+        <span class="mono">Shinki Hikaku · Kobe</span>
+        <p class="desc">One hide in twenty passes. The master runs his palm across the grain, feeling for density, memory, and the slight resistance that says this leather will outlive him. Rejected hides return to the tannery.</p>
+      </div>
+    </div>
+    <div class="acc-panel" data-panel="1">
+      <img class="acc-panel-img" src="https://picsum.photos/seed/murohandstitchingartisanleather/900/1100" alt="Hand-stitching process">
+      <span class="acc-panel-num">02</span>
+      <span class="acc-panel-hours">Phase 02<span class="big">480h</span></span>
+      <div class="acc-panel-title">
+        <span class="stencil">Hand-Stitching</span>
+        <span class="mono">Saddle · 8 spi · Waxed linen</span>
+        <p class="desc">Each seam punched with an irons-set, then drawn by hand with waxed linen thread. Two needles pass through the same hole from opposite directions, locking the stitch. A machine cannot feel tension. The hand can.</p>
+      </div>
+    </div>
+    <div class="acc-panel" data-panel="2">
+      <img class="acc-panel-img" src="https://picsum.photos/seed/muroburnishededgeleatherprocess/900/1100" alt="Edge burnishing process">
+      <span class="acc-panel-num">03</span>
+      <span class="acc-panel-hours">Phase 03<span class="big">200h</span></span>
+      <div class="acc-panel-title">
+        <span class="stencil">Burnishing</span>
+        <span class="mono">Iron-dyed · 3 coats · Hand-rubbed</span>
+        <p class="desc">The edge is dyed with iron oxide, sealed with beeswax, and rubbed with a bone slicker until the fibers compress into a glass-smooth surface. Three coats. Three days of drying between each. No shortcuts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 6: VISUAL PHILOSOPHY ============ -->
+<section class="philosophy" id="philosophy">
+  <div class="philo-left">
+    <h2 class="philo-text">
+      IM<span class="bronze">MOR</span><br>
+      <span class="outline">TAL</span>
+    </h2>
+  </div>
+  <div class="philo-right">
+    <img src="https://picsum.photos/seed/muroartisanhandspullingthreadleather/900/1100" alt="Master artisan's hands pulling waxed thread taut against leather">
+    <div class="philo-caption">
+      <span class="bronze">— Pull, lock, repeat.</span><br>
+      480 hours of formation live in this gesture. The thread is drawn taut enough to compress the leather, never tight enough to cut it.
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: PATINA ARCHIVE ============ -->
+<section class="patina" id="patina">
+  <div class="patina-header reveal">
+    <h2>The <span class="bronze">Patina</span><br><em>Archive</em></h2>
+    <div class="meta">
+      <span class="mono">07 / Tenure</span>
+      <span class="mono">Drag to reveal</span>
+      <span class="mono">Day one · Year ten</span>
+    </div>
+  </div>
+
+  <div class="patina-slider-wrap reveal reveal-delay-1" id="patinaSlider">
+    <img class="patina-img patina-new" src="https://picsum.photos/seed/muroleathershouldergrainmacro/1400/800" alt="Macro of brand new leather shoulder grain">
+    <img class="patina-img patina-worn" id="patinaWorn" src="https://picsum.photos/seed/muroleathershouldergrainmacro/1400/800" alt="Macro of same leather shoulder after 10 years of patina">
+    <div class="patina-labels">
+      <span>Day One · Matt</span>
+      <span class="right">Year Ten · Glossy Patina</span>
+    </div>
+    <div class="patina-divider" id="patinaDivider"></div>
+    <div class="patina-handle" id="patinaHandle"></div>
+    <div class="patina-corners">
+      <span>Macro · Shoulder · 1.8mm</span>
+      <span>Worn 3,650 days</span>
+    </div>
+  </div>
+
+  <div class="patina-footer reveal">
+    <p class="mono"><span class="strong">Built for the ground,</span><br>proven by time.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 8: LIVING STORIES ============ -->
+<section class="stories" id="stories">
+  <div class="stories-header reveal">
+    <h2>Living<br><em>Stories</em></h2>
+    <div class="meta">
+      <span class="mono">08 / Field Notes</span>
+      <span class="mono">Five owners · Five climates</span>
+    </div>
+  </div>
+
+  <div class="collage reveal reveal-delay-1">
+    <div class="collage-item ci-1">
+      <span class="ci-num">01</span>
+      <img src="https://picsum.photos/seed/murojacketbrutalisturbanlandscape/700/900" alt="Jacket in brutalist urban landscape">
+    </div>
+    <div class="collage-item ci-2">
+      <span class="ci-num">02</span>
+      <img src="https://picsum.photos/seed/murojacketjapaneseforestpath/600/800" alt="Jacket in Japanese forest">
+    </div>
+    <div class="collage-item ci-3">
+      <span class="ci-num">03</span>
+      <img src="https://picsum.photos/seed/murojacketindoorwarmwarehouse/650/900" alt="Jacket in warm warehouse interior">
+    </div>
+    <div class="collage-item ci-4">
+      <span class="ci-num">04</span>
+      <img src="https://picsum.photos/seed/murojacketstreetlifetokyo/750/850" alt="Jacket on street in Tokyo">
+    </div>
+    <div class="collage-item ci-5">
+      <span class="ci-num">05</span>
+      <img src="https://picsum.photos/seed/murojacketmountainhiketrail/700/900" alt="Jacket on mountain trail">
+    </div>
+  </div>
+
+  <div class="stories-footer reveal">
+    <a href="#" class="stories-link">
+      <span>Heirloom Stories</span>
+      <span class="arrow"></span>
+    </a>
+  </div>
+</section>
+
+<!-- ============ SECTION 9: THE MAKER ============ -->
+<section class="maker" id="maker">
+  <div class="maker-img-wrap" id="makerImg">
+    <img src="https://picsum.photos/seed/murotaromatsumotoartisanworkshop/1600/1100" alt="Taro Matsumoto, master leather artisan, at his workbench in Osaka">
+  </div>
+  <span class="maker-crosshair-tl">Subject · M-01</span>
+  <span class="maker-crosshair-tr">Atelier · Nishinari</span>
+
+  <div class="maker-bounding">
+    <div class="maker-info">
+      <span class="label-mono">09 / The Maker</span>
+      <h2 class="maker-name">Taro<br><em>Matsumoto</em></h2>
+      <p class="maker-quote">
+        "<span class="bronze">Master Craftsman · Taro Matsumoto.</span>"<br>
+        Three generations at the same bench. The leather does not change; only the hands that hold it grow older. He has cut 1,247 hides since 1962. Each one is recorded in a ledger, in pencil.
+      </p>
+    </div>
+    <div class="maker-stats">
+      <div class="maker-stat">
+        <span class="label-mono">Generation</span>
+        <span class="val"><span class="bronze">3rd</span></span>
+      </div>
+      <div class="maker-stat">
+        <span class="label-mono">Years at Bench</span>
+        <span class="val">62</span>
+      </div>
+      <div class="maker-stat">
+        <span class="label-mono">Hides Cut</span>
+        <span class="val">1,247</span>
+      </div>
+      <div class="maker-stat">
+        <span class="label-mono">Atelier</span>
+        <span class="val"><em>Osaka</em></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 10: FOOTER ============ -->
+<footer class="footer" id="footer">
+  <div class="footer-grain"></div>
+
+  <div class="footer-label reveal">
+    <span class="label-mono">10 / Final Cut</span>
+  </div>
+
+  <h2 class="footer-headline reveal reveal-delay-1">
+    ONE JACKET.<br>ONE <span class="bronze">LIFETIME</span><span class="dot">.</span>
+  </h2>
+
+  <div class="footer-cta-row reveal reveal-delay-2">
+    <a href="#" class="block-cta block-cta-light" id="bespokeBtn" onclick="event.preventDefault();showToast('Application received · We will respond within 72 hours')">
+      <span>Apply for Bespoke</span>
+      <span class="arrow"></span>
+    </a>
+  </div>
+
+  <div class="footer-stock reveal reveal-delay-2">
+    <span class="num">12</span> of 100 placements remaining in Edition 002 · <span class="bronze">Formation begins Q3</span>
+  </div>
+
+  <nav class="footer-nav reveal reveal-delay-3">
+    <a href="#">Process</a>
+    <a href="#">Sizing</a>
+    <a href="#">Care</a>
+    <a href="#">Shipping</a>
+    <a href="#">Returns</a>
+    <a href="#">Contact</a>
+    <a href="#">Journal</a>
+  </nav>
+
+  <div class="footer-bottom">
+    <span class="footer-copyright" id="copyright">© MURO Atelier · Osaka · MMXXV · All rights reserved</span>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============ TOAST ============
+  const toast = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toast.classList.remove('show'),3000);
+  }
+
+  // ============ PARTICLE BURST ON HERO CTA ============
+  const orderBtn = document.getElementById('orderBtn');
+  const burst = orderBtn.querySelector('.particle-burst');
+  // Generate 12 particles
+  for(let i=0;i<12;i++){
+    const p = document.createElement('span');
+    p.className = 'particle';
+    const angle = (i/12) * Math.PI * 2;
+    const dist = 40 + Math.random()*30;
+    p.style.setProperty('--px', Math.cos(angle)*dist + 'px');
+    p.style.setProperty('--py', Math.sin(angle)*dist + 'px');
+    p.style.left = '50%';
+    p.style.top = '50%';
+    p.style.animationDelay = (i*0.02) + 's';
+    burst.appendChild(p);
+  }
+
+  // ============ HERO PARALLAX ============
+  const heroSection = document.getElementById('hero');
+  const heroModel = document.getElementById('heroModel');
+
+  if(window.matchMedia('(hover:hover) and (min-width:1025px)').matches){
+    heroSection.addEventListener('mousemove',(e)=>{
+      const rect = heroSection.getBoundingClientRect();
+      const x = (e.clientX - rect.left)/rect.width - .5;
+      const y = (e.clientY - rect.top)/rect.height - .5;
+      heroModel.style.transform = `rotate(-5deg) translate3d(${x*-16}px, ${y*-16}px, 0)`;
+    });
+    heroSection.addEventListener('mouseleave',()=>{
+      heroModel.style.transform = 'rotate(-5deg)';
+    });
+  }
+
+  // Scroll parallax for hero model
+  window.addEventListener('scroll',()=>{
+    const rect = heroSection.getBoundingClientRect();
+    if(rect.bottom > 0 && rect.top < window.innerHeight){
+      const progress = Math.max(0, Math.min(1, (window.innerHeight - rect.top) / (window.innerHeight + rect.height)));
+      if(!heroSection.matches(':hover')){
+        heroModel.style.transform = `rotate(${-5 + progress*2}deg) translate3d(0, ${progress*-20}px, 0)`;
+      }
+    }
+  },{passive:true});
+
+  // ============ PATTERN TOGGLE ============
+  const patternSwitch = document.getElementById('patternSwitch');
+  const patternToggle = document.getElementById('patternToggle');
+  const heroBlueprint = document.getElementById('heroBlueprint');
+  const heroModelImg = document.querySelector('.hero-model-img');
+
+  let patternState = localStorage.getItem('muroPattern') === 'true';
+  function applyPattern(state){
+    patternSwitch.classList.toggle('on', state);
+    patternSwitch.setAttribute('aria-checked', state);
+    if(state){
+      heroBlueprint.style.opacity = '1';
+      heroModelImg.style.opacity = '.25';
+    } else {
+      heroBlueprint.style.opacity = '0';
+      heroModelImg.style.opacity = '1';
+    }
+    localStorage.setItem('muroPattern', state);
+  }
+  applyPattern(patternState);
+
+  patternToggle.addEventListener('click',(e)=>{
+    patternState = !patternState;
+    applyPattern(patternState);
+    showToast(patternState ? 'Pattern view · enabled' : 'Pattern view · disabled');
+  });
+
+  // ============ MECHANICAL ZOOM LENS ============
+  const macroCluster = document.getElementById('macroCluster');
+  const magnifierLens = document.getElementById('magnifierLens');
+  let activeMacro = null;
+  const zoomLevel = 2.8;
+
+  function moveLens(clientX, clientY, target){
+    const rect = target.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    if(x < 0 || x > rect.width || y < 0 || y > rect.height){
+      magnifierLens.classList.remove('active');
+      return;
+    }
+    const macroImg = target.querySelector('img');
+    const src = macroImg.src;
+    const lensSize = parseInt(getComputedStyle(magnifierLens).width);
+
+    magnifierLens.style.left = (clientX - macroCluster.getBoundingClientRect().left - lensSize/2) + 'px';
+    magnifierLens.style.top = (clientY - macroCluster.getBoundingClientRect().top - lensSize/2) + 'px';
+    magnifierLens.style.backgroundImage = `url(${src})`;
+    magnifierLens.style.backgroundSize = (rect.width * zoomLevel) + 'px ' + (rect.height * zoomLevel) + 'px';
+    const bgX = -(x * zoomLevel - lensSize/2);
+    const bgY = -(y * zoomLevel - lensSize/2);
+    magnifierLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    magnifierLens.classList.add('active');
+  }
+
+  document.querySelectorAll('.macro-cutout').forEach(cutout=>{
+    cutout.addEventListener('mouseenter',()=>{activeMacro = cutout;});
+    cutout.addEventListener('mousemove',(e)=>{
+      if(activeMacro === cutout) moveLens(e.clientX, e.clientY, cutout);
+    });
+    cutout.addEventListener('mouseleave',()=>{
+      magnifierLens.classList.remove('active');
+      activeMacro = null;
+    });
+    // Touch
+    cutout.addEventListener('touchstart',(e)=>{
+      activeMacro = cutout;
+      moveLens(e.touches[0].clientX, e.touches[0].clientY, cutout);
+      e.preventDefault();
+    },{passive:false});
+    cutout.addEventListener('touchmove',(e)=>{
+      if(activeMacro === cutout){
+        moveLens(e.touches[0].clientX, e.touches[0].clientY, cutout);
+        e.preventDefault();
+      }
+    },{passive:false});
+    cutout.addEventListener('touchend',()=>{
+      setTimeout(()=>magnifierLens.classList.remove('active'), 800);
+      activeMacro = null;
+    });
+  });
+
+  // ============ DRAPE CAROUSEL ============
+  const drapeCarousel = document.getElementById('drapeCarousel');
+  const drapeThumbs = document.querySelectorAll('.drape-thumb');
+  const drapeClips = drapeCarousel.querySelectorAll('.drape-clip');
+
+  drapeCarousel.addEventListener('scroll',()=>{
+    const scrollLeft = drapeCarousel.scrollLeft;
+    const itemWidth = drapeClips[0].offsetWidth + 28;
+    const activeIndex = Math.round(scrollLeft / itemWidth);
+    drapeThumbs.forEach((thumb,i)=>{
+      thumb.classList.toggle('active', i === activeIndex);
+    });
+  },{passive:true});
+
+  drapeThumbs.forEach((thumb,i)=>{
+    thumb.addEventListener('click',()=>{
+      const itemWidth = drapeClips[0].offsetWidth + 28;
+      drapeCarousel.scrollTo({left: i * itemWidth, behavior:'smooth'});
+    });
+  });
+
+  // ============ HEIRLOOM ACCORDION ============
+  const accordion = document.getElementById('accordion');
+  const accPanels = accordion.querySelectorAll('.acc-panel');
+
+  accPanels.forEach((panel)=>{
+    panel.addEventListener('click',()=>{
+      if(panel.classList.contains('active')) return;
+      accPanels.forEach(p=>p.classList.remove('active'));
+      panel.classList.add('active');
+    });
+  });
+
+  // Drag/swipe for accordion (desktop + mobile)
+  let dragStartX = 0;
+  let dragPanel = null;
+  accordion.addEventListener('mousedown',(e)=>{
+    dragStartX = e.clientX;
+    dragPanel = e.target.closest('.acc-panel');
+  });
+  accordion.addEventListener('mouseup',(e)=>{
+    if(!dragPanel) return;
+    const delta = e.clientX - dragStartX;
+    if(Math.abs(delta) > 60){
+      const currentIndex = Array.from(accPanels).indexOf(dragPanel);
+      let nextIndex;
+      if(delta < 0 && currentIndex < accPanels.length - 1){
+        nextIndex = currentIndex + 1;
+      } else if(delta > 0 && currentIndex > 0){
+        nextIndex = currentIndex - 1;
+      }
+      if(nextIndex !== undefined){
+        accPanels.forEach(p=>p.classList.remove('active'));
+        accPanels[nextIndex].classList.add('active');
+      }
+    }
+    dragPanel = null;
+  });
+  // Touch
+  let touchStartX = 0;
+  accordion.addEventListener('touchstart',(e)=>{
+    touchStartX = e.touches[0].clientX;
+    dragPanel = e.target.closest('.acc-panel');
+  },{passive:true});
+  accordion.addEventListener('touchend',(e)=>{
+    if(!dragPanel) return;
+    const delta = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(delta) > 60){
+      const currentIndex = Array.from(accPanels).indexOf(dragPanel);
+      let nextIndex;
+      if(delta < 0 && currentIndex < accPanels.length - 1){
+        nextIndex = currentIndex + 1;
+      } else if(delta > 0 && currentIndex > 0){
+        nextIndex = currentIndex - 1;
+      }
+      if(nextIndex !== undefined){
+        accPanels.forEach(p=>p.classList.remove('active'));
+        accPanels[nextIndex].classList.add('active');
+      }
+    }
+    dragPanel = null;
+  });
+
+  // ============ PATINA ARCHIVE SLIDER ============
+  const patinaSlider = document.getElementById('patinaSlider');
+  const patinaWorn = document.getElementById('patinaWorn');
+  const patinaDivider = document.getElementById('patinaDivider');
+  const patinaHandle = document.getElementById('patinaHandle');
+  let isDraggingPatina = false;
+  let patinaPct = 50;
+
+  function updatePatinaSlider(clientX){
+    const rect = patinaSlider.getBoundingClientRect();
+    let pct = ((clientX - rect.left) / rect.width) * 100;
+    pct = Math.max(0, Math.min(100, pct));
+    patinaPct = pct;
+    patinaWorn.style.clipPath = `inset(0 0 0 ${pct}%)`;
+    patinaDivider.style.left = pct + '%';
+    patinaHandle.style.left = pct + '%';
+  }
+
+  patinaSlider.addEventListener('mousedown',(e)=>{
+    isDraggingPatina = true;
+    updatePatinaSlider(e.clientX);
+    patinaHandle.style.transition = 'none';
+  });
+  window.addEventListener('mousemove',(e)=>{
+    if(isDraggingPatina) updatePatinaSlider(e.clientX);
+  });
+  window.addEventListener('mouseup',()=>{
+    isDraggingPatina = false;
+    patinaHandle.style.transition = 'transform .5s var(--snap)';
+  });
+
+  patinaSlider.addEventListener('touchstart',(e)=>{
+    isDraggingPatina = true;
+    updatePatinaSlider(e.touches[0].clientX);
+  },{passive:true});
+  window.addEventListener('touchmove',(e)=>{
+    if(isDraggingPatina) updatePatinaSlider(e.touches[0].clientX);
+  },{passive:true});
+  window.addEventListener('touchend',()=>{
+    isDraggingPatina = false;
+  });
+
+  // Initialize at 50%
+  setTimeout(()=>{
+    updatePatinaSlider(patinaSlider.getBoundingClientRect().left + patinaSlider.getBoundingClientRect().width * 0.5);
+  }, 100);
+
+  // ============ SCROLL REVEAL ============
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  },{threshold:.1, rootMargin:'0px 0px -60px 0px'});
+  reveals.forEach(el=>revealObserver.observe(el));
+
+  // ============ FOOTER COPYRIGHT HOVER (mechanical hum) ============
+  const copyright = document.getElementById('copyright');
+  const footer = document.getElementById('footer');
+  copyright.addEventListener('mouseenter',()=>{
+    footer.querySelector('.footer-grain').style.opacity = '.15';
+    showToast('— low-frequency hum activated');
+  });
+  copyright.addEventListener('mouseleave',()=>{
+    // Handled by CSS hover state on footer
+  });
+
+  // ============ MAKER PARALLAX ============
+  const makerImg = document.getElementById('makerImg');
+  window.addEventListener('scroll',()=>{
+    const makerSection = document.getElementById('maker');
+    const rect = makerSection.getBoundingClientRect();
+    if(rect.bottom > 0 && rect.top < window.innerHeight){
+      const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+      makerImg.style.transform = `translate3d(0, ${(progress - .5) * 40}px, 0) scale(1.05)`;
+    }
+  },{passive:true});
+
+  // ============ INITIAL LOAD ============
+  // Restore pattern state on load with smooth transition
+  window.addEventListener('load',()=>{
+    const stored = localStorage.getItem('muroPattern') === 'true';
+    if(stored){
+      applyPattern(false);
+      setTimeout(()=>applyPattern(true), 600);
+    }
+  });
+
+</script>
+</body>
+</html>

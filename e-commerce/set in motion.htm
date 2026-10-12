@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nocturne °001 — an ambient field</title>
+<meta name="description" content="A calm, aurora-like block field for hero sections. One canvas, zero dependencies." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script>document.documentElement.classList.add('js');</script>
+<style>
+  :root {
+    --bg-deep: #0a0c14;
+    --ink: #eef0f6;
+    --body: #97a0b4;
+    --mute: #5f687d;
+    --mono-v: #a7b0c6;
+    --accent: #aab6dd;           /* hue 230, heavily desaturated */
+    --hairline: rgba(255,255,255,0.09);
+    --serif: "Instrument Serif", Georgia, serif;
+    --sans: "Instrument Sans", "Helvetica Neue", Helvetica, sans-serif;
+    --mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; background: #080a11; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg-deep);
+    color: var(--body);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: rgba(120,140,210,.28); color: #fff; }
+  a:focus-visible { outline: 1px solid rgba(170,182,221,.6); outline-offset: 3px; border-radius: 2px; }
+
+  /* ============ the ambient field (fixed backdrop) ============ */
+  .field {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(circle at 50% 46%, #141824 0%, #0a0c14 62%, #080a11 100%);
+    overflow: hidden;
+    isolation: isolate;
+    pointer-events: none;
+  }
+  .field canvas {
+    display: block;
+    mix-blend-mode: screen;   /* grid glows out of the gradient, never sits on top of it */
+    opacity: .65;
+    filter: blur(.4px);       /* kills the harsh pixel edges */
+  }
+  .vignette {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(to bottom, rgba(4,5,9,.5), rgba(4,5,9,0) 16%),
+      radial-gradient(ellipse 130% 100% at 50% 46%, rgba(4,5,9,0) 44%, rgba(4,5,9,.6) 100%);
+  }
+  .grain {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+    opacity: .05;
+    mix-blend-mode: overlay;
+  }
+
+  /* ============ header ============ */
+  .site-head {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px clamp(20px, 4vw, 44px);
+    border-bottom: 1px solid transparent;
+    opacity: 0;
+    animation: fade 1s ease .95s forwards;
+    transition: background .5s ease, border-color .5s ease;
+  }
+  .site-head.scrolled {
+    background: rgba(9,11,18,.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom-color: var(--hairline);
+  }
+  .wordmark { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+  .wordmark .wm-name { font-family: var(--serif); font-style: italic; font-size: 21px; color: var(--ink); }
+  .wordmark .wm-num  { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--mute); }
+  .site-nav { display: flex; gap: clamp(18px, 3vw, 34px); }
+  .site-nav a {
+    font-size: 11.5px; letter-spacing: .22em; text-transform: uppercase;
+    color: #8b94a9; text-decoration: none; position: relative; padding: 4px 0;
+    transition: color .3s ease;
+  }
+  .site-nav a::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .45s cubic-bezier(.22,1,.36,1);
+  }
+  .site-nav a:hover { color: var(--ink); }
+  .site-nav a:hover::after { transform: scaleX(1); }
+
+  /* ============ hero ============ */
+  main { position: relative; z-index: 1; }
+  .hero {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid; place-items: center;
+    text-align: center;
+    padding: 130px 24px 110px;
+  }
+  .hero-inner { max-width: 900px; will-change: opacity, transform; }
+
+  .eyebrow {
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .34em; text-transform: uppercase;
+    color: #7d87a0;
+    opacity: 0; animation: fade .9s ease .15s forwards;
+  }
+  .eyebrow::before, .eyebrow::after { content: ""; width: 52px; height: 1px; background: rgba(255,255,255,.16); }
+
+  h1 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(3.2rem, 9vw, 7.2rem);
+    line-height: 1.03; letter-spacing: -.015em;
+    color: var(--ink);
+    margin-top: 34px;
+  }
+  h1 .line { display: block; overflow: hidden; padding-bottom: .06em; margin-bottom: -.03em; }
+  h1 .line-in {
+    display: block; transform: translateY(112%);
+    animation: rise 1.15s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  h1 .line:nth-child(1) .line-in { animation-delay: .28s; }
+  h1 .line:nth-child(2) .line-in { animation-delay: .42s; }
+  h1 em { font-style: italic; color: #c3cdec; }
+
+  .hero-sub {
+    margin: 30px auto 0; max-width: 47ch;
+    font-size: 15.5px; line-height: 1.75; color: var(--body);
+    opacity: 0; animation: fade 1.2s ease .7s forwards;
+  }
+  .hero-cta {
+    margin-top: 42px; display: flex; flex-direction: column; align-items: center; gap: 20px;
+    opacity: 0; animation: fade 1.2s ease .9s forwards;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--sans); font-size: 14px; font-weight: 500; letter-spacing: .02em;
+    color: #d9deee; text-decoration: none;
+    padding: 13px 27px; border-radius: 999px;
+    border: 1px solid rgba(196,206,238,.24);
+    background: rgba(15,18,29,.42);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: border-color .35s ease, background .35s ease, transform .35s ease;
+  }
+  .btn svg { transition: transform .35s cubic-bezier(.22,1,.36,1); }
+  .btn:hover { border-color: rgba(196,206,238,.55); background: rgba(24,29,46,.6); transform: translateY(-2px); }
+  .btn:hover svg { transform: translateY(3px); }
+  .hero-note { font-family: var(--serif); font-style: italic; font-size: 15px; color: #6d7690; }
+
+  /* ============ hud: telemetry + scroll cue ============ */
+  .telemetry {
+    position: fixed; left: clamp(20px, 4vw, 44px); bottom: 24px; z-index: 5;
+    display: flex; gap: 26px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    opacity: 0;
+  }
+  .t-item { display: flex; align-items: center; gap: 8px; }
+  .t-k { color: #4d5568; }
+  .t-v { color: var(--mono-v); font-variant-numeric: tabular-nums; }
+  #tSwell { min-width: 9ch; }
+  .t-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: .12; }
+
+  .scroll-cue {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: .32em; text-transform: uppercase;
+    color: #57607a;
+    opacity: 0;
+  }
+  .scroll-cue .stem {
+    width: 1px; height: 26px; background: rgba(170,182,221,.55);
+    transform-origin: top;
+    animation: stem 3.2s ease-in-out infinite;
+  }
+
+  /* ============ content after the hero (legibility scrim) ============ */
+  .after {
+    background: linear-gradient(to bottom,
+      rgba(10,12,20,0),
+      rgba(10,12,20,.68) 14%,
+      rgba(9,11,18,.86) 34%,
+      rgba(9,11,18,.9) 100%);
+  }
+  .mechanics {
+    max-width: 1240px; margin: 0 auto;
+    padding: clamp(110px, 14vh, 160px) clamp(24px, 6vw, 72px) 90px;
+    display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+    gap: clamp(40px, 6vw, 96px);
+  }
+  .mech-left { position: sticky; top: 110px; align-self: start; }
+  .mech-label { font-family: var(--mono); font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: #6d7690; }
+  .mech-left h2 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(2.4rem, 4vw, 3.6rem); line-height: 1.05;
+    color: var(--ink); margin-top: 20px;
+  }
+  .mech-left h2 em { font-style: italic; color: #c3cdec; }
+  .mech-left p { margin-top: 22px; font-size: 14.5px; line-height: 1.75; max-width: 36ch; }
+
+  .mrows { border-bottom: 1px solid var(--hairline); }
+  .mrow {
+    display: grid; grid-template-columns: 58px 1fr; gap: 6px 18px;
+    padding: 30px 6px 30px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .mrow .num {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em; color: #525b70;
+    padding-top: 9px; transition: color .35s ease;
+  }
+  .mrow h3 { font-family: var(--serif); font-weight: 400; font-size: 25px; color: #e2e6f1; transition: color .35s ease; }
+  .mrow p { margin-top: 10px; font-size: 14.5px; line-height: 1.75; color: #8a93a8; max-width: 54ch; }
+  .mrow .hint {
+    display: inline-block; margin-top: 14px;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase;
+    color: #67718c;
+  }
+  .mrow:hover .num { color: var(--accent); }
+  .mrow:hover h3 { color: #f2f4fa; }
+
+  /* scroll reveals (JS-gated so nothing hides without JS) */
+  .js .mrow, .js .mech-left, .js .colophon > * {
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .9s ease, transform .9s cubic-bezier(.16,1,.3,1);
+  }
+  .js .in { opacity: 1 !important; transform: none !important; }
+
+  /* ============ colophon ============ */
+  .colophon {
+    text-align: center; padding: 30px 24px 96px;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+  }
+  .colophon .rule { width: 1px; height: 56px; background: rgba(255,255,255,.14); }
+  .cf-name { font-family: var(--serif); font-style: italic; font-size: 26px; color: #dfe4f0; }
+  .cf-line { font-size: 14px; color: #8a93a8; }
+  .cf-meta { font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #525b70; line-height: 2; }
+  .top-link {
+    margin-top: 14px; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: #8b94a9; text-decoration: none; transition: color .3s ease;
+  }
+  .top-link:hover { color: var(--ink); }
+
+  /* ============ keyframes ============ */
+  @keyframes rise { to { transform: none; } }
+  @keyframes fade { to { opacity: 1; } }
+  @keyframes stem { 0%, 100% { transform: scaleY(.55); opacity: .4; } 50% { transform: scaleY(1); opacity: .9; } }
+
+  /* ============ responsive ============ */
+  @media (max-width: 860px) {
+    .mechanics { grid-template-columns: 1fr; gap: 48px; }
+    .mech-left { position: static; }
+    .scroll-cue { display: none; }
+    .t-item.opt { display: none; }
+  }
+  @media (max-width: 560px) {
+    .t-item.opt2 { display: none; }
+    .telemetry { gap: 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======= the ambient field ======= -->
+<div class="field" aria-hidden="true">
+  <canvas id="fieldCanvas"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+
+<!-- ======= header ======= -->
+<header class="site-head" id="siteHead">
+  <a class="wordmark" href="#hero">
+    <span class="wm-name">Nocturne</span>
+    <span class="wm-num">°001</span>
+  </a>
+  <nav class="site-nav">
+    <a href="#mechanics">Mechanics</a>
+    <a href="#colophon">Colophon</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ======= hero ======= -->
+  <section class="hero" id="hero">
+    <div class="hero-inner" id="heroInner">
+      <p class="eyebrow">Ambient field — №001</p>
+      <h1>
+        <span class="line"><span class="line-in">Stillness,</span></span>
+        <span class="line"><span class="line-in">set in <em>motion</em>.</span></span>
+      </h1>
+      <p class="hero-sub">
+        A quiet aurora of blocks drifts beneath this page — opacity and scale coupled
+        to one slow diagonal wave that leans, almost imperceptibly, toward your cursor.
+        Nothing demands attention. Everything responds.
+      </p>
+      <div class="hero-cta">
+        <a class="btn" href="#mechanics">
+          See how it moves
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v16m0 0l-6-6m6 6l6-6"/>
+          </svg>
+        </a>
+        <p class="hero-note">no clicks — it only breathes</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= mechanics ======= -->
+  <div class="after">
+    <section class="mechanics" id="mechanics">
+      <div class="mech-left">
+        <p class="mech-label">Mechanics</p>
+        <h2>Four quiet <em>rules</em>.</h2>
+        <p>No particles, no chaos, nothing to click. Each block reads a single value
+           and bends to it — guided only by the clock and a pointer.</p>
+      </div>
+      <div class="mrows">
+        <article class="mrow">
+          <span class="num">01</span>
+          <div>
+            <h3>One wave, corner to corner</h3>
+            <p>A slow sine travels diagonally across the field, while a second, lazier
+               harmonic underneath keeps the pattern from ever repeating itself.</p>
+          </div>
+        </article>
+        <article class="mrow">
+          <span class="num">02</span>
+          <div>
+            <h3>Scale and opacity, coupled</h3>
+            <p>Every block reads one value: crests swell brighter and larger, troughs
+               shrink and dissolve back into the dark. Nothing decouples, nothing flickers.</p>
+          </div>
+        </article>
+        <article class="mrow" id="swellRow">
+          <span class="num">03</span>
+          <div>
+            <h3>A swell, every few seconds</h3>
+            <p>Between five and eight seconds apart, the whole field inhales — scale and
+               brightness rising together like a heartbeat too soft to interrupt reading.</p>
+            <span class="hint">hover this row to feel one swell</span>
+          </div>
+        </article>
+        <article class="mrow">
+          <span class="num">04</span>
+          <div>
+            <h3>It leans toward you</h3>
+            <p>The wave's bearing drifts a few degrees toward your cursor, and the blocks
+               beneath it lift almost imperceptibly. Responsive, never needy.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ======= colophon ======= -->
+    <footer class="colophon" id="colophon">
+      <div class="rule"></div>
+      <p class="cf-name">Nocturne °001</p>
+      <p class="cf-line">an ambient field for calm hero sections</p>
+      <p class="cf-meta">one canvas · zero libraries · hue 230° · saturation 24% · grid 32 / 4</p>
+      <p class="cf-meta">it answers only the clock and the cursor</p>
+      <a class="top-link" href="#hero">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 20V4m0 0l-6 6m6-6l6 6"/>
+        </svg>
+        return to the field
+      </a>
+    </footer>
+  </div>
+</main>
+
+<!-- ======= hud ======= -->
+<div class="telemetry" aria-hidden="true">
+  <div class="t-item opt"><span class="t-k">field</span><span class="t-v" id="tField">—</span></div>
+  <div class="t-item opt2"><span class="t-k">bearing</span><span class="t-v" id="tBearing">045°</span></div>
+  <div class="t-item"><span class="t-k">swell</span><span class="t-v" id="tSwell">T-04s</span><span class="t-dot" id="tDot"></span></div>
+</div>
+<div class="scroll-cue" aria-hidden="true">
+  <span>scroll</span>
+  <span class="stem"></span>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= setup ================= */
+  const canvas = document.getElementById('fieldCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // roundRect fallback for older engines
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  /* ================= configuration ================= */
+  const CFG = {
+    size: 32, gap: 4,             // medium density, airy spacing
+    hue: 230, sat: 24,            // cool indigo, very muted
+    speed: reduced ? 0.06 : 0.3,  // slow, gentle motion
+    baseAngle: Math.PI / 4,       // diagonal
+    maxLean: 0.55,                // how far the wave turns toward the pointer (rad)
+    liftSigma: 250, liftAmp: 0.3, // soft local lift under the cursor
+    lutN: 72                      // colour lookup resolution
+  };
+  const cell = CFG.size + CFG.gap;
+  const TAU = Math.PI * 2;
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const normA = (a) => { while (a > Math.PI) a -= TAU; while (a < -Math.PI) a += TAU; return a; };
+
+  /* ================= state ================= */
+  let W = 0, H = 0, cols = 0, rows = 0, startX = 0, startY = 0;
+  let colAlong, colCross, colEx2, colX, rowAlong, rowCross, rowEy2, rowY;
+  let waveAngle = CFG.baseAngle;
+  let elapsed = 0, lastNow = performance.now();
+  let liftMix = 0;
+  const pulse = { next: 4.2, phase: -1, dur: 2.4, env: 0 };
+  const pointer = { x: -1e4, y: -1e4, inside: false };
+  const LUT = new Array(CFG.lutN);
+
+  /* ================= dom refs ================= */
+  const tField   = document.getElementById('tField');
+  const tBearing = document.getElementById('tBearing');
+  const tSwell   = document.getElementById('tSwell');
+  const tDot     = document.getElementById('tDot');
+  const heroInner = document.getElementById('heroInner');
+  const siteHead  = document.getElementById('siteHead');
+  const hudEls    = Array.from(document.querySelectorAll('.telemetry, .scroll-cue'));
+
+  /* ================= colour LUT =================
+     Rebuilt every frame so the global swell can tint every block at once —
+     72 hsla strings instead of ~1600 per frame. */
+  function buildLUT(bright) {
+    const n = CFG.lutN, hue = CFG.hue, sat = CFG.sat;
+    for (let i = 0; i < n; i++) {
+      const w = i / (n - 1);
+      const l = (15 + 48 * Math.pow(w, 1.2)) * bright;  // crests carry the light
+      const a = 0.05 + 0.82 * Math.pow(w, 2.1);         // troughs fade out entirely
+      LUT[i] = 'hsla(' + hue + ',' + sat + '%,' + l.toFixed(1) + '%,' + a.toFixed(3) + ')';
+    }
+  }
+
+  /* ================= sizing ================= */
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    cols = Math.ceil(W / cell) + 1;
+    rows = Math.ceil(H / cell) + 1;
+    // keep the grid perfectly symmetric about the screen centre
+    startX = (W - (cols - 1) * cell) / 2;
+    startY = (H - (rows - 1) * cell) / 2;
+
+    colAlong = new Float32Array(cols); colCross = new Float32Array(cols);
+    colEx2   = new Float32Array(cols); colX     = new Float32Array(cols);
+    rowAlong = new Float32Array(rows); rowCross = new Float32Array(rows);
+    rowEy2   = new Float32Array(rows); rowY     = new Float32Array(rows);
+
+    if (tField) tField.textContent = cols + '×' + rows;
+  }
+  window.addEventListener('resize', resize);
+
+  /* ================= pointer ================= */
+  window.addEventListener('pointermove', (e) => {
+    pointer.x = e.clientX; pointer.y = e.clientY; pointer.inside = true;
+  }, { passive: true });
+  window.addEventListener('pointerdown', (e) => {
+    pointer.x = e.clientX; pointer.y = e.clientY; pointer.inside = true;
+  }, { passive: true });
+  window.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'mouse') pointer.inside = false;  // don't pin the lift on touch
+  }, { passive: true });
+  document.addEventListener('mouseleave', () => { pointer.inside = false; });
+  window.addEventListener('blur', () => { pointer.inside = false; });
+
+  /* ================= the slow swell ================= */
+  const bump = (p, c, w) => { const u = (p - c) / w; return Math.exp(-4 * u * u); };
+
+  function triggerSwell() {
+    if (reduced || pulse.phase >= 0) return;
+    pulse.phase = 0;
+    pulse.dur = 2.4;
+  }
+  // rule 03 demonstrates itself
+  const swellRow = document.getElementById('swellRow');
+  if (swellRow) swellRow.addEventListener('pointerenter', triggerSwell);
+
+  /* ================= telemetry ================= */
+  function updateHud() {
+    const deg = Math.round(((waveAngle * 180 / Math.PI) % 360 + 360) % 360) % 360;
+    tBearing.textContent = String(deg).padStart(3, '0') + '°';
+    if (pulse.phase >= 0) tSwell.textContent = 'breathing';
+    else tSwell.textContent = 'T-' + String(Math.max(0, Math.ceil(pulse.next - elapsed))).padStart(2, '0') + 's';
+    tDot.style.opacity = (0.12 + pulse.env * 0.88).toFixed(2);
+  }
+
+  /* ================= main loop ================= */
+  let lastSy = -1, hudCache = '', teleT = 1;
+
+  function frame(now) {
+    const dt = Math.min((now - lastNow) / 1000, 0.05);
+    lastNow = now;
+    elapsed += dt;
+    const ph = elapsed * CFG.speed;
+
+    /* --- wave bearing: slow wander, nudged toward the pointer --- */
+    const wander = CFG.baseAngle + Math.sin(elapsed * 0.07) * 0.16;
+    let desired = wander;
+    if (!reduced && pointer.inside) {
+      const dx = pointer.x - W / 2, dy = pointer.y - H / 2;
+      const inf = clamp(Math.hypot(dx, dy) / 280, 0, 1); // ignore jitter near centre
+      if (inf > 0.002) {
+        const ta = Math.atan2(dy, dx);
+        desired = wander + clamp(normA(ta - wander), -CFG.maxLean, CFG.maxLean) * 0.85 * inf;
+      }
+    }
+    waveAngle += normA(desired - waveAngle) * (1 - Math.exp(-dt * 1.4));
+
+    /* --- pointer presence (for the local lift) --- */
+    const liftTarget = (pointer.inside && !reduced) ? 1 : 0;
+    liftMix += (liftTarget - liftMix) * (1 - Math.exp(-dt * 2.2));
+
+    /* --- the swell: a soft double-thump every 5–8s --- */
+    pulse.env = 0;
+    if (!reduced) {
+      if (pulse.phase < 0 && elapsed >= pulse.next) {
+        pulse.phase = 0;
+        pulse.dur = 2.3 + Math.random() * 0.7;
+      }
+      if (pulse.phase >= 0) {
+        pulse.phase += dt;
+        const p = pulse.phase / pulse.dur;
+        if (p >= 1) { pulse.phase = -1; pulse.next = elapsed + 5 + Math.random() * 3; }
+        else pulse.env = bump(p, 0.2, 0.13) + 0.55 * bump(p, 0.5, 0.17);
+      }
+    }
+
+    /* --- draw the field --- */
+    const bright = 1 + pulse.env * 0.17;   // swell brightens every block
+    const sBoost = 1 + pulse.env * 0.05;   // ...and grows them slightly
+    buildLUT(bright);
+    ctx.clearRect(0, 0, W, H);
+
+    const ca = Math.cos(waveAngle), sa = Math.sin(waveAngle);
+    const cx = W / 2, cy = H / 2;
+    const px = pointer.x, py = pointer.y;
+    const lm = liftMix * CFG.liftAmp;
+    const inv = 1 / (2 * CFG.liftSigma * CFG.liftSigma);
+    const n1 = CFG.lutN - 1;
+    const useLift = lm > 0.004;
+
+    // per-column / per-row projections (the wave axis rotates every frame)
+    for (let i = 0; i < cols; i++) {
+      const x = startX + i * cell;
+      const dx = x - cx;
+      colX[i] = x;
+      colAlong[i] = dx * ca;
+      colCross[i] = -dx * sa;
+      const ex = x - px;
+      colEx2[i] = ex * ex;
+    }
+    for (let j = 0; j < rows; j++) {
+      const y = startY + j * cell;
+      const dy = y - cy;
+      rowY[j] = y;
+      rowAlong[j] = dy * sa;
+      rowCross[j] = dy * ca;
+      const ey = y - py;
+      rowEy2[j] = ey * ey;
+    }
+
+    for (let j = 0; j < rows; j++) {
+      const bJ = rowAlong[j], cJ = rowCross[j], ey2 = rowEy2[j], by = rowY[j];
+      for (let i = 0; i < cols; i++) {
+        const d = colAlong[i] + bJ;               // distance along the wave axis
+        const c = colCross[i] + cJ;               // distance across it
+        // three incommensurate sines → smooth, never-repeating drift
+        let e = Math.sin(d * 0.0092 - ph * 2.1)
+              + 0.45 * Math.sin(d * 0.0034 + c * 0.0052 + ph * 0.85 + 1.7)
+              + 0.16 * Math.sin(c * 0.013 - ph * 0.5);
+        let w = e * 0.3106 + 0.5;                 // normalised to ~[0,1]
+
+        // gentle local lift beneath the cursor
+        if (useLift) {
+          const q = (colEx2[i] + ey2) * inv;
+          if (q < 10) w += Math.exp(-q) * lm;
+        }
+
+        if (w <= 0.045) continue;                 // troughs dissolve entirely
+        if (w > 1) w = 1;
+
+        const s = CFG.size * (0.52 + 0.52 * w) * sBoost;  // scale coupled to elevation
+        const hs = s * 0.5;
+        ctx.fillStyle = LUT[(w * n1 + 0.5) | 0];
+        ctx.beginPath();
+        ctx.roundRect(colX[i] - hs, by + (0.5 - w) * 5 - hs, s, s, hs * 0.36);
+        ctx.fill();
+      }
+    }
+
+    /* --- hud (throttled) --- */
+    teleT += dt;
+    if (teleT >= 0.12) { teleT = 0; updateHud(); }
+
+    /* --- scroll-linked ui --- */
+    const sy = window.scrollY;
+    if (sy !== lastSy) {
+      lastSy = sy;
+      const vh = Math.max(H, 1);
+      const k = clamp(1 - sy / (vh * 0.75), 0, 1);
+      heroInner.style.opacity = k.toFixed(3);
+      heroInner.style.transform = 'translateY(' + (sy * 0.16).toFixed(1) + 'px)';
+      siteHead.classList.toggle('scrolled', sy > 40);
+    }
+    // hud entrance × scroll fade
+    const hudK = clamp(1 - sy / Math.max(H * 0.35, 1), 0, 1)
+               * clamp((elapsed - 1.1) / 0.8, 0, 1);
+    const o = hudK.toFixed(2);
+    if (o !== hudCache) {
+      hudCache = o;
+      for (const el of hudEls) el.style.opacity = o;
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  /* ================= reveals ================= */
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    }
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.mrow, .mech-left, .colophon > *').forEach((el) => io.observe(el));
+
+  /* ================= go ================= */
+  resize();
+  buildLUT(1);
+  requestAnimationFrame((t) => { lastNow = t; requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>

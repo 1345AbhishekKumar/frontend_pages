@@ -1,0 +1,3463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMIÈRE — Mineral Bloom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,900;1,400;1,900&family=Jost:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════
+   MINERAL BLOOM  ·  60/30/10 Design System
+   60%  #FEF7E8  Warm Sand   — canvas & light sections
+   30%  #1E2A2B  Deep Ink    — dark sections & type
+   10%  #FF6B4A  Coral       — primary accent / CTA
+        #4B9B7E  Sage        — secondary accent
+        #FFD166  Turmeric    — highlight / tertiary
+   ════════════════════════════════════════════════════ */
+:root{
+  --s0:#FEF7E8; --s1:#F8EDCC; --s2:#F0E2B0;
+  --i0:#1E2A2B; --i1:#2E4042; --i2:#3D5658; --i3:#5A7273; --i4:#C8D5D5;
+  --c0:#FF6B4A; --c1:#FF9B82; --c2:#FFE8E0; --c3:#FFF0EB;
+  --g0:#4B9B7E; --g1:#7BBFA6; --g2:#B3D9CC; --g3:#E6F4EF;
+  --t0:#FFD166; --t1:#FFE299; --t2:#FFF5D6;
+  --fs:'Playfair Display',Georgia,serif;
+  --fn:'Jost',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-back:cubic-bezier(.34,1.56,.64,1);
+  --ease-in:cubic-bezier(.55,0,1,.45);
+
+  /* Layout constants */
+  --col:80px;   /* outer gutter */
+  --gap:2px;    /* section gap / border */
+  --r:0px;      /* zero border-radius — architectural */
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px;overflow-x:hidden}
+body{
+  background:var(--i0);color:var(--s0);
+  font-family:var(--fn);
+  overflow-x:hidden;cursor:none;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* grain overlay */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.024;pointer-events:none;z-index:9992;
+}
+
+/* WebGL canvas */
+#glc{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* page wrapper */
+.root{position:relative;z-index:1}
+
+/* ─────────────────────────────────────────
+   CURSOR — magnetic dot + lagging ring
+───────────────────────────────────────── */
+#cur,#cur-r{
+  position:fixed;top:0;left:0;
+  border-radius:50%;pointer-events:none;
+  transform:translate(-50%,-50%);
+  z-index:10000;
+}
+#cur{width:9px;height:9px;background:var(--c0);transition:width .25s,height .25s,background .3s,opacity .3s}
+#cur-r{width:36px;height:36px;border:1.5px solid var(--c0);opacity:.38;transition:width .32s var(--ease),height .32s var(--ease)}
+.hov #cur{width:20px;height:20px;background:var(--c0);opacity:.7}
+.hov #cur-r{width:56px;height:56px;opacity:.2}
+
+/* ─────────────────────────────────────────
+   SCROLL REVEAL SYSTEM
+───────────────────────────────────────── */
+[data-reveal]{
+  opacity:0;
+  transition:opacity .9s var(--ease),transform .9s var(--ease);
+}
+[data-reveal="up"]   {transform:translateY(40px)}
+[data-reveal="left"] {transform:translateX(-44px)}
+[data-reveal="right"]{transform:translateX(44px)}
+[data-reveal="scale"]{transform:scale(.93)}
+[data-reveal="fade"] {transform:none}
+[data-reveal].in{opacity:1;transform:none}
+[data-delay="1"]{transition-delay:.08s}
+[data-delay="2"]{transition-delay:.18s}
+[data-delay="3"]{transition-delay:.3s}
+[data-delay="4"]{transition-delay:.44s}
+[data-delay="5"]{transition-delay:.58s}
+[data-delay="6"]{transition-delay:.72s}
+
+/* ─────────────────────────────────────────
+   DESIGN TOKENS — reusable across sections
+───────────────────────────────────────── */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:12px;
+  font-size:.58rem;font-weight:400;letter-spacing:.44em;text-transform:uppercase;
+}
+.eyebrow::before{content:'';display:block;width:22px;height:1.5px;background:currentColor;flex-shrink:0}
+.eyebrow.coral{color:var(--c0)}
+.eyebrow.sage{color:var(--g0)}
+.eyebrow.tur{color:var(--t0)}
+.eyebrow.sand{color:var(--s0)}
+.eyebrow.muted{color:var(--i3)}
+
+.section-num{
+  font-family:var(--fs);font-size:.7rem;font-weight:400;
+  color:rgba(254,247,232,.18);letter-spacing:.2em;
+}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--fn);font-size:.62rem;font-weight:400;letter-spacing:.22em;text-transform:uppercase;
+  text-decoration:none;border:none;cursor:none;
+  position:relative;overflow:hidden;
+  transition:transform .3s var(--ease-back),box-shadow .35s;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,rgba(255,255,255,.14),transparent 60%);
+  transform:translateX(-110%);transition:transform .42s;
+}
+.btn:hover::after{transform:translateX(0)}
+.btn-fill{padding:15px 38px;background:var(--c0);color:#fff;box-shadow:0 10px 30px rgba(255,107,74,.3)}
+.btn-fill:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(255,107,74,.46)}
+.btn-line{padding:14px 36px;border:1.5px solid currentColor;color:inherit}
+.btn-line:hover{background:var(--c0);border-color:var(--c0);color:#fff}
+.btn-text-link{
+  font-family:var(--fn);font-size:.62rem;font-weight:400;letter-spacing:.2em;text-transform:uppercase;
+  color:inherit;text-decoration:none;cursor:none;
+  border-bottom:1px solid rgba(currentColor,.3);padding-bottom:2px;
+  transition:color .3s,border-color .3s;
+}
+.btn-text-link:hover{color:var(--c0);border-color:var(--c0)}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   NAV — architectural fixed bar
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:2000;
+  height:64px;
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:0 var(--col);
+  transition:background .4s,border-bottom .4s;
+  border-bottom:1px solid transparent;
+}
+#nav.stuck{
+  background:rgba(30,42,43,.97);
+  backdrop-filter:blur(24px);
+  border-bottom-color:rgba(254,247,232,.07);
+}
+.nav-logo{
+  font-family:var(--fs);font-size:1.25rem;font-weight:500;
+  letter-spacing:.36em;text-transform:uppercase;
+  color:var(--s0);text-decoration:none;
+}
+.nav-center{
+  display:flex;gap:36px;list-style:none;
+}
+.nav-center a{
+  font-size:.62rem;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--s0);text-decoration:none;opacity:.48;
+  transition:opacity .28s;
+}
+.nav-center a:hover{opacity:1}
+.nav-right{display:flex;justify-content:flex-end;align-items:center;gap:20px}
+.nav-cta{
+  padding:8px 20px;
+  border:1px solid rgba(254,247,232,.26);
+  background:transparent;color:var(--s0);
+  font-family:var(--fn);font-size:.62rem;font-weight:400;letter-spacing:.16em;text-transform:uppercase;
+  cursor:none;transition:all .3s;
+}
+.nav-cta:hover{background:var(--c0);border-color:var(--c0);color:#fff}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §1 HERO - ADVANCED EDITORIAL
+   Architecture: 12-column complex grid
+   Overlapping typography, multi-frame visuals,
+   precision clipping animations.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto 1fr auto;
+  padding: 120px var(--col) 40px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+/* Vertical Tracker */
+.hero-vert {
+  grid-column: 1 / 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 20px;
+  opacity: 0;
+  animation: fuA 1.2s var(--ease) 0.5s forwards;
+}
+.vert-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: .52rem;
+  font-weight: 400;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: rgba(254,247,232,.4);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.vert-text::after {
+  content: '';
+  height: 60px;
+  width: 1px;
+  background: rgba(254,247,232,.2);
+}
+
+/* Main Title Area */
+.hero-main-title {
+  grid-column: 2 / 10;
+  grid-row: 2;
+  align-self: center;
+  position: relative;
+  z-index: 10;
+  margin-top: -5vh;
+}
+.h-mask {
+  overflow: hidden;
+  display: block;
+  padding-bottom: 15px; /* prevent clipping descenders */
+  margin-bottom: -15px;
+}
+.h-mask > span {
+  display: block;
+  transform: translateY(115%);
+  animation: clipUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hero-h1 {
+  font-family: var(--fs);
+  font-size: clamp(4rem, 8.5vw, 9rem);
+  font-weight: 900;
+  line-height: .92;
+  letter-spacing: -.03em;
+  color: var(--s0);
+  text-transform: none;
+}
+.hero-h1 .h-l1 > span { animation-delay: .1s; }
+.hero-h1 .h-l2 > span { animation-delay: .2s; margin-left: 8vw; }
+.hero-h1 .h-l3 { display: flex; align-items: center; gap: clamp(15px, 3vw, 30px); }
+.hero-h1 .h-l3 > span { animation-delay: .3s; }
+.hero-h1 .h-l4 > span { animation-delay: .4s; margin-left: 14vw; }
+
+.h-ital { font-style: italic; font-weight: 400; }
+.h-grad {
+  background: linear-gradient(135deg, var(--c0), var(--t0));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.h-sage { color: var(--g0); }
+
+/* Floating Image in Title */
+.hero-inline-img {
+  width: clamp(80px, 11vw, 130px);
+  height: clamp(50px, 6.5vw, 80px);
+  border-radius: 100px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  transform: scale(0);
+  animation: scaleIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) .5s forwards;
+}
+.hero-inline-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.5);
+  animation: imgScale 2s cubic-bezier(0.16, 1, 0.3, 1) .5s forwards;
+}
+
+/* Complex Visual Area */
+.hero-visual-complex {
+  grid-column: 8 / 13;
+  grid-row: 1 / 4;
+  position: relative;
+  height: 100%;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 1;
+}
+.frame-pri {
+  width: 85%;
+  height: 80%;
+  position: relative;
+  overflow: hidden;
+  clip-path: inset(100% 0 0 0);
+  animation: wipeUp 1.4s cubic-bezier(0.65, 0, 0.15, 1) .4s forwards;
+}
+.frame-pri img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.2);
+  animation: imgScale 2s cubic-bezier(0.16, 1, 0.3, 1) .4s forwards;
+  filter: saturate(0.85);
+}
+.frame-sec {
+  position: absolute;
+  left: -15%;
+  bottom: 15%;
+  width: 50%;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border: 1px solid rgba(254,247,232,.15);
+  clip-path: inset(0 0 100% 0);
+  animation: wipeDown 1.4s cubic-bezier(0.65, 0, 0.15, 1) .7s forwards;
+  z-index: 2;
+}
+.frame-sec img {
+  width: 100%; height: 100%; object-fit: cover;
+  transform: scale(1.2);
+  animation: imgScale 2s cubic-bezier(0.16, 1, 0.3, 1) .7s forwards;
+}
+
+/* Data & Actions (Bottom) */
+.hero-footer {
+  grid-column: 2 / 12;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 60px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(254,247,232,.08);
+  opacity: 0;
+  animation: fuA 1s var(--ease) 1.2s forwards;
+  z-index: 5;
+}
+.hf-desc {
+  max-width: 320px;
+  font-size: .8rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: rgba(254,247,232,.5);
+}
+.hf-stats {
+  display: flex;
+  gap: 48px;
+}
+.hf-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hf-val {
+  font-family: var(--fs);
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--s0);
+  line-height: 1;
+}
+.hf-lbl {
+  font-size: .52rem;
+  font-weight: 400;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--i3);
+}
+
+/* Badge */
+.hero-seal {
+  position: absolute;
+  top: 20%;
+  right: 90%;
+  width: 90px;
+  height: 90px;
+  z-index: 5;
+  background: rgba(30,42,43,.4);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(254,247,232,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: fuA 1s var(--ease) 1.4s forwards;
+}
+.hero-seal svg {
+  animation: spin 20s linear infinite;
+}
+
+/* Keyframes for new hero */
+@keyframes clipUp {
+  from { transform: translateY(115%); }
+  to { transform: translateY(0); }
+}
+@keyframes wipeUp {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes wipeDown {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+@keyframes imgScale {
+  from { transform: scale(1.2); }
+  to { transform: scale(1); }
+}
+
+/* Responsive updates for Hero */
+@media(max-width: 1100px) {
+  #hero {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    padding: 120px 28px 60px;
+    gap: 40px;
+    min-height: auto;
+  }
+  .hero-vert { display: none; }
+  .hero-main-title { grid-column: 1 / -1; grid-row: 1; margin-top: 0; }
+  .hero-h1 { font-size: clamp(3.2rem, 11vw, 5rem); }
+  .hero-h1 .h-l2 > span { margin-left: 10vw; }
+  .hero-h1 .h-l4 > span { margin-left: 0; }
+  .hero-inline-img { 
+    display: inline-block; 
+    width: clamp(65px, 12vw, 90px); 
+    height: clamp(40px, 8vw, 60px); 
+  }
+  .hero-visual-complex { 
+    display: flex;
+    grid-column: 1 / -1; 
+    grid-row: 2;
+    min-height: 400px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .frame-pri { width: 90%; height: 95%; }
+  .frame-sec { width: 55%; left: -5%; bottom: -5%; }
+  .hero-seal { right: 80%; top: 5%; width: 75px; height: 75px; }
+  .hero-seal svg { width: 65px; height: 65px; }
+  
+  .hero-footer {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-top: 30px;
+    margin-top: 20px;
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MARQUEE TICKER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.ticker{overflow:hidden;padding:14px 0;display:flex;width:100%}
+.ticker.dark{background:var(--i1)}
+.ticker.mid{background:var(--i2)}
+.ticker.sand{background:var(--s1)}
+.ticker-track{display:flex;white-space:nowrap;width:max-content;animation:tickerA 25s linear infinite}
+.ticker.rev .ticker-track{animation-direction:reverse}
+.ticker-item{
+  display:inline-flex;align-items:center;gap:28px;
+  padding:0 28px;flex-shrink:0;
+  font-family:var(--fn);font-size:.57rem;font-weight:400;letter-spacing:.28em;text-transform:uppercase;
+}
+.ticker.dark .ticker-item{color:rgba(254,247,232,.24)}
+.ticker.dark .ticker-item::after{content:'✦';color:var(--t0);font-size:.48rem}
+.ticker.sand .ticker-item{color:rgba(30,42,43,.25)}
+.ticker.sand .ticker-item::after{content:'✦';color:var(--c0);font-size:.48rem}
+.ticker.mid .ticker-item{color:rgba(254,247,232,.2)}
+.ticker.mid .ticker-item::after{content:'✦';color:var(--g1);font-size:.48rem}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §3 PHILOSOPHY - EDITORIAL OVERLAP
+   Architecture: Thin-bordered solid box overlapping 
+   a portrait image with dashed inner list accents.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#philosophy {
+  background: var(--i1); /* Match the dark ticker above to prevent corner bleed */
+  position: relative;
+  z-index: 10;
+}
+
+.phil-inner {
+  background: var(--s0); /* Warm Sand */
+  padding: 160px var(--col);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-top-left-radius: 50% 120px;
+  border-top-right-radius: 50% 120px;
+}
+
+.phil-wrap-ref {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  min-height: 620px;
+}
+
+/* Right Side Image Container */
+.phil-img-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 45%;
+  height: 100%;
+  z-index: 1;
+}
+.phil-img-container img {
+  width: 100%;
+  height: calc(100% - 70px); /* Leaves room for bottom text */
+  object-fit: cover;
+  display: block;
+}
+.phil-img-caption {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--i0);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  line-height: 1.6;
+}
+
+/* Left Side Overlapping Box */
+.phil-box-ref {
+  position: relative;
+  z-index: 2;
+  width: 66%;
+  background: var(--s0); /* Matches body background to hide image beneath */
+  border: 1px solid var(--i0);
+  padding: clamp(40px, 6vw, 70px);
+  box-shadow: 20px 20px 60px rgba(0,0,0,0.04);
+}
+
+.phil-eyebrow-ref {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--i3);
+  margin-bottom: 24px;
+}
+
+.phil-h-ref {
+  font-family: var(--fn);
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--i0);
+  margin-bottom: 48px;
+}
+
+/* Dashed "Form" Rows */
+.phil-dashed-wrap {
+  border: 1px dashed rgba(30,42,43,0.35);
+  border-bottom: none;
+  width: 100%;
+}
+.pd-row {
+  border-bottom: 1px dashed rgba(30,42,43,0.35);
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+.pd-interact:hover {
+  background: rgba(30,42,43,0.03);
+}
+.pd-row span {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  color: rgba(30,42,43,0.6);
+}
+.pd-btn {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--i0);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pd-arrow {
+  transition: transform 0.3s var(--ease-back);
+}
+.pd-interact:hover .pd-arrow {
+  transform: translateX(6px);
+}
+
+/* Responsive adjustments for Philosophy */
+@media(max-width: 1100px) {
+  .phil-inner { border-top-left-radius: 50% 60px; border-top-right-radius: 50% 60px; }
+  .phil-wrap-ref { flex-direction: column; min-height: auto; }
+  .phil-box-ref { width: 100%; order: 1; padding: 40px; }
+  .phil-img-container { position: relative; width: 100%; height: 500px; order: 2; margin-top: 40px; }
+  .phil-img-container img { height: calc(100% - 60px); }
+  .phil-img-caption { text-align: left; left: 0; right: auto; }
+  .pd-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .pd-row.pd-interact { flex-direction: row; align-items: center; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §4 INGREDIENTS - NATURE's BLUEPRINT (EDITORIAL)
+   Architecture: High-fashion asymmetric split grid
+   matching the reference magazine layout.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#ingredients {
+  background: var(--s0); /* Warm off-white */
+  padding: 140px var(--col) 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top Centered Header */
+.ing-head-ref {
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ing-head-p {
+  font-family: var(--fs);
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--i0);
+  margin-top: 16px;
+  letter-spacing: -0.02em;
+}
+.ing-head-p em {
+  font-style: italic;
+}
+
+/* Block 1: Left Image, Right Stacked List */
+.ing-block-1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6vw;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto 140px;
+}
+.ib1-left {
+  display: flex;
+  justify-content: flex-start;
+}
+.ib1-img {
+  width: 95%;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+}
+.ib1-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ib1-list > span {
+  font-family: var(--fs);
+  font-size: clamp(3rem, 6vw, 6.5rem);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--i0);
+  text-transform: uppercase;
+}
+.ib1-last-row {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: nowrap;
+  margin-top: 10px;
+}
+.ib1-last-row .ital {
+  font-family: var(--fs);
+  font-size: clamp(3rem, 6vw, 6.5rem);
+  font-style: italic;
+  text-transform: none;
+  font-weight: 400;
+  color: var(--i0);
+  line-height: 1;
+}
+.ib1-desc {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--i0);
+  line-height: 1.6;
+  max-width: 220px;
+}
+
+/* Block 2: Left Text, Right Overlapping Images */
+.ing-block-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6vw;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.ib2-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 420px;
+}
+.ib2-text {
+  font-family: var(--fs);
+  font-size: clamp(1.4rem, 2vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--i0);
+  margin-bottom: 40px;
+}
+.ib2-text em { font-style: italic; }
+.ib2-link {
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--i0);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--i0);
+  padding-bottom: 4px;
+  align-self: flex-start;
+  transition: color 0.3s, border-color 0.3s;
+}
+.ib2-link:hover {
+  color: var(--c0);
+  border-color: var(--c0);
+}
+
+.ib2-right {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.ib2-bg {
+  width: 85%;
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  display: block;
+}
+.ib2-fg {
+  position: absolute;
+  top: 50%;
+  left: -5%; /* Pulls it out over the text column slightly */
+  transform: translateY(-50%);
+  width: 55%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  box-shadow: 0 30px 60px rgba(30,42,43,0.15);
+  z-index: 2;
+  will-change: transform;
+}
+
+@media(max-width: 1100px) {
+  #ingredients { padding: 100px var(--col) 80px; }
+  .ing-block-1, .ing-block-2 { grid-template-columns: 1fr; gap: 60px; }
+  .ib1-left { justify-content: center; }
+  .ib1-img { width: 100%; aspect-ratio: 1/1; }
+  .ib1-list > span, .ib1-last-row .ital { font-size: 4rem; }
+  .ib1-last-row { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .ib2-left { max-width: 100%; margin-bottom: 20px; }
+  .ib2-right { padding-top: 20px; justify-content: flex-end; }
+  .ib2-bg { width: 90%; }
+  .ib2-fg { left: 0%; width: 60%; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §5 PRODUCTS - MINIMALIST STUDIO GRID
+   Architecture: Ultra-clean 4-column grid, 
+   studio background, detached typography matching reference.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#products {
+  background: #FFFFFF;
+  padding: 140px var(--col);
+  position: relative;
+}
+.prod-top-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 80px;
+}
+.prod-h-v2 {
+  font-family: var(--fs);
+  font-size: clamp(3rem, 5vw, 4.5rem);
+  font-weight: 900;
+  color: var(--i0);
+  margin-bottom: 30px;
+  letter-spacing: -0.02em;
+}
+.prod-h-v2 em { font-style: italic; color: var(--c0); }
+
+.filter-row-v2 {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.filter-btn-v2 {
+  background: transparent;
+  border: none;
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(30,42,43,0.4);
+  cursor: none;
+  transition: color 0.3s;
+  position: relative;
+  padding-bottom: 6px;
+}
+.filter-btn-v2.act, .filter-btn-v2:hover {
+  color: var(--i0);
+}
+.filter-btn-v2.act::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--i0);
+}
+
+.prod-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.pc-v2 {
+  display: flex;
+  flex-direction: column;
+  cursor: none;
+  transition: opacity 0.4s cubic-bezier(0.19, 1, 0.22, 1), transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
+}
+
+/* Light Studio Background Box */
+.pc-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.15;
+  background: #F9F9F9; /* Very light, premium grey */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.pc-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-family: var(--fn);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--i0);
+  z-index: 2;
+}
+.pc-img {
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  mix-blend-mode: darken; /* Blends white photo backgrounds into the light grey box perfectly */
+  transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.06)); /* Artificial studio depth */
+}
+.pc-v2:hover .pc-img {
+  transform: scale(1.08) translateY(-8px);
+}
+
+/* Floating Add To Cart Overlay */
+.pc-add {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 16px;
+  text-align: center;
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--i0);
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  border-top: 1px solid rgba(255,255,255,1);
+}
+.pc-v2:hover .pc-add {
+  transform: translateY(0);
+}
+.pc-add:hover {
+  background: var(--i0);
+  color: #fff;
+}
+
+/* Detached Typography (Matches Reference) */
+.pc-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pc-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.pc-title {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--i0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pc-price {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--i0);
+}
+.pc-desc {
+  font-family: var(--fn);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(30,42,43,0.5);
+}
+
+@media(max-width: 1200px) {
+  .prod-grid-v2 { grid-template-columns: repeat(2, 1fr); gap: 50px 30px; }
+  .pc-add { transform: translateY(0); background: transparent; padding-bottom: 12px; border: none; font-size: 0.55rem; color: var(--i3); }
+}
+@media(max-width: 600px) {
+  .prod-grid-v2 { grid-template-columns: 1fr; gap: 60px; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §6 TRANSFORMATION - ORGANIC FLOATING BENTO
+   Architecture: High-fashion editorial layout.
+   Central organic blob image, asymmetric floating cards.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#transformation {
+  background: #FCFBF9; /* Crisp, warm off-white editorial background */
+  padding: 160px 0 100px;
+  position: relative;
+  overflow: hidden;
+}
+.tf-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  padding: 0 var(--col);
+}
+
+/* Header */
+.tf-head {
+  max-width: 700px;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 5;
+}
+.tf-h {
+  font-family: var(--fn);
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  color: var(--i0);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+.tf-h-serif {
+  font-family: var(--fs);
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  font-weight: 400;
+  font-style: italic;
+  text-transform: lowercase;
+  color: var(--i0);
+  border-bottom: 2px solid var(--i0);
+  padding-bottom: 4px;
+  display: inline-block;
+  margin-top: 5px;
+}
+.tf-sub {
+  font-family: var(--fn);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(30,42,43,0.6);
+  margin-top: 24px;
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+/* Main Stage & Central Image */
+.tf-stage {
+  position: relative;
+  width: 100%;
+  height: 800px;
+  margin-top: -120px; /* Pulls the stage up to overlap text slightly */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.tf-center-img {
+  position: relative;
+  width: clamp(400px, 45vw, 650px);
+  aspect-ratio: 1 / 1.05;
+  z-index: 2;
+}
+.tf-blob {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Organic diagonal pill/blob shape replicating the reference */
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  box-shadow: 0 30px 80px rgba(30,42,43,0.08);
+  animation: blob-morph 8s ease-in-out infinite alternate;
+}
+
+/* Floating Cards */
+.tf-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+  padding: 36px 30px;
+  width: 260px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.04);
+  border: 1px solid rgba(255,255,255,1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 4;
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.5s;
+}
+.tf-card:hover { 
+  transform: translateY(-8px); 
+  box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+}
+.tf-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(30,42,43,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: var(--i0);
+}
+.tf-card-icon svg { width: 20px; height: 20px; stroke-width: 1.5px; }
+.tf-card-title {
+  font-family: var(--fn);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--i0);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.tf-card-desc {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(30,42,43,0.6);
+  line-height: 1.6;
+}
+
+/* Exact Card Positioning mapping to the reference */
+.tfc-1 { top: 22%; left: 15%; z-index: 3; } /* Top Left */
+.tfc-2 { top: 58%; left: 4%; z-index: 4; }  /* Bottom Left */
+.tfc-3 { bottom: 2%; right: 26%; z-index: 4; } /* Bottom Right */
+.tfc-4 { top: 45%; right: 6%; z-index: 3; }  /* Mid Right */
+
+/* Graphic Decorations */
+.tf-arc {
+  position: absolute;
+  top: -8%;
+  right: 18%;
+  width: 500px;
+  height: 500px;
+  z-index: 1;
+  pointer-events: none;
+}
+.tf-decor-leaf {
+  position: absolute;
+  top: 45%;
+  right: 26%;
+  width: 45px;
+  z-index: 5;
+  animation: float-slow 6s ease-in-out infinite;
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
+}
+.tf-decor-peel {
+  position: absolute;
+  bottom: 15%;
+  left: 20%;
+  width: 90px;
+  z-index: 5;
+  animation: float-slow 8s ease-in-out infinite reverse;
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.15));
+}
+
+/* Bottom Footer Section */
+.tf-bottom {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px var(--col) 0;
+  text-align: center;
+}
+.tf-bottom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--col);
+  right: var(--col);
+  height: 1px;
+  background: rgba(30,42,43,0.15);
+}
+.tf-bot-pre {
+  font-family: var(--fn);
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--i0);
+  letter-spacing: 0.05em;
+  display: block;
+}
+.tf-bot-post {
+  font-family: var(--fs);
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-style: italic;
+  color: var(--i0);
+  display: block;
+  margin-top: -12px;
+  letter-spacing: -0.02em;
+}
+
+/* Keyframes for organic blob morphing */
+@keyframes blob-morph {
+  0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  100% { border-radius: 60% 40% 30% 70% / 50% 60% 40% 60%; }
+}
+
+@media(max-width: 1100px) {
+  #transformation { padding: 100px 0; }
+  .tf-stage { height: auto; flex-direction: column; margin-top: 60px; }
+  .tf-center-img { width: 85%; margin-bottom: 60px; }
+  .tf-card { position: relative; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; width: 100%; max-width: 380px; margin-bottom: 20px; }
+  .tf-arc, .tf-decor-leaf, .tf-decor-peel { display: none; }
+  .tf-bottom { margin-top: 40px; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §7 SCIENCE - MOLECULAR PRECISION (EDITORIAL)
+   Architecture: Minimalist 3-column studio layout.
+   Left list, center microscopic bubble image, right copywriting.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#science {
+  background: #FCFBF9; /* Match #transformation background to prevent corner bleed */
+  position: relative;
+  z-index: 10;
+}
+.sci-inner {
+  background: #FFFFFF;
+  padding: 160px var(--col);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  border-top-left-radius: 50% 120px;
+  border-top-right-radius: 50% 120px;
+}
+.sci-container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+}
+.sci-top {
+  margin-bottom: 80px;
+}
+.sci-eyebrow {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #8A8A8A;
+}
+.sci-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+/* Left: Protocol List */
+.sci-left {
+  display: flex;
+  flex-direction: column;
+}
+.sci-list-title {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #111111;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+.sci-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Tighter stacking matching the reference */
+}
+.sci-item {
+  display: flex;
+  align-items: flex-start; /* Changed from baseline to top-align the numbers */
+  gap: 12px;
+  color: #E2E2E2; /* Lighter, more muted inactive state */
+  transition: color 0.4s var(--ease);
+  cursor: none;
+}
+.sci-item.active {
+  color: #111111;
+}
+.sci-item:not(.active):hover {
+  color: #A0A0A0; /* Subtle hover for inactive items */
+}
+.sci-num {
+  font-family: var(--fn);
+  font-size: 0.55rem;
+  font-weight: 600;
+  margin-top: 16px; /* Aligns tiny number with top of giant serif text */
+  width: 16px;
+  flex-shrink: 0;
+}
+.sci-name {
+  font-family: var(--fs);
+  font-size: clamp(2.4rem, 4vw, 4.4rem); /* Oversized editorial look */
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  transition: transform 0.6s var(--ease);
+}
+.sci-item.active .sci-name {
+  font-style: italic;
+  transform: translateX(12px);
+}
+.sci-item:hover .sci-name {
+  transform: translateX(12px);
+}
+
+/* Center: Microscopic Visual */
+.sci-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+.sci-blob-wrap {
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 1;
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.03);
+  animation: blob-morph 10s ease-in-out infinite alternate;
+  position: relative;
+  background: #F4F4F4;
+  z-index: 2;
+}
+.sci-blob-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.05);
+  transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+  mix-blend-mode: darken;
+}
+.sci-center:hover .sci-blob-img {
+  transform: scale(1.1);
+}
+
+/* Floating Water Molecules (Glassmorphism) */
+.sci-molecules {
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  z-index: 5;
+}
+.sci-mol {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(110% 110% at 25% 25%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.1) 75%, rgba(255, 255, 255, 0.6) 100%);
+  box-shadow: inset -4px -4px 10px rgba(0,0,0,0.03), 0 15px 35px rgba(0,0,0,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: float-mol 6s ease-in-out infinite alternate;
+}
+/* Highlight reflection on the droplet */
+.sci-mol::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 25%;
+  height: 25%;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  filter: blur(1px);
+}
+
+/* Individual Molecule Sizing & Positioning */
+.sci-m1 { width: 50px; height: 50px; top: 15%; left: 5%; animation-delay: 0s; animation-duration: 7s; }
+.sci-m2 { width: 90px; height: 90px; top: 75%; left: -5%; animation-delay: -2s; animation-duration: 9s; }
+.sci-m3 { width: 30px; height: 30px; top: 85%; right: 10%; animation-delay: -4s; animation-duration: 6s; }
+.sci-m4 { width: 65px; height: 65px; top: 5%; right: 0%; animation-delay: -1s; animation-duration: 8s; }
+.sci-m5 { width: 20px; height: 20px; top: 45%; right: -8%; animation-delay: -3s; animation-duration: 5s; }
+.sci-m6 { width: 40px; height: 40px; top: 60%; left: 15%; animation-delay: -5s; animation-duration: 8.5s; z-index: 10; } /* Overlaps main blob slightly */
+
+@keyframes float-mol {
+  0% { transform: translateY(0) scale(1) rotate(0deg); }
+  100% { transform: translateY(-25px) scale(1.05) rotate(5deg); }
+}
+
+/* Right: Copywriting Description */
+.sci-right-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.sci-desc {
+  font-family: var(--fn);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.8;
+  color: #6F6F6F;
+  margin-bottom: 30px;
+}
+.sci-cert-strip {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sci-cert-strip .cert {
+  padding: 6px 14px;
+  border: 1px solid #DCDCDC;
+  background: transparent;
+  font-family: var(--fn);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #8A8A8A;
+  border-radius: 40px;
+}
+
+/* Bottom: Pill Button */
+.sci-bottom {
+  margin-top: 100px;
+  display: flex;
+  justify-content: center;
+}
+.sci-pill-btn {
+  padding: 16px 64px;
+  border-radius: 60px;
+  border: 1px solid #DCDCDC;
+  background: transparent;
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #111111;
+  cursor: none;
+  text-decoration: none;
+  transition: all 0.4s var(--ease);
+}
+.sci-pill-btn:hover {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+  transform: translateY(-2px);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §8 EDITORIAL MANIFESTO - BENTO UI
+   Architecture: Rounded container, 2-column, 
+   accordion list left, full image right.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#editorial {
+  background: #FFFFFF; /* Crisp background to make the box pop */
+  padding: 100px var(--col);
+  display: flex;
+  justify-content: center;
+}
+
+.mb-container {
+  background: #F0F2EB; /* Soft matcha/sage off-white matching reference */
+  border-radius: 48px;
+  width: 100%;
+  max-width: 1400px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  padding: 60px;
+  box-shadow: 0 20px 60px rgba(30,42,43,0.03);
+}
+
+/* Left Side - Content & Accordion */
+.mb-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 20px;
+}
+.mb-eyebrow {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--g0); /* Sage Green */
+  margin-bottom: 24px;
+}
+.mb-h {
+  font-family: var(--fs);
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  font-weight: 400;
+  color: var(--i0);
+  line-height: 1.05;
+  margin-bottom: 40px;
+  letter-spacing: -0.02em;
+}
+.mb-accordion {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(30,42,43,0.15);
+  margin-bottom: 40px;
+}
+.mb-item {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(30,42,43,0.15);
+  cursor: none;
+}
+.mb-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.mb-item-text {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--i0);
+  transition: color 0.3s;
+}
+.mb-item-icon {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: var(--i0);
+  transition: transform 0.4s var(--ease-back), color 0.3s;
+}
+.mb-item:hover .mb-item-text { color: var(--g0); }
+.mb-item:hover .mb-item-icon { color: var(--g0); }
+.mb-item-body {
+  height: 0;
+  overflow: hidden;
+  transition: height 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--i3);
+  max-width: 90%;
+  opacity: 0;
+}
+.mb-item.open .mb-item-body {
+  padding-top: 16px;
+  opacity: 1;
+  transition: height 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.5s 0.1s;
+}
+.mb-item.open .mb-item-icon {
+  transform: rotate(45deg);
+  color: var(--g0);
+}
+.mb-item.open .mb-item-text {
+  color: var(--g0);
+}
+
+/* Pill Button */
+.mb-btn {
+  align-self: flex-start;
+  background: var(--i1); /* Dark Green/Ink */
+  color: #fff;
+  padding: 16px 36px;
+  border-radius: 50px; /* Fully rounded pill */
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.3s var(--ease-back), background 0.3s, box-shadow 0.3s;
+  cursor: none;
+}
+.mb-btn:hover {
+  transform: translateY(-3px);
+  background: var(--g0); /* Sage Green hover */
+  box-shadow: 0 10px 25px rgba(75, 155, 126, 0.3);
+}
+
+/* Right Side - Image */
+.mb-right {
+  position: relative;
+  height: 100%;
+  min-height: 500px;
+  border-radius: 36px;
+  overflow: hidden;
+}
+.mb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.mb-container:hover .mb-img {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media(max-width: 1100px) {
+  #editorial { padding: 60px var(--col); }
+  .mb-container { grid-template-columns: 1fr; padding: 40px; gap: 40px; border-radius: 36px; }
+  .mb-left { padding-right: 0; }
+  .mb-right { min-height: 400px; }
+}
+@media(max-width: 600px) {
+  .mb-container { padding: 30px 20px; border-radius: 28px; }
+  .mb-right { min-height: 300px; border-radius: 20px; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §9 TESTIMONIALS - 3D CURVED CAROUSEL
+   Architecture: Tactile floating cards with 
+   scale, rotation, and opacity transitions.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#testimonials {
+  background: #FFFFFF; /* Match the background of the #editorial section above to hide the body background */
+  position: relative;
+  z-index: 10;
+}
+.test-inner {
+  background: #F2EBE1; /* Matching the creamy taupe from the reference */
+  padding: 160px 0 140px;
+  overflow: hidden;
+  position: relative;
+  border-top-left-radius: 50% 100px;
+  border-top-right-radius: 50% 100px;
+}
+.test-head-v2 {
+  text-align: center;
+  margin-bottom: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 10;
+}
+.test-h-v2 {
+  font-family: var(--fs);
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  font-weight: 500;
+  color: var(--i0);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.test-sub-v2 {
+  font-family: var(--fn);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(30,42,43,0.7);
+  margin-top: 16px;
+  max-width: 320px;
+  line-height: 1.6;
+}
+
+/* 3D Carousel Track */
+.tc-wrap {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.tc-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+}
+.tc-card {
+  position: absolute;
+  width: clamp(260px, 24vw, 320px);
+  height: clamp(340px, 32vw, 420px);
+  background: rgba(230, 222, 208, 0.4);
+  border-radius: 16px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: none;
+  transform-origin: center bottom;
+}
+
+/* Carousel States */
+.tc-card.active {
+  transform: translateX(0) scale(1) rotate(0deg);
+  opacity: 1;
+  z-index: 5;
+  background: #FFFFFF;
+  box-shadow: 0 30px 60px rgba(30,42,43,0.05);
+}
+.tc-card.prev {
+  transform: translateX(-110%) scale(0.88) rotate(-4deg);
+  opacity: 0.55;
+  z-index: 4;
+}
+.tc-card.next {
+  transform: translateX(110%) scale(0.88) rotate(4deg);
+  opacity: 0.55;
+  z-index: 4;
+}
+.tc-card.far-prev {
+  transform: translateX(-210%) scale(0.76) rotate(-8deg);
+  opacity: 0.25;
+  z-index: 3;
+}
+.tc-card.far-next {
+  transform: translateX(210%) scale(0.76) rotate(8deg);
+  opacity: 0.25;
+  z-index: 3;
+}
+.tc-card.hidden-l {
+  transform: translateX(-300%) scale(0.6) rotate(-12deg);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.tc-card.hidden-r {
+  transform: translateX(300%) scale(0.6) rotate(12deg);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Card Content Typography */
+.tc-quote {
+  font-family: var(--fs);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: rgba(30,42,43,0.5);
+  transition: color 0.6s;
+}
+.tc-card.active .tc-quote {
+  color: var(--i0);
+  font-weight: 500;
+}
+.tc-auth {
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c0);
+  margin-top: 24px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.5s;
+}
+.tc-card.active .tc-auth {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.2s;
+}
+
+/* Controls */
+.tc-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+  position: relative;
+  z-index: 10;
+}
+.tc-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: var(--i0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: none;
+  box-shadow: 0 4px 15px rgba(30,42,43,0.04);
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+.tc-btn:hover {
+  background: var(--i0);
+  color: #fff;
+  transform: scale(1.05);
+}
+.tc-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §10 ROUTINE BUILDER - BRUTALIST EDITORIAL
+   Architecture: Massive brutalist typography, 
+   floating organic swatches, thin architectural 
+   lines, and an asymmetric split bottom section.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#routine {
+  background: #FFFFFF;
+  padding: 160px 0 100px;
+  position: relative;
+  overflow: hidden;
+  color: var(--i0);
+}
+.rt-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--col);
+  position: relative;
+}
+
+/* Top: Massive Typography */
+.rt-top {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 120px;
+}
+.rt-pill {
+  display: inline-block;
+  padding: 6px 20px;
+  border: 1px solid rgba(30,42,43,0.3);
+  border-radius: 40px;
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  margin-left: 8vw;
+}
+.rt-h {
+  font-family: var(--fn);
+  font-size: clamp(3.5rem, 8vw, 8rem);
+  font-weight: 900;
+  line-height: 0.85;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  color: var(--i0);
+  margin: 0;
+}
+.rt-h span { display: block; }
+.rt-h .indent { margin-left: 8vw; }
+.rt-h em {
+  font-family: var(--fs);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.02em;
+}
+
+/* Right Side Toggle List */
+.rt-toggles {
+  position: absolute;
+  top: 10%;
+  right: var(--col);
+  max-width: 320px;
+  z-index: 10;
+}
+.rt-toggle-desc {
+  font-family: var(--fn);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(30,42,43,0.6);
+  margin-bottom: 40px;
+}
+.rt-skin-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 12px 0;
+  cursor: none;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+  width: 100%;
+}
+.rt-skin-btn.act, .rt-skin-btn:hover { opacity: 1; }
+.rt-skin-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.rt-skin-text strong {
+  display: block;
+  font-family: var(--fn);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--i0);
+  margin-bottom: 4px;
+}
+.rt-skin-text small {
+  font-family: var(--fn);
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(30,42,43,0.6);
+}
+
+/* Floating Textures */
+.rt-float-wrap {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.rt-swatch-1, .rt-swatch-2 {
+  position: absolute;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.1);
+}
+.rt-swatch-1 {
+  width: 180px;
+  height: 400px;
+  top: 35%;
+  left: 20%;
+  background-image: url('https://images.unsplash.com/photo-1615397323861-12ecbc58b291?q=80&w=400');
+  border-radius: 100px 40px 100px 40px;
+  transform: rotate(15deg);
+  filter: sepia(0.3) hue-rotate(-20deg); /* Warm pinkish tint */
+}
+.rt-swatch-2 {
+  width: 160px;
+  height: 380px;
+  top: 50%;
+  left: 32%;
+  background-image: url('https://images.unsplash.com/photo-1599305090598-fe179d501227?q=80&w=400');
+  border-radius: 40px 100px 40px 100px;
+  transform: rotate(35deg);
+  filter: sepia(0.5) hue-rotate(20deg); /* Warm taupe tint */
+}
+
+/* Delicate SVG Connectors */
+.rt-svg-line {
+  position: absolute;
+  pointer-events: none;
+}
+.rt-line-top { top: 25%; left: 0; width: 40%; height: 200px; }
+.rt-line-bot { top: -60px; left: -20px; width: 100%; height: 120px; }
+
+/* Bottom Split Layout */
+.rt-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 240px;
+  position: relative;
+  z-index: 10;
+}
+.rt-split-left {
+  padding-right: 80px;
+  position: relative;
+}
+
+.rt-split-right {
+  background: #F4EFEA; /* Warm soft taupe matching reference block */
+  padding: 80px 60px;
+  position: relative;
+}
+.rt-sr-header {
+  margin-bottom: 60px;
+}
+.rt-sr-title {
+  font-family: var(--fn);
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--i0);
+}
+.rt-sr-title em {
+  font-family: var(--fs);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+.rt-sr-sub {
+  font-family: var(--fn);
+  font-size: 0.8rem;
+  color: rgba(30,42,43,0.6);
+  margin-top: 16px;
+}
+
+/* Step Cards */
+.rt-step {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 60px;
+}
+.rt-step:last-child { margin-bottom: 0; }
+.rt-step-img {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  margin-bottom: 24px;
+}
+.rt-step-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rt-step-pill {
+  border: 1px solid rgba(30,42,43,0.2);
+  border-radius: 40px;
+  padding: 4px 10px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--i0);
+}
+.rt-step-title {
+  font-family: var(--fs);
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: 12px;
+  color: var(--i0);
+}
+.rt-step-desc {
+  font-family: var(--fn);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(30,42,43,0.7);
+  max-width: 320px;
+}
+
+/* Action Button overlay simulating "SHOP NOW" */
+.rt-action-btn {
+  position: absolute;
+  top: 80px;
+  right: 60px;
+  width: 70px;
+  height: 70px;
+  background: var(--i0);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: var(--fn);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transition: transform 0.3s var(--ease-back);
+  cursor: none;
+}
+.rt-action-btn:hover {
+  transform: scale(1.1);
+}
+.rt-action-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-bottom: 4px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §11 COLLECTIONS - EDITORIAL COLLAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#collections {
+  background: #FFFFFF;
+  padding: 160px var(--col) 0px;
+  overflow: hidden;
+  position: relative;
+}
+.coll-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
+}
+.coll-h {
+  font-family: var(--fs);
+  font-size: clamp(2.8rem, 5vw, 5.5rem);
+  font-weight: 900;
+  color: var(--i0);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+.coll-h em { font-style: italic; color: var(--c0); }
+.coll-link {
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--i0);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--c0);
+  padding-bottom: 4px;
+  transition: color 0.3s, border-color 0.3s;
+}
+.coll-link:hover { color: var(--c0); }
+
+.collage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4vw;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+.cg-col { display: flex; flex-direction: column; }
+.cg-item-wrap { position: relative; will-change: transform; }
+.cg-item { position: relative; width: 100%; animation: float-slow 8s ease-in-out infinite; }
+.cg-col:nth-child(2) .cg-item { animation-delay: -2s; animation-duration: 9s; }
+.cg-col:nth-child(3) .cg-item { animation-delay: -4s; animation-duration: 7s; }
+
+.cg-img-mask {
+  overflow: hidden;
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 1.4s cubic-bezier(.19,1,.22,1);
+}
+.cg-item-wrap.in .cg-img-mask { clip-path: inset(0 0 0 0); }
+.cg-img {
+  width: 100%; height: auto; object-fit: cover; display: block;
+  transition: transform 1.2s cubic-bezier(.19,1,.22,1), filter 1.2s ease;
+  filter: grayscale(15%) saturate(0.9);
+}
+.cg-item-wrap:hover .cg-img { transform: scale(1.04) rotate(1deg); filter: grayscale(0%) saturate(1.1); }
+
+.cg-cap { font-family: var(--fs); font-size: 0.75rem; line-height: 1.4; color: var(--i0); margin-top: 12px; }
+.cg-cap.top { margin-top: 0; margin-bottom: 12px; }
+
+.c1-1 { width: 65%; margin-top: 100px; }
+.c1-2 { width: 100%; margin-top: 200px; }
+.c1-3 { width: 75%; margin-left: 15%; margin-top: 120px; }
+.c2-1 { width: 100%; margin-top: -20px; }
+.c2-2 { width: 35%; margin-left: 65%; margin-top: -30px; z-index: 2; }
+.c2-3 { width: 95%; margin-top: 140px; }
+.c3-1 { width: 95%; margin-top: -80px; margin-left: auto; }
+.c3-2 { width: 60%; margin-left: auto; margin-top: 160px; }
+.c3-3 { width: 85%; margin-top: 100px; }
+
+.cg-quote-block {
+  background: var(--i0); color: var(--s0); padding: 40px 30px; position: relative;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: transform 0.5s var(--ease-back);
+}
+.cg-quote-block:hover { transform: scale(1.02); }
+.cqb-inner { position: relative; width: 65%; margin: 30px 0 20px; }
+.cqb-inner img { width: 100%; aspect-ratio: 4/5; object-fit: cover; position: relative; z-index: 2; }
+.cqb-marks {
+  position: absolute; top: 50%; left: 50%; width: 160%; transform: translate(-50%, -50%);
+  display: flex; justify-content: space-between; font-family: var(--fn); font-weight: 900;
+  font-size: clamp(4rem, 8vw, 7rem); line-height: 0; pointer-events: none; z-index: 1;
+}
+.cqb-brand { font-family: var(--fs); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900; letter-spacing: -0.02em; margin-top: 30px; line-height: 1; color: #fff; }
+
+@media(max-width: 900px) {
+  .collage-grid { grid-template-columns: 1fr; gap: 80px; }
+  .cg-item-wrap { width: 100% !important; margin: 0 !important; margin-bottom: 40px !important; }
+  .c1-3, .c2-2, .c3-2, .c3-1 { margin-left: 0 !important; }
+  .c2-2 { width: 50% !important; }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   §12 PROUD PARTNERS & NOTIFICATION FOOTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.partners-sec {
+  background: #FFFFFF;
+  padding: 140px var(--col) 100px;
+  text-align: center;
+}
+.partners-h {
+  font-family: var(--fn);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--i0);
+  margin-bottom: 50px;
+}
+.partners-logos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 40px;
+  opacity: 0.6;
+}
+.plogo {
+  font-family: var(--fs);
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  font-weight: 900;
+  color: var(--i0);
+}
+.plogo span { font-weight: 300; font-family: var(--fn); font-size: 1.2rem; }
+
+.new-footer {
+  background: #FFFFFF;
+  padding-top: 40px;
+  overflow: hidden;
+  position: relative;
+}
+.nf-curve {
+  background: #3261DF; /* Vibrant Royal Blue */
+  border-top-left-radius: 50% 120px;
+  border-top-right-radius: 50% 120px;
+  padding: 120px var(--col) 60px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 -20px 60px rgba(50, 97, 223, 0.15);
+  transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.nf-cta-h {
+  font-family: var(--fn);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #DEFF00; /* Neon Chartreuse Accent */
+  margin-bottom: 24px;
+  text-align: center;
+}
+.nf-cta-p {
+  font-family: var(--fn);
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #fff;
+  margin-bottom: 48px;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.6;
+}
+.nf-form { display: flex; flex-direction: column; align-items: center; gap: 28px; width: 100%; max-width: 380px; }
+.nf-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1.5px solid rgba(255,255,255,0.3);
+  color: #fff; padding: 12px 0; text-align: center; font-family: var(--fn); font-size: 0.85rem; outline: none; transition: border-color 0.3s; cursor: none;
+}
+.nf-input::placeholder { color: rgba(255,255,255,0.7); }
+.nf-input:focus { border-bottom-color: #DEFF00; }
+.nf-submit {
+  padding: 14px 44px; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 50px; background: transparent; color: #fff;
+  font-family: var(--fn); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; cursor: none; transition: all 0.4s var(--ease);
+}
+.nf-submit:hover { background: #DEFF00; color: #3261DF; border-color: #DEFF00; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(222, 255, 0, 0.2); }
+
+.nf-grid { display: grid; grid-template-columns: 1fr 1fr 2fr 1fr 1fr; gap: 30px; width: 100%; max-width: 1200px; margin-top: 120px; text-align: left; }
+.nf-col-h { font-family: var(--fn); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #DEFF00; margin-bottom: 24px; }
+.nf-links { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.nf-links a, .nf-links p { font-family: var(--fn); font-size: 0.8rem; font-weight: 400; color: #fff; text-decoration: none; opacity: 0.9; transition: opacity 0.3s, color 0.3s, transform 0.3s; cursor: none; display: inline-block; }
+.nf-links a:hover { opacity: 1; color: #DEFF00; transform: translateX(4px); }
+.mt-4 { margin-top: 40px; }
+
+.nf-logo-col { display: flex; justify-content: center; align-items: flex-start; }
+.nf-logo-svg { width: 110px; height: 110px; color: #DEFF00; animation: spin 24s linear infinite; }
+
+.nf-bottom { width: 100%; max-width: 1200px; margin-top: 100px; text-align: center; font-family: var(--fn); font-size: 0.65rem; font-weight: 400; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px; }
+
+/* ─────────────────────────────────────────
+   GLOBAL RESPONSIVE RESETS (CLEANED)
+───────────────────────────────────────── */
+@media(max-width: 1100px) {
+  :root { --col: 28px; }
+  
+  /* Nav */
+  #nav { padding: 0 var(--col); }
+
+  /* Transformation Reset */
+  #transformation { padding: 100px 0; }
+  
+  /* Science Reset */
+  .sci-inner { border-top-left-radius: 50% 60px; border-top-right-radius: 50% 60px; padding: 100px var(--col); }
+  .sci-grid { grid-template-columns: 1fr; gap: 80px; }
+  .sci-left, .sci-right-col, .sci-top { text-align: center; align-items: center; }
+  .sci-list-title { align-self: center; }
+  .sci-item { justify-content: center; }
+  .sci-name { font-size: clamp(2.2rem, 6vw, 3.2rem); }
+  .sci-item.active .sci-name, .sci-item:hover .sci-name { transform: none; }
+  .sci-desc { max-width: 480px; text-align: center; margin: 0 auto 30px; }
+  .sci-cert-strip { justify-content: center; }
+  
+  /* Testimonials Mobile Reset */
+  .test-inner { border-top-left-radius: 50% 50px; border-top-right-radius: 50% 50px; }
+  .tc-wrap { height: 400px; }
+  .tc-card.prev { transform: translateX(-60%) scale(0.85) rotate(-3deg); opacity: 0; pointer-events: none; }
+  .tc-card.next { transform: translateX(60%) scale(0.85) rotate(3deg); opacity: 0; pointer-events: none; }
+  .tc-card.far-prev, .tc-card.far-next { display: none; }
+  
+  /* Routine Reset */
+  .rt-top { flex-direction: column; }
+  .rt-toggles { position: relative; top: auto; right: auto; margin-top: 40px; }
+  .rt-h { font-size: clamp(3rem, 10vw, 4.5rem); }
+  .rt-h .indent { margin-left: 0; }
+  .rt-pill { margin-left: 0; }
+  .rt-float-wrap { display: none; }
+  .rt-split { grid-template-columns: 1fr; margin-top: 80px; gap: 60px; }
+  .rt-split-left { padding-right: 0; }
+  .rt-split-right { padding: 60px 30px; }
+  .rt-action-btn { display: none; }
+
+  /* Footer */
+  .nf-grid { grid-template-columns: 1fr 1fr; gap: 60px; text-align: center; }
+  .nf-logo-col { grid-column: span 2; order: -1; margin-bottom: 20px; }
+  .nf-links a:hover { transform: translateY(-3px); }
+  .nf-curve { border-top-left-radius: 50% 60px; border-top-right-radius: 50% 60px; padding: 80px var(--col) 40px; }
+}
+
+@media(max-width: 600px) {
+  .nf-grid { grid-template-columns: 1fr; }
+  .nf-logo-col { grid-column: span 1; }
+  .test-grid { grid-template-columns: 1fr; }
+  .tcard.dark { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="glc"></canvas>
+<div id="cur"></div>
+<div id="cur-r"></div>
+
+<div class="root">
+
+<!-- ══════ NAV ══════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">Lumière</a>
+  <ul class="nav-center">
+    <li><a href="#products">Ritual</a></li>
+    <li><a href="#science">Science</a></li>
+    <li><a href="#collections">Collections</a></li>
+    <li><a href="#">Journal</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="#cta" class="btn-text-link" style="color:rgba(254,247,232,.5)">Account</a>
+    <button class="nav-cta">Shop Now</button>
+  </div>
+</nav>
+
+<!-- ══════ §1 HERO ══════ -->
+<section id="hero">
+  
+  <div class="hero-vert">
+    <div class="vert-text">EST. MMXXV</div>
+  </div>
+
+  <div class="hero-main-title">
+    <h1 class="hero-h1">
+      <span class="h-mask h-l1"><span>Botanical</span></span>
+      <span class="h-mask h-l2"><span><span class="h-ital h-sage">Intelligence</span></span></span>
+      <span class="h-mask h-l3">
+        <span>Perfected</span>
+        <div class="hero-inline-img">
+          <img src="https://images.unsplash.com/photo-1558244402-286dd748c593?q=80&w=400&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1558244402-286dd748c593?w=400'" alt="Soft botanical texture">
+        </div>
+        <span class="h-ital">by</span>
+      </span>
+      <span class="h-mask h-l4"><span><span class="h-grad">Science.</span></span></span>
+    </h1>
+  </div>
+
+  <div class="hero-visual-complex">
+    <div class="frame-pri">
+      <img src="https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=1200&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1617897903246-719242758050?w=1200'" alt="Lumière Hero Model">
+    </div>
+    <div class="frame-sec">
+      <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800'" alt="Lumière Dropper">
+    </div>
+    <div class="hero-seal">
+      <svg viewBox="0 0 90 90" width="80" height="80">
+        <defs><path id="sp" d="M45,45 m-36,0 a36,36 0 1,1 72,0 a36,36 0 1,1 -72,0"/></defs>
+        <text font-size="7.5" fill="var(--t0)" letter-spacing="3.8" font-family="Jost,sans-serif" font-weight="400">
+          <textPath href="#sp">CLINICALLY PROVEN • 97% NATURAL • </textPath>
+        </text>
+        <circle cx="45" cy="45" r="4" fill="var(--c0)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="hero-footer">
+    <div class="hf-desc">
+      Precision-crafted formulations that merge botanical intelligence with clinical innovation. Your skin, reimagined at the molecular level.
+    </div>
+    <div class="hf-stats">
+      <div class="hf-stat">
+        <span class="hf-val">48<span style="font-size:1rem;color:var(--g0)">h</span></span>
+        <span class="hf-lbl">Proven Hydration</span>
+      </div>
+      <div class="hf-stat">
+        <span class="hf-val" style="color:var(--c0)">97<span style="font-size:1rem;color:var(--c1)">%</span></span>
+        <span class="hf-lbl">Natural Origin</span>
+      </div>
+    </div>
+    <div class="hf-actions">
+       <a href="#products" class="btn btn-fill">Discover the Range</a>
+    </div>
+  </div>
+
+</section>
+
+<!-- TICKER 1 -->
+<div class="ticker dark" aria-hidden="true">
+  <div class="ticker-track">
+    <span class="ticker-item">Mineral Bloom</span><span class="ticker-item">Clay + Enzyme</span><span class="ticker-item">Botanically Derived</span><span class="ticker-item">Cruelty Free</span><span class="ticker-item">Dermatologist Approved</span><span class="ticker-item">Coral Active</span><span class="ticker-item">Sage Mineral</span><span class="ticker-item">97% Natural Origin</span>
+    <span class="ticker-item">Mineral Bloom</span><span class="ticker-item">Clay + Enzyme</span><span class="ticker-item">Botanically Derived</span><span class="ticker-item">Cruelty Free</span><span class="ticker-item">Dermatologist Approved</span><span class="ticker-item">Coral Active</span><span class="ticker-item">Sage Mineral</span><span class="ticker-item">97% Natural Origin</span>
+  </div>
+</div>
+
+<!-- ══════ §3 PHILOSOPHY - EDITORIAL OVERLAP ══════ -->
+<section id="philosophy">
+  <div class="phil-inner">
+    <div class="phil-wrap-ref">
+
+      <!-- Image on Right (Underneath Box) -->
+      <div class="phil-img-container plx" data-speed="1.05" data-reveal="fade" data-delay="1">
+        <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=1000&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=1000'" alt="Lumière Botanical Process" loading="lazy">
+        <p class="phil-img-caption" data-reveal="up" data-delay="4">
+          The ritual is the product.<br>
+          The product is the ritual.<br>
+          — Lumière Founding Ethos
+        </p>
+      </div>
+
+      <!-- Box on Left (Overlapping) -->
+      <div class="phil-box-ref" data-reveal="up" data-delay="2">
+        <p class="phil-eyebrow-ref">Our Philosophy</p>
+        <h2 class="phil-h-ref">Beauty born from intention and science. We believe your skincare ritual should feel like a meditation—each product a considered act.</h2>
+        
+        <div class="phil-dashed-wrap">
+          <div class="pd-row">
+            <span>97% Natural Origin</span>
+            <span>0 Harmful Additives</span>
+          </div>
+          <div class="pd-row pd-interact">
+            <span>48h Proven Hydration</span>
+            <a href="#science" class="pd-btn">DISCOVER <span class="pd-arrow">➔</span></a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════ §4 INGREDIENTS - NATURE'S BLUEPRINT ══════ -->
+<section id="ingredients">
+  
+  <div class="ing-head-ref" data-reveal="up">
+    <span class="eyebrow muted">Nature's Blueprint</span>
+    <p class="ing-head-p">Our meticulously sourced extracts of Bakuchiol, Centella, and Vit-C work together to <em>restore</em> and <em>reveal</em> your best skin.</p>
+  </div>
+
+  <!-- Block 1 -->
+  <div class="ing-block-1">
+    <div class="ib1-left" data-reveal="up" data-delay="1">
+      <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800'" class="ib1-img" alt="Lumière Botanical Process" loading="lazy">
+    </div>
+    <div class="ib1-right" data-reveal="up" data-delay="2">
+      <div class="ib1-list">
+        <span>BAKUCHIOL</span>
+        <span>CENTELLA</span>
+        <span>POLYGLUTAMIC</span>
+        <div class="ib1-last-row">
+          <span class="ital">Vit-C</span>
+          <p class="ib1-desc">Swiss Laboratory extraction for deep cellular repair and targeted hyperpigmentation fading.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Block 2 -->
+  <div class="ing-block-2">
+    <div class="ib2-left" data-reveal="up" data-delay="1">
+      <p class="ib2-text">Every formula starts with a botanical brief. Each ingredient is sourced from its purest origin, processed to preserve maximum bioactivity, and engineered to work in perfect synergy with your skin's natural intelligence.</p>
+      <a href="#products" class="ib2-link">LEARN MORE</a>
+    </div>
+    <div class="ib2-right" data-reveal="up" data-delay="3">
+      <!-- Background Texture -->
+      <img src="https://images.unsplash.com/photo-1615397323861-12ecbc58b291?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1615397323861-12ecbc58b291?w=800'" class="ib2-bg" alt="Cream Texture" loading="lazy">
+      <!-- Foreground Portrait (with parallax class) -->
+      <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600'" class="ib2-fg plx" data-speed="1.2" alt="Lumière Models" loading="lazy">
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════ §5 PRODUCTS - MINIMALIST STUDIO GRID ══════ -->
+<section id="products">
+  
+  <div class="prod-top-v2" data-reveal="up">
+    <h2 class="prod-h-v2">The <em>Edit</em></h2>
+    <div class="filter-row-v2">
+      <button class="filter-btn-v2 act">All</button>
+      <button class="filter-btn-v2">Serums</button>
+      <button class="filter-btn-v2">Creams</button>
+      <button class="filter-btn-v2">Treatments</button>
+      <button class="filter-btn-v2">Cleansers</button>
+    </div>
+  </div>
+
+  <div class="prod-grid-v2">
+    
+    <!-- Card 1 -->
+    <div class="pc-v2" data-reveal="up" data-delay="1" data-cat="creams treatments">
+      <div class="pc-img-wrap">
+        <span class="pc-badge">NEW</span>
+        <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600'" class="pc-img" alt="Melting Cream" loading="lazy">
+        <div class="pc-add">+ Add to Ritual</div>
+      </div>
+      <div class="pc-meta">
+        <div class="pc-top-row">
+          <span class="pc-title">BIOGENIC MELTING CREAM</span>
+          <span class="pc-price">€185</span>
+        </div>
+        <span class="pc-desc">Cell-Preserving Hydrator</span>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="pc-v2" data-reveal="up" data-delay="2" data-cat="serums treatments">
+      <div class="pc-img-wrap">
+        <span class="pc-badge">BESTSELLER</span>
+        <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600'" class="pc-img" alt="Recovery Broth" loading="lazy">
+        <div class="pc-add">+ Add to Ritual</div>
+      </div>
+      <div class="pc-meta">
+        <div class="pc-top-row">
+          <span class="pc-title">ACTIVE RECOVERY BROTH</span>
+          <span class="pc-price">€117</span>
+        </div>
+        <span class="pc-desc">Concentrated Facial Serum</span>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="pc-v2" data-reveal="up" data-delay="3" data-cat="cleansers">
+      <div class="pc-img-wrap">
+        <span class="pc-badge">AWARD-WINNING</span>
+        <img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600'" class="pc-img" alt="Suns Balm" loading="lazy">
+        <div class="pc-add">+ Add to Ritual</div>
+      </div>
+      <div class="pc-meta">
+        <div class="pc-top-row">
+          <span class="pc-title">THREE SUNS BALM</span>
+          <span class="pc-price">€76</span>
+        </div>
+        <span class="pc-desc">Revitalising Facial Cleanser</span>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="pc-v2" data-reveal="up" data-delay="4" data-cat="creams treatments">
+      <div class="pc-img-wrap">
+        <span class="pc-badge">AWARD-WINNING</span>
+        <img src="https://images.unsplash.com/photo-1599305090598-fe179d501227?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1599305090598-fe179d501227?w=600'" class="pc-img" alt="Eye Treatment" loading="lazy">
+        <div class="pc-add">+ Add to Ritual</div>
+      </div>
+      <div class="pc-meta">
+        <div class="pc-top-row">
+          <span class="pc-title">FIRMING EYE TREATMENT</span>
+          <span class="pc-price">€171</span>
+        </div>
+        <span class="pc-desc">Activated Gel-Crème</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TICKER 2 reversed, sand -->
+<div class="ticker sand rev" aria-hidden="true">
+  <div class="ticker-track">
+    <span class="ticker-item">Mineral Bloom</span><span class="ticker-item">Clay + Enzyme</span><span class="ticker-item">Botanically Derived</span><span class="ticker-item">Clean Beauty</span><span class="ticker-item">Clinically Tested</span><span class="ticker-item">Coral Active</span><span class="ticker-item">Sage Mineral</span><span class="ticker-item">97% Natural</span>
+    <span class="ticker-item">Mineral Bloom</span><span class="ticker-item">Clay + Enzyme</span><span class="ticker-item">Botanically Derived</span><span class="ticker-item">Clean Beauty</span><span class="ticker-item">Clinically Tested</span><span class="ticker-item">Coral Active</span><span class="ticker-item">Sage Mineral</span><span class="ticker-item">97% Natural</span>
+  </div>
+</div>
+
+<!-- ══════ §6 TRANSFORMATION - ORGANIC BENTO ══════ -->
+<section id="transformation">
+  <div class="tf-container">
+    
+    <div class="tf-head" data-reveal="up">
+      <h2 class="tf-h">REAL RESULTS,<br>MEASURABLE</h2>
+      <p class="tf-sub">Results you can see. Results you can feel. Our clinical trials speak the language of your skin — real changes, documented meticulously.<br><br><span class="tf-h-serif">difference.</span></p>
+    </div>
+
+    <div class="tf-stage">
+      
+      <!-- Thin Sweeping Arc SVG -->
+      <svg class="tf-arc" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 250 C 200 50, 450 100, 450 400" stroke="#1E2A2B" stroke-width="0.5" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Central Organic Image -->
+      <div class="tf-center-img" data-reveal="scale" data-delay="2">
+        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800'" alt="Radiant Skin" class="tf-blob" style="animation: blob-morph 8s ease-in-out infinite alternate;">
+      </div>
+
+      <!-- Floating Decorations -->
+      <img src="https://cdn.pixabay.com/photo/2016/03/31/20/09/leaf-1295498_1280.png" onerror="this.style.display='none'" class="tf-decor-leaf" alt="Leaf" aria-hidden="true">
+      <img src="https://cdn.pixabay.com/photo/2017/02/26/12/28/orange-2100108_1280.png" onerror="this.style.display='none'" class="tf-decor-peel" alt="Orange Peel" aria-hidden="true">
+
+      <!-- Card 1: 92% -->
+      <div class="tf-card tfc-1" data-reveal="up" data-delay="3">
+        <div class="tf-card-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <h3 class="tf-card-title">92% Reduction</h3>
+        <p class="tf-card-desc">Users reported a visible reduction in fine lines and wrinkles after 12 weeks of continuous application.</p>
+      </div>
+
+      <!-- Card 2: 48h -->
+      <div class="tf-card tfc-2" data-reveal="up" data-delay="4">
+        <div class="tf-card-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+        </div>
+        <h3 class="tf-card-title">48h Hydration</h3>
+        <p class="tf-card-desc">Clinically proven to retain deep cellular moisture for up to 48 hours, strengthening the dermal barrier.</p>
+      </div>
+
+      <!-- Card 3: 3x -->
+      <div class="tf-card tfc-3" data-reveal="up" data-delay="5">
+        <div class="tf-card-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+        </div>
+        <h3 class="tf-card-title">3x Turnover</h3>
+        <p class="tf-card-desc">Accelerates natural cellular turnover without the harsh irritation associated with traditional retinoids.</p>
+      </div>
+
+      <!-- Card 4: 97% -->
+      <div class="tf-card tfc-4" data-reveal="up" data-delay="6">
+        <div class="tf-card-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+        </div>
+        <h3 class="tf-card-title">97% Satisfaction</h3>
+        <p class="tf-card-desc">The overwhelming majority of clinical participants reported significantly improved skin tone and texture.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Footer Element -->
+  <div class="tf-bottom" data-reveal="up">
+    <span class="tf-bot-pre">Explore</span>
+    <span class="tf-bot-post">real impact</span>
+  </div>
+</section>
+
+<!-- ══════ §7 SCIENCE ══════ -->
+<section id="science">
+  <div class="sci-inner">
+    <div class="sci-container">
+      
+      <!-- Top Label -->
+      <div class="sci-top" data-reveal="up">
+        <span class="sci-eyebrow">Our Science</span>
+      </div>
+
+      <div class="sci-grid">
+        
+        <!-- Left: Protocol List -->
+        <div class="sci-left" data-reveal="right" data-delay="1">
+          <span class="sci-list-title">OUR PROTOCOL</span>
+          <ul class="sci-list">
+            <li class="sci-item active">
+              <span class="sci-num">1.</span>
+              <span class="sci-name">Mapping</span>
+            </li>
+            <li class="sci-item">
+              <span class="sci-num">2.</span>
+              <span class="sci-name">Bioavailability</span>
+            </li>
+            <li class="sci-item">
+              <span class="sci-num">3.</span>
+              <span class="sci-name">Synergy</span>
+            </li>
+            <li class="sci-item">
+              <span class="sci-num">4.</span>
+              <span class="sci-name">Validation</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Center: Visual -->
+        <div class="sci-center" data-reveal="scale" data-delay="2">
+          
+          <!-- Floating 3D Water Molecules -->
+          <div class="sci-molecules">
+            <div class="sci-mol sci-m1"></div>
+            <div class="sci-mol sci-m2"></div>
+            <div class="sci-mol sci-m3"></div>
+            <div class="sci-mol sci-m4"></div>
+            <div class="sci-mol sci-m5"></div>
+            <div class="sci-mol sci-m6"></div>
+          </div>
+
+          <div class="sci-blob-wrap">
+            <img src="https://images.unsplash.com/photo-1572913017567-02f06fa02268?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1572913017567-02f06fa02268?w=800'" alt="Molecular Bubbles" class="sci-blob-img">
+          </div>
+        </div>
+
+        <!-- Right: Description -->
+        <div class="sci-right-col" data-reveal="left" data-delay="3">
+          <h2 class="sci-h-ref"><em>Bio-active</em><br>Harmonisation</h2>
+          <p class="sci-desc">
+            We don't just mix ingredients. We engineer synergistic environments where each botanical active amplifies the other, delivering unparalleled cellular communication.
+          </p>
+          <div class="sci-cert-strip">
+            <span class="cert">ECOCERT</span>
+            <span class="cert">Vegan</span>
+            <span class="cert">ISO 22716</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom: CTA -->
+      <div class="sci-bottom" data-reveal="up" data-delay="4">
+        <a href="#products" class="sci-pill-btn">Discover More</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════ §8 EDITORIAL MANIFESTO (BENTO UI) ══════ -->
+<section id="editorial">
+  <div class="mb-container" data-reveal="up">
+    
+    <div class="mb-left">
+      <span class="mb-eyebrow">The Lumière Manifesto</span>
+      <h2 class="mb-h">Your skin has a memory.<br>Make it beautiful.</h2>
+      
+      <div class="mb-accordion">
+        <div class="mb-item">
+          <div class="mb-item-head" onclick="toggleAcc(this)">
+            <span class="mb-item-text">Preserves Cellular Memory</span>
+            <span class="mb-item-icon">+</span>
+          </div>
+          <div class="mb-item-body">By optimizing the skin's natural regeneration cycles, our formulas ensure that cellular memory retains its resilient, youthful state against oxidative stress.</div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-item-head" onclick="toggleAcc(this)">
+            <span class="mb-item-text">Long-term Skin Investment</span>
+            <span class="mb-item-icon">+</span>
+          </div>
+          <div class="mb-item-body">True radiance doesn't wash off. We build enduring barrier strength that compounds in efficacy with every passing week of ritualistic use.</div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-item-head" onclick="toggleAcc(this)">
+            <span class="mb-item-text">Repairs Past Damage</span>
+            <span class="mb-item-icon">+</span>
+          </div>
+          <div class="mb-item-body">Advanced clinical bio-actives seek out and neutralize deep-set photo-aging and hyperpigmentation, reversing the physical marks of time.</div>
+        </div>
+        <div class="mb-item">
+          <div class="mb-item-head" onclick="toggleAcc(this)">
+            <span class="mb-item-text">Extraordinary Efficacy</span>
+            <span class="mb-item-icon">+</span>
+          </div>
+          <div class="mb-item-body">Rigorous multi-stage clinical testing guarantees that every drop delivers maximum potency without compromising your skin's delicate microbiome.</div>
+        </div>
+      </div>
+      
+      <a href="#products" class="mb-btn">Shop the Collection</a>
+    </div>
+
+    <div class="mb-right">
+      <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800'" alt="Lumière Aesthetics" class="mb-img" loading="lazy">
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════ §9 TESTIMONIALS - 3D CAROUSEL ══════ -->
+<section id="testimonials">
+  <div class="test-inner">
+    
+    <div class="test-head-v2" data-reveal="up">
+      <h2 class="test-h-v2">Real stories.<br>Real impact.</h2>
+      <p class="test-sub-v2">See how Lumière helps others, and find out what it can do for you.</p>
+    </div>
+
+    <div class="tc-wrap" data-reveal="up" data-delay="2">
+      <div class="tc-track" id="tcTrack">
+        <!-- Card 1 -->
+        <div class="tc-card far-prev">
+          <p class="tc-quote">"A short 10 minute ritual had a surprisingly powerful effect on lifting my mood and clearing my skin."</p>
+          <span class="tc-auth">Elena V.</span>
+        </div>
+        <!-- Card 2 -->
+        <div class="tc-card prev">
+          <p class="tc-quote">"I've tried every luxury serum on the market. Lumière is the first that actually did what it promised."</p>
+          <span class="tc-auth">Margaux D.</span>
+        </div>
+        <!-- Card 3 (Active) -->
+        <div class="tc-card active">
+          <p class="tc-quote">"Lumière changed my life. I'm speaking up more and handling challenges without stressing about breakouts like before."</p>
+          <span class="tc-auth">Claire T.</span>
+        </div>
+        <!-- Card 4 -->
+        <div class="tc-card next">
+          <p class="tc-quote">"I've noticed such an improvement in my radiance since starting to use it. My colleagues even mentioned I seem less stressed."</p>
+          <span class="tc-auth">Sophia R.</span>
+        </div>
+        <!-- Card 5 -->
+        <div class="tc-card far-next">
+          <p class="tc-quote">"Sensitive skin sceptic no more. Zero reactions, maximum results. I've finally found my forever formula."</p>
+          <span class="tc-auth">Amara K.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tc-controls" data-reveal="up" data-delay="3">
+      <button class="tc-btn" id="tcPrev">❮</button>
+      <button class="tc-btn" id="tcNext">❯</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════ §10 ROUTINE BUILDER - BRUTALIST EDITORIAL ══════ -->
+<section id="routine">
+  
+  <div class="rt-container">
+    
+    <!-- Top Area: Massive Typography & Toggles -->
+    <div class="rt-top">
+      <div data-reveal="up">
+        <span class="rt-pill">BUILD YOUR RITUAL</span>
+        <h2 class="rt-h">
+          <span class="indent">BUILD YOUR</span>
+          <span>RITUAL.</span>
+          <span>YOUR <em>perfect</em></span>
+          <span class="indent">MORNING.</span>
+        </h2>
+      </div>
+    </div>
+
+    <!-- Toggles matching "100% Transparent Formulas" right block -->
+    <div class="rt-toggles" data-reveal="left" data-delay="2">
+      <p class="rt-toggle-desc">Every skin is different. Every ritual should be too. Select your type for your optimal Lumière routine.</p>
+      
+      <div class="rt-skin-btn act" onclick="setSkin(this)">
+        <span class="rt-skin-icon">✨</span>
+        <div class="rt-skin-text">
+          <strong>Normal / Balanced</strong>
+          <small>Most universal</small>
+        </div>
+      </div>
+      <div class="rt-skin-btn" onclick="setSkin(this)">
+        <span class="rt-skin-icon">💧</span>
+        <div class="rt-skin-text">
+          <strong>Dry / Dehydrated</strong>
+          <small>Moisture focus</small>
+        </div>
+      </div>
+      <div class="rt-skin-btn" onclick="setSkin(this)">
+        <span class="rt-skin-icon">🌿</span>
+        <div class="rt-skin-text">
+          <strong>Oily / Combination</strong>
+          <small>Balance &amp; control</small>
+        </div>
+      </div>
+      <div class="rt-skin-btn" onclick="setSkin(this)">
+        <span class="rt-skin-icon">🤍</span>
+        <div class="rt-skin-text">
+          <strong>Sensitive / Reactive</strong>
+          <small>Calm &amp; protect</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Organic Textures -->
+    <div class="rt-float-wrap">
+      <!-- Delicate SVG tracing line -->
+      <svg class="rt-svg-line rt-line-top" viewBox="0 0 400 200" fill="none" preserveAspectRatio="none">
+        <path d="M0 100 C 150 100, 200 10, 400 50" stroke="rgba(30,42,43,0.3)" stroke-width="1"/>
+      </svg>
+      
+      <!-- Smear 1 (Warm Pink tint) -->
+      <div class="rt-swatch-1 plx" data-speed="1.2" data-reveal="fade"></div>
+      
+      <!-- Smear 2 (Taupe tint) -->
+      <div class="rt-swatch-2 plx" data-speed="0.8" data-reveal="fade" data-delay="2"></div>
+    </div>
+
+    <!-- Bottom Split Section (The Steps) -->
+    <div class="rt-split">
+      
+      <!-- Left Side (Clean background) -->
+      <div class="rt-split-left" data-reveal="up" data-delay="1">
+        
+        <!-- Connecting line -->
+        <svg class="rt-svg-line rt-line-bot" viewBox="0 0 500 150" fill="none" preserveAspectRatio="none">
+          <path d="M0 150 C 100 150, 200 50, 500 0" stroke="rgba(30,42,43,0.3)" stroke-width="1"/>
+          <circle cx="500" cy="0" r="3" fill="rgba(30,42,43,0.5)"/>
+        </svg>
+
+        <div class="rt-step">
+          <img src="https://images.unsplash.com/photo-1615397323861-12ecbc58b291?q=80&w=300&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1615397323861-12ecbc58b291?w=300'" class="rt-step-img" alt="Step 1">
+          <div class="rt-step-meta">
+            <span class="rt-step-pill">01</span>
+            <span class="rt-step-pill" style="border:none;padding:0;">AM · First Step</span>
+          </div>
+          <h4 class="rt-step-title">Gentle Cleanse</h4>
+          <p class="rt-step-desc">pH-balanced micellar formula. Remove overnight buildup without disrupting your barrier.</p>
+        </div>
+
+        <div class="rt-step" style="margin-left: 40px;">
+          <img src="https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=300&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=300'" class="rt-step-img" alt="Step 2">
+          <div class="rt-step-meta">
+            <span class="rt-step-pill">02</span>
+            <span class="rt-step-pill" style="border:none;padding:0;">AM · Second Step</span>
+          </div>
+          <h4 class="rt-step-title">Lumière Sérum</h4>
+          <p class="rt-step-desc">Your active treatment window. Bakuchiol + Vitamin C at peak efficacy.</p>
+        </div>
+
+      </div>
+
+      <!-- Right Side (Color Block) -->
+      <div class="rt-split-right" data-reveal="left" data-delay="3">
+        
+        <div class="rt-sr-header">
+          <h3 class="rt-sr-title">COMPLETE <em>the routine</em></h3>
+          <p class="rt-sr-sub">Lock in actives and regenerate overnight.</p>
+        </div>
+
+        <div class="rt-step">
+          <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=300&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=300'" class="rt-step-img" alt="Step 3">
+          <div class="rt-step-meta">
+            <span class="rt-step-pill">03</span>
+            <span class="rt-step-pill" style="border:none;padding:0;">AM · Third Step</span>
+          </div>
+          <h4 class="rt-step-title">Velvet Crème</h4>
+          <p class="rt-step-desc">Lock in actives. Build your shield against the day's oxidative stressors.</p>
+        </div>
+
+        <div class="rt-step" style="margin-left: 40px;">
+          <img src="https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=300&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1617897903246-719242758050?w=300'" class="rt-step-img" alt="Step 4">
+          <div class="rt-step-meta">
+            <span class="rt-step-pill">04</span>
+            <span class="rt-step-pill" style="border:none;padding:0;">PM · Night Step</span>
+          </div>
+          <h4 class="rt-step-title">Midnight Élixir</h4>
+          <p class="rt-step-desc">Sleep is your greatest regenerator. This formula amplifies it tenfold.</p>
+        </div>
+
+        <!-- Shop Now Action -->
+        <a href="#products" class="rt-action-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          SHOP
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════ §11 COLLECTIONS - EDITORIAL COLLAGE ══════ -->
+<section id="collections">
+  <div class="coll-top">
+    <h2 class="coll-h" data-reveal="up">As Seen <em>In</em></h2>
+    <a href="#" class="coll-link" data-reveal="up" data-delay="2">Explore Community →</a>
+  </div>
+  
+  <div class="collage-grid">
+    <!-- Column 1 -->
+    <div class="cg-col">
+      <div class="cg-item-wrap c1-1 plx" data-speed="0.8" data-reveal="up">
+        <div class="cg-item">
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1629198688000-71f23e745b6e?q=80&w=500&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=500'" class="cg-img" alt="The Hydrating Serum" loading="lazy">
+          </div>
+          <p class="cg-cap">The Hydrating Serum</p>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c1-2 plx" data-speed="1.15" data-reveal="up">
+        <div class="cg-item">
+          <p class="cg-cap top">Nancy<br>wears The Moisturising Cream</p>
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=700&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=700'" class="cg-img" alt="Model with cream" loading="lazy">
+          </div>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c1-3 plx" data-speed="0.9" data-reveal="up">
+        <div class="cg-item">
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=600&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600'" class="cg-img" alt="Hand holding jar" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Column 2 -->
+    <div class="cg-col">
+      <div class="cg-item-wrap c2-1 plx" data-speed="1.05" data-reveal="up">
+        <div class="cg-item">
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?q=80&w=800&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=800'" class="cg-img" alt="Smiling model holding products" loading="lazy">
+          </div>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c2-2 plx" data-speed="1.3" data-reveal="up">
+        <div class="cg-item">
+          <div class="cg-img-mask" style="border: 4px solid #fff;">
+            <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=400&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400'" class="cg-img" alt="Close up eye" loading="lazy">
+          </div>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c2-3 plx" data-speed="0.95" data-reveal="up">
+        <div class="cg-item">
+          <p class="cg-cap top">Kat<br>wears The Hydrating Serum</p>
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=700&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=700'" class="cg-img" alt="Smiling model with rings" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Column 3 -->
+    <div class="cg-col">
+      <div class="cg-item-wrap c3-1 plx" data-speed="1.2" data-reveal="up">
+        <div class="cg-item">
+          <p class="cg-cap top" style="color: var(--i0);">Mercy<br>wears The Moisturising Cream</p>
+          <div class="cg-quote-block">
+            <div class="cqb-inner">
+              <div class="cqb-marks"><span>“</span><span>”</span></div>
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=500&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500'" alt="Model portrait" loading="lazy">
+            </div>
+            <h3 class="cqb-brand">LUMIÈRE</h3>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c3-2 plx" data-speed="0.85" data-reveal="up">
+        <div class="cg-item">
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1617897903246-719242758050?q=80&w=500&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1617897903246-719242758050?w=500'" class="cg-img" alt="Floating products" loading="lazy">
+          </div>
+        </div>
+      </div>
+      
+      <div class="cg-item-wrap c3-3 plx" data-speed="1.1" data-reveal="up">
+        <div class="cg-item">
+          <p class="cg-cap top">The Hydrating Serum and The Moisturising Cream</p>
+          <div class="cg-img-mask">
+            <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=700&auto=format&fit=crop" onerror="this.src='https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=700'" class="cg-img" alt="Moody product shot" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ PROUD PARTNERS ══════ -->
+<section class="partners-sec">
+  <h3 class="partners-h" data-reveal="up">Proud Partners</h3>
+  <div class="partners-logos" data-reveal="up" data-delay="2">
+    <div class="plogo">PCA<span>skin</span></div>
+    <div class="plogo">MERZ<span>AESTHETICS</span></div>
+    <div class="plogo">skin<span>better</span></div>
+    <div class="plogo">Allergan<span>Aesthetics</span></div>
+    <div class="plogo"><span>VITALITY</span> VI</div>
+  </div>
+</section>
+
+<!-- ══════ NEW FOOTER / CTA ══════ -->
+<footer class="new-footer">
+  <div class="nf-curve">
+    
+    <!-- Top Notification Area -->
+    <h2 class="nf-cta-h" data-reveal="up">Your new favorite notification</h2>
+    <p class="nf-cta-p" data-reveal="up" data-delay="2">Be the first to know the latest updates and news.</p>
+    
+    <form class="nf-form" data-reveal="up" data-delay="3" onsubmit="event.preventDefault()">
+      <input type="email" placeholder="Enter your email" class="nf-input" required>
+      <button type="submit" class="nf-submit">Sign Up</button>
+    </form>
+
+    <!-- Bottom Links Grid -->
+    <div class="nf-grid">
+      <div class="nf-col" data-reveal="up" data-delay="1">
+        <h4 class="nf-col-h">Company</h4>
+        <ul class="nf-links">
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Promotions</a></li>
+          <li><a href="#">Memberships</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Give $50, Get $50</a></li>
+          <li><a href="#">Lumière Rewards</a></li>
+          <li><a href="#">Chat With Us</a></li>
+          <li><a href="#">The Collective</a></li>
+        </ul>
+      </div>
+
+      <div class="nf-col" data-reveal="up" data-delay="2">
+        <h4 class="nf-col-h">Locations</h4>
+        <ul class="nf-links">
+          <li><a href="#">Lincoln Park</a></li>
+          <li><a href="#">West Loop</a></li>
+          <li><a href="#">North Shore</a></li>
+          <li><a href="#">Lakeview</a></li>
+          <li><a href="#">Wicker Park</a></li>
+          <li><a href="#">View All</a></li>
+        </ul>
+      </div>
+
+      <div class="nf-logo-col" data-reveal="scale" data-delay="3">
+        <!-- Recreated Geometric Floral/S Logo from reference -->
+        <svg viewBox="0 0 100 100" class="nf-logo-svg" fill="currentColor">
+          <path d="M50,20 C50,20 65,5 80,20 C95,35 80,50 80,50 C80,50 95,65 80,80 C65,95 50,80 50,80 C50,80 35,95 20,80 C5,65 20,50 20,50 C20,50 5,35 20,20 C35,5 50,20 50,20 Z" />
+        </svg>
+      </div>
+
+      <div class="nf-col" data-reveal="up" data-delay="4">
+        <h4 class="nf-col-h">Shop</h4>
+        <ul class="nf-links">
+          <li><a href="#">Treatments</a></li>
+          <li><a href="#">Products</a></li>
+        </ul>
+        
+        <h4 class="nf-col-h mt-4">Legal</h4>
+        <ul class="nf-links">
+          <li><a href="#">Terms & Conditions</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+
+      <div class="nf-col" data-reveal="up" data-delay="5">
+        <h4 class="nf-col-h">Connect</h4>
+        <ul class="nf-links">
+          <li><a href="#">Text Alerts</a></li>
+          <li><p>info@lumiere.com</p></li>
+          <li><p>773-529-5277</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="nf-bottom" data-reveal="fade" data-delay="6">
+      © Lumière 2026 | Made by Abhishek
+    </div>
+
+  </div>
+</footer>
+
+</div><!-- /root -->
+
+<script>
+/* ══════════════════════════════════════════
+   WEBGL — Mineral Bloom fluid shader
+══════════════════════════════════════════ */
+(()=>{
+  const cv=document.getElementById('glc');
+  const gl=cv.getContext('webgl',{alpha:true,antialias:false,powerPreference:'high-performance'});
+  if(!gl)return;
+  const rsz=()=>{cv.width=innerWidth;cv.height=innerHeight;gl.viewport(0,0,cv.width,cv.height)};
+  rsz();window.addEventListener('resize',rsz,{passive:true});
+  const VS=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const FS=`precision highp float;
+uniform float T;uniform vec2 R,M;
+float h(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);return mix(mix(h(i),h(i+vec2(1.0,0.0)),u.x),mix(h(i+vec2(0.0,1.0)),h(i+vec2(1.0,1.0)),u.x),u.y);}
+float fbm(vec2 p){float v=0.0,a=0.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*n(p);p=m*p;a*=0.5;}return v;}
+float sp(vec2 u,vec2 c,float r){float d=length(u-c);return smoothstep(r,r*0.3,d)*(0.5+0.5*sin(T*2.0+d*40.0));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/R;
+  vec2 p=uv*2.0-1.0;p.x*=R.x/R.y;
+  float t=T*0.16;
+  vec2 mo=M/R*2.0-1.0;mo.x*=R.x/R.y;
+  float q=fbm(p+t),r=fbm(p+q+vec2(1.7,9.2)+t*0.55),f=fbm(p+r);
+  float vein=pow(max(1.0-abs(fbm(p+t*0.75)-0.5)*2.0-0.72,0.0),2.0)*7.5;
+  float pool=smoothstep(0.48,0.62,fbm(p*1.4-vec2(t*0.38,t*0.28)))*0.28;
+  float blob=sp(uv,vec2(0.22+0.05*sin(t*1.1),0.72+0.04*cos(t*0.9)),0.052)+sp(uv,vec2(0.78+0.04*cos(t*0.7),0.28+0.05*sin(t*1.3)),0.04)+sp(uv,vec2(0.5+0.06*sin(t*0.5),0.5+0.06*cos(t*0.6)),0.028);
+  float mg=exp(-length(p-mo)*length(p-mo)*2.4)*0.2;
+  vec3 col=vec3(0.118,0.165,0.169);
+  col=mix(col,vec3(1.0,0.42,0.29),vein*0.48);
+  col=mix(col,vec3(0.29,0.61,0.49),pool);
+  col+=vec3(1.0,0.82,0.4)*blob*0.6;
+  col+=vec3(1.0,0.42,0.29)*mg;
+  col*=1.0-length(uv-0.5)*length(uv-0.5)*0.7;
+  gl_FragColor=vec4(col,0.86);
+}`;
+  const mk=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x};
+  const pr=gl.createProgram();
+  gl.attachShader(pr,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,FS));
+  gl.linkProgram(pr);gl.useProgram(pr);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const ap=gl.getAttribLocation(pr,'p');
+  gl.enableVertexAttribArray(ap);gl.vertexAttribPointer(ap,2,gl.FLOAT,false,0,0);
+  const uT=gl.getUniformLocation(pr,'T'),uR=gl.getUniformLocation(pr,'R'),uM=gl.getUniformLocation(pr,'M');
+  let mx=0,my=0,t0=performance.now();
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=innerHeight-e.clientY;},{passive:true});
+  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  const frame=()=>{
+    gl.uniform1f(uT,(performance.now()-t0)*.001);
+    gl.uniform2f(uR,cv.width,cv.height);
+    gl.uniform2f(uM,mx,my);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    requestAnimationFrame(frame);
+  };
+  frame();
+})();
+
+/* ══════════════════════════════════════════
+   CURSOR
+══════════════════════════════════════════ */
+const curEl=document.getElementById('cur'),curR=document.getElementById('cur-r');
+let cx=-100,cy=-100,rx=-100,ry=-100;
+document.addEventListener('mousemove',e=>{cx=e.clientX;cy=e.clientY;},{passive:true});
+(function tick(){
+  curEl.style.left=cx+'px';curEl.style.top=cy+'px';
+  rx+=(cx-rx)*.12;ry+=(cy-ry)*.12;
+  curR.style.left=rx+'px';curR.style.top=ry+'px';
+  requestAnimationFrame(tick);
+})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+});
+
+/* ══════════════════════════════════════════
+   SCROLL REVEALS — IntersectionObserver
+══════════════════════════════════════════ */
+const rObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      if(e.target.classList.contains('ic'))e.target.classList.add('in');
+      if(e.target.classList.contains('scard'))e.target.classList.add('in');
+    }
+  });
+},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('[data-reveal],.ic,.scard,.ic-row,.cg-item-wrap').forEach(el=>rObs.observe(el));
+
+/* ══════════════════════════════════════════
+   PARALLAX — hero image + philosophy photo + cascade images + collage
+══════════════════════════════════════════ */
+const pImgs = document.querySelectorAll('.para-img');
+const collagePlx = document.querySelectorAll('.plx');
+window.addEventListener('scroll',()=>{
+  const sy=window.scrollY;
+  const hi=document.getElementById('heroImg');
+  if(hi)hi.style.transform=`translateY(${sy*.22}px)`;
+
+  // Parallax for the arched ingredient images
+  pImgs.forEach(img => {
+    const rect = img.parentElement.getBoundingClientRect();
+    const centerY = window.innerHeight / 2;
+    const imgCenter = rect.top + rect.height / 2;
+    const diff = imgCenter - centerY;
+    img.style.transform = `translateY(${diff * 0.1}px) scale(1.05)`;
+  });
+
+  // Parallax for the Editorial Collage Grid
+  collagePlx.forEach(el => {
+    const speed = parseFloat(el.getAttribute('data-speed')) || 1;
+    const rect = el.getBoundingClientRect();
+    // Calculate movement relative to scroll, adjusted by speed attribute
+    const y = rect.top * (1 - speed) * 0.2;
+    el.style.transform = `translateY(${y}px)`;
+  });
+},{passive:true});
+
+/* ══════════════════════════════════════════
+   NAV — sticky state
+══════════════════════════════════════════ */
+const navEl=document.getElementById('nav');
+window.addEventListener('scroll',()=>navEl.classList.toggle('stuck',scrollY>60),{passive:true});
+
+/* ══════════════════════════════════════════
+   BEFORE/AFTER SLIDER
+══════════════════════════════════════════ */
+const baWrap=document.getElementById('baWrap'),baDivEl=document.getElementById('baDivider'),baLEl=document.getElementById('baL'),baREl=document.getElementById('baR');
+let baDrag=false;
+const setBA=x=>{
+  if(!baWrap)return;
+  const r=baWrap.getBoundingClientRect();
+  const p=Math.max(8,Math.min(92,((x-r.left)/r.width)*100));
+  baDivEl.style.left=p+'%';baLEl.style.right=(100-p)+'%';baREl.style.left=p+'%';
+};
+if(baDivEl){
+  baDivEl.addEventListener('mousedown',()=>baDrag=true);
+  baDivEl.addEventListener('touchstart',()=>baDrag=true,{passive:true});
+  document.addEventListener('mouseup',()=>baDrag=false);
+  document.addEventListener('touchend',()=>baDrag=false);
+  document.addEventListener('mousemove',e=>{if(baDrag)setBA(e.clientX);});
+  document.addEventListener('touchmove',e=>{if(baDrag)setBA(e.touches[0].clientX);},{passive:true});
+}
+let baTriggered=false;
+new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&!baTriggered){
+      baTriggered=true;
+      let p=50,dir=1;
+      const id=setInterval(()=>{
+        p+=dir*.55;
+        if(p>=64||p<=36)dir*=-1;
+        if(Math.abs(p-50)<.4&&dir>0){clearInterval(id);return;}
+        setBA(baWrap.getBoundingClientRect().left+baWrap.offsetWidth*(p/100));
+      },16);
+      setTimeout(()=>clearInterval(id),2800);
+    }
+  });
+},{threshold:.5}).observe(baWrap||document.body);
+
+/* ══════════════════════════════════════════
+   FILTER LINKS (UPDATED FOR STUDIO GRID)
+══════════════════════════════════════════ */
+document.querySelectorAll('.filter-btn-v2').forEach(b=>{
+  b.addEventListener('click',(e)=>{
+    e.preventDefault();
+    document.querySelectorAll('.filter-btn-v2').forEach(x=>x.classList.remove('act'));
+    b.classList.add('act');
+    
+    const filter = b.innerText.toLowerCase().trim();
+    const cards = document.querySelectorAll('.pc-v2');
+    
+    cards.forEach(card => {
+      const cats = card.getAttribute('data-cat') || "";
+      
+      if (filter === 'all' || cats.includes(filter)) {
+        card.style.display = 'flex';
+        // Delay ensures display:flex registers before animating opacity/scale
+        setTimeout(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'scale(1)';
+        }, 10);
+      } else {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        // Wait for CSS transition to finish before hiding from layout
+        setTimeout(() => {
+          card.style.display = 'none';
+        }, 400); 
+      }
+    });
+  });
+});
+
+/* ══════════════════════════════════════════
+   FUNCTIONAL COMPONENTS (ACCORDION & FORM)
+══════════════════════════════════════════ */
+// Manifesto Accordion Logic
+function toggleAcc(el) {
+  const parent = el.parentElement;
+  const body = parent.querySelector('.mb-item-body');
+  const isOpen = parent.classList.contains('open');
+  
+  // Close all other open accordion items smoothly
+  document.querySelectorAll('.mb-item').forEach(item => {
+    item.classList.remove('open');
+    const b = item.querySelector('.mb-item-body');
+    if(b) b.style.height = '0px';
+  });
+  
+  // Open clicked item
+  if (!isOpen) {
+    parent.classList.add('open');
+    body.style.height = body.scrollHeight + 16 + 'px'; // +16 for padding gap
+  }
+}
+
+// Footer Newsletter Logic
+const form = document.querySelector('.nf-form');
+if(form) {
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = form.querySelector('.nf-submit');
+    const originalText = btn.innerText;
+    
+    // Success state styling
+    btn.innerText = "Subscribed ✓";
+    btn.style.background = "#DEFF00";
+    btn.style.color = "#3261DF";
+    btn.style.borderColor = "#DEFF00";
+    form.querySelector('input').value = "";
+    
+    // Revert back after 3 seconds
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.style = "";
+    }, 3000);
+  });
+}
+
+/* ══════════════════════════════════════════
+   SKIN TYPE SELECTOR
+══════════════════════════════════════════ */
+function setSkin(el){
+  document.querySelectorAll('.rt-skin-btn').forEach(b=>b.classList.remove('act'));
+  el.classList.add('act');
+}
+
+/* ══════════════════════════════════════════
+   GLOSSARY HOVER INTERACTIONS
+══════════════════════════════════════════ */
+const igLinks = document.querySelectorAll('.ig-link');
+const igPanels = document.querySelectorAll('.ig-panel');
+if (igLinks.length > 0) {
+  igLinks.forEach(link => {
+    link.addEventListener('mouseenter', function() {
+      // Remove active states
+      igLinks.forEach(l => l.classList.remove('active'));
+      igPanels.forEach(p => p.classList.remove('active'));
+      
+      // Add active state to current item
+      this.classList.add('active');
+      const targetId = this.getAttribute('data-target');
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) targetPanel.classList.add('active');
+    });
+  });
+}
+
+/* ══════════════════════════════════════════
+   3D CAROUSEL LOGIC
+══════════════════════════════════════════ */
+const tcCards = document.querySelectorAll('.tc-card');
+const tcPrev = document.getElementById('tcPrev');
+const tcNext = document.getElementById('tcNext');
+let tcIndex = 2; // Start on middle card
+
+function updateTcCards() {
+  tcCards.forEach((card, i) => {
+    card.className = 'tc-card'; // clear all classes except base
+    if (i === tcIndex) card.classList.add('active');
+    else if (i === tcIndex - 1) card.classList.add('prev');
+    else if (i === tcIndex + 1) card.classList.add('next');
+    else if (i === tcIndex - 2) card.classList.add('far-prev');
+    else if (i === tcIndex + 2) card.classList.add('far-next');
+    else if (i < tcIndex - 2) card.classList.add('hidden-l');
+    else if (i > tcIndex + 2) card.classList.add('hidden-r');
+  });
+  
+  if(tcPrev) tcPrev.disabled = tcIndex === 0;
+  if(tcNext) tcNext.disabled = tcIndex === tcCards.length - 1;
+}
+
+if(tcPrev && tcNext) {
+  tcNext.addEventListener('click', () => { 
+    if (tcIndex < tcCards.length - 1) { tcIndex++; updateTcCards(); } 
+  });
+  tcPrev.addEventListener('click', () => { 
+    if (tcIndex > 0) { tcIndex--; updateTcCards(); } 
+  });
+  
+  // Make cards clickable to navigate directly
+  tcCards.forEach((c, i) => {
+    c.addEventListener('click', () => {
+      tcIndex = i;
+      updateTcCards();
+    });
+  });
+  
+  updateTcCards(); // Initialize states
+}
+</script>
+</body>
+</html>

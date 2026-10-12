@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Depth Image Slider</title>
+    <style>
+        /* Base Reset & Typography */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            /* Warm paper texture background */
+            background-color: #f6f3eb;
+            background-image: radial-gradient(circle at center, #ffffff 0%, transparent 100%),
+                              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        /* 3D Slider Container */
+        .slider-container {
+            position: relative;
+            width: 100vw;
+            height: 60vh;
+            min-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px; /* Establishes 3D depth */
+            transform-style: preserve-3d;
+        }
+
+        /* Base Card Styling */
+        .card {
+            position: absolute;
+            width: 320px;
+            height: 480px;
+            background-color: #faf9f6;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            
+            /* Fast, snappy, ultra-smooth motion */
+            transition: transform 0.6s cubic-bezier(0.17, 0.84, 0.44, 1), 
+                        opacity 0.6s cubic-bezier(0.17, 0.84, 0.44, 1), 
+                        box-shadow 0.6s ease, 
+                        filter 0.6s ease;
+            
+            will-change: transform, opacity;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 3D DEPTH STATES --- */
+
+        /* Center / Active Card */
+        .card.active {
+            transform: translateX(0) translateZ(0) rotateY(0deg);
+            z-index: 10;
+            opacity: 1;
+            box-shadow: 0 40px 70px rgba(0, 0, 0, 0.25);
+            cursor: default; /* No pointer since it's already active */
+        }
+
+        /* Adjacent Left Card */
+        .card.prev {
+            transform: translateX(-55%) translateZ(-250px) rotateY(15deg);
+            z-index: 5;
+            opacity: 0.65;
+            filter: brightness(0.8);
+        }
+
+        /* Adjacent Right Card */
+        .card.next {
+            transform: translateX(55%) translateZ(-250px) rotateY(-15deg);
+            z-index: 5;
+            opacity: 0.65;
+            filter: brightness(0.8);
+        }
+
+        /* Far Left Card */
+        .card.prev-far {
+            transform: translateX(-90%) translateZ(-500px) rotateY(25deg);
+            z-index: 2;
+            opacity: 0.2;
+            filter: brightness(0.5);
+            pointer-events: none; /* Can't click cards too far back */
+        }
+
+        /* Far Right Card */
+        .card.next-far {
+            transform: translateX(90%) translateZ(-500px) rotateY(-25deg);
+            z-index: 2;
+            opacity: 0.2;
+            filter: brightness(0.5);
+            pointer-events: none;
+        }
+
+        /* Hidden Cards (Directly behind) */
+        .card.hidden {
+            transform: translateX(0) translateZ(-700px) rotateY(0deg);
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Hover interaction for background cards to show they are clickable */
+        .card:not(.active):hover {
+            opacity: 0.9;
+            filter: brightness(0.95);
+        }
+
+        /* --- CARD INNER DESIGN (High-End Editorial) --- */
+        .image-container {
+            width: 100%;
+            height: 55%;
+            overflow: hidden;
+            position: relative;
+            background-color: #111;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center 20%; 
+            transform: scale(1) translateZ(0);
+            transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1);
+            will-change: transform;
+        }
+
+        /* Hover Zoom effect strictly on the ACTIVE card */
+        .card.active .image-container:hover .card-image {
+            transform: scale(1.08) translateZ(0);
+        }
+
+        .card-content {
+            width: 100%;
+            height: 45%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #faf9f6;
+        }
+
+        .card-content h3 {
+            font-family: "Didot", "Bodoni MT", "Playfair Display", "Georgia", serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 0.6rem;
+            color: #1a1a1a;
+            letter-spacing: 1px;
+            transition: transform 0.4s ease;
+        }
+
+        .card-content p {
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: #777;
+            margin-bottom: 1.5rem;
+            max-width: 95%;
+            letter-spacing: 0.3px;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .card-content .action-btn {
+            background: none;
+            border: none;
+            border-bottom: 1px solid rgba(26, 26, 26, 0.3);
+            padding: 0 0 5px 0;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: #1a1a1a;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .card-content .action-btn::after {
+            content: '→';
+            position: absolute;
+            right: -18px;
+            bottom: 5px;
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.3s ease;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .card-content .action-btn:hover {
+            padding-right: 22px;
+            border-bottom-color: #1a1a1a;
+            color: #000;
+        }
+
+        .card-content .action-btn:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* --- CLEAN CONTROLS --- */
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .control-btn {
+            background: none;
+            border: 1px solid rgba(0,0,0,0.1);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: #111;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .control-btn:hover {
+            background: #111;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        
+        .dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .dot.active {
+            background: #111;
+            transform: scale(1.5);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="slider-container" id="slider">
+        <!-- Cards injected by JS -->
+    </div>
+
+    <!-- Clean, minimalist controls -->
+    <div class="controls">
+        <button class="control-btn" id="prev-btn">&#10094;</button>
+        <div class="dots" id="dots-container"></div>
+        <button class="control-btn" id="next-btn">&#10095;</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slider = document.getElementById('slider');
+            const dotsContainer = document.getElementById('dots-container');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            const shapeData = [
+                { 
+                    title: "Acoustic", 
+                    desc: "Immersive sound. Incredibly light and perfectly balanced.",
+                    img: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop" 
+                },
+                { 
+                    title: "Structure", 
+                    desc: "Geometric perfection born from the chaos of thought.",
+                    img: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop" 
+                },
+                { 
+                    title: "Nature", 
+                    desc: "Organic algorithms creating infinite complexity.",
+                    img: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=600&auto=format&fit=crop" 
+                },
+                { 
+                    title: "Depth", 
+                    desc: "Diving into the layers of perception and reality.",
+                    img: "https://images.unsplash.com/photo-1558244661-d248897f7bc4?q=80&w=600&auto=format&fit=crop" 
+                },
+                { 
+                    title: "Energy", 
+                    desc: "The unseen forces driving motion and interaction.",
+                    img: "https://images.unsplash.com/photo-1550859492-d5da9d8e45f3?q=80&w=600&auto=format&fit=crop" 
+                },
+                { 
+                    title: "Void", 
+                    desc: "The silent space between objects that gives them meaning.",
+                    img: "https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=600&auto=format&fit=crop" 
+                }
+            ];
+
+            let currentIndex = 0;
+            const totalCards = shapeData.length;
+            const cardElements = [];
+            const dotElements = [];
+
+            // Initialize Cards and Dots
+            shapeData.forEach((data, i) => {
+                // Create Card
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = i;
+                
+                card.innerHTML = `
+                    <div class="image-container">
+                        <div class="card-image" style="background-image: url('${data.img}')"></div>
+                    </div>
+                    <div class="card-content">
+                        <h3>${data.title}</h3>
+                        <p>${data.desc}</p>
+                        <button class="action-btn">EXPLORE</button>
+                    </div>
+                `;
+                
+                // Click a background card to bring it to front
+                card.addEventListener('click', () => {
+                    if (currentIndex !== i) {
+                        currentIndex = i;
+                        updateSlider();
+                    }
+                });
+
+                slider.appendChild(card);
+                cardElements.push(card);
+
+                // Create Dot
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.addEventListener('click', () => {
+                    currentIndex = i;
+                    updateSlider();
+                });
+                dotsContainer.appendChild(dot);
+                dotElements.push(dot);
+            });
+
+            // Core 3D Slider Logic
+            function updateSlider() {
+                cardElements.forEach((card, i) => {
+                    // Reset all classes
+                    card.classList.remove('active', 'prev', 'next', 'prev-far', 'next-far', 'hidden');
+
+                    // Calculate distance from current index (handling circular wrap-around)
+                    let diff = i - currentIndex;
+                    if (diff < -totalCards / 2) diff += totalCards;
+                    if (diff > totalCards / 2) diff -= totalCards;
+
+                    // Apply the correct depth class based on distance
+                    if (diff === 0) {
+                        card.classList.add('active');
+                    } else if (diff === -1) {
+                        card.classList.add('prev');
+                    } else if (diff === 1) {
+                        card.classList.add('next');
+                    } else if (diff === -2) {
+                        card.classList.add('prev-far');
+                    } else if (diff === 2) {
+                        card.classList.add('next-far');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+
+                // Update Dots
+                dotElements.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === currentIndex);
+                });
+            }
+
+            // Controls Event Listeners
+            prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + totalCards) % totalCards;
+                updateSlider();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % totalCards;
+                updateSlider();
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    currentIndex = (currentIndex - 1 + totalCards) % totalCards;
+                    updateSlider();
+                } else if (e.key === 'ArrowRight') {
+                    currentIndex = (currentIndex + 1) % totalCards;
+                    updateSlider();
+                }
+            });
+
+            // Initial Setup
+            updateSlider();
+        });
+    </script>
+</body>
+</html>

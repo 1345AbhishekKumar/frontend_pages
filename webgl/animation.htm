@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Starborne Garden</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            user-select: none;
+            background: radial-gradient(ellipse at center, #030010 0%, #000 100%);
+            touch-action: none;
+            width: 100vw;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    // Configuration constants
+    const config = {
+        particleCount: 500,
+        connectRadius: 80,
+        maxLineWidth: 2.5,
+        minLineWidth: 0.3,
+        lineAlphaFactor: 0.6,
+        decayRate: 0.98,
+        reconnectionTime: 1500,
+        cameraZ: 400
+    };
+
+    // Canvas setup
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    // Particle class
+    class Particle {
+        constructor() {
+            this.n = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+            this.a = Math.random() * 5 + 2; // [2, 7]
+            this.radius = Math.random() * 200 + 50; // [50, 250]
+            this.omega = (Math.random() * 0.01) - 0.005; // [-0.005, 0.005]
+            this.theta = Math.random() * Math.PI * 2;
+            this.color = `hsla(${(this.radius / 200) * 60 + 270}, 100%, 70%, 0.8)`;
+            this.reconnectTimer = 0;
+            this.screenX = 0;
+            this.screenY = 0;
+            this.z = 0;
+        }
+
+        update(time) {
+            this.theta += 0.01;
+            const r = this.radius + this.a * Math.cos(this.n * this.theta + this.omega * time);
+            const x = r * Math.cos(this.theta);
+            const y = r * Math.sin(this.theta);
+            this.z = r * Math.sin(this.theta * 0.5); // add some z variation
+
+            // Simple perspective projection
+            const scale = config.cameraZ / (config.cameraZ - this.z);
+            this.screenX = width / 2 + x * scale;
+            this.screenY = height / 2 + y * scale;
+
+            if (this.reconnectTimer > 0) {
+                this.reconnectTimer -= 16; // approx 60fps
+            }
+        }
+    }
+
+    // Create particles
+    const particles = Array.from({ length: config.particleCount }, () => new Particle());
+
+    // Ripple state
+    let rippleX = 0;
+    let rippleY = 0;
+    let ripplePower = 0;
+
+    // Interaction state
+    let pointerDownTime = 0;
+    let isPointerDown = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    // Event listeners
+    canvas.addEventListener('pointerdown', (e) => {
+        isPointerDown = true;
+        pointerDownTime = Date.now();
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+        if (isPointerDown) {
+            const dx = e.clientX - lastPointerX;
+            const dy = e.clientY - lastPointerY;
+            const power = Math.min(1, Math.sqrt(dx * dx + dy * dy) / 10);
+            rippleX += dx * 0.001 * power;
+            rippleY += dy * 0.001 * power;
+            lastPointerX = e.clientX;
+            lastPointerY = e.clientY;
+        }
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        const holdDuration = Date.now() - pointerDownTime;
+        if (holdDuration < 500) {
+            // Short tap: apply random ripple
+            const power = Math.min(1, holdDuration / 500);
+            rippleX += (Math.random() - 0.5) * 10 * power;
+            rippleY += (Math.random() - 0.5) * 10 * power;
+        } else {
+            // Long hold: activate reconnection timer
+            particles.forEach(p => {
+                p.reconnectTimer = config.reconnectionTime;
+            });
+        }
+    });
+
+    // Device motion for mobile
+    if (window.DeviceMotionEvent) {
+        let lastAccelX = 0;
+        let lastAccelY = 0;
+        window.addEventListener('devicemotion', (e) => {
+            if (!e.acceleration) return;
+            const accelX = e.acceleration.x || 0;
+            const accelY = e.acceleration.y || 0;
+            const deltaX = Math.abs(accelX - lastAccelX);
+            const deltaY = Math.abs(accelY - lastAccelY);
+            if (deltaX > 0.5 || deltaY > 0.5) {
+                rippleX += (accelX - lastAccelX) * 20;
+                rippleY += (accelY - lastAccelY) * 20;
+            }
+            lastAccelX = accelX;
+            lastAccelY = accelY;
+        });
+    }
+
+    // Animation loop
+    let time = 0;
+    function animate() {
+        time += 16; // approx 60fps
+
+        // Apply ripple to particles
+        particles.forEach(p => {
+            p.theta += rippleX * 0.01;
+            p.theta += rippleY * 0.01;
+        });
+
+        // Decay ripple
+        rippleX *= config.decayRate;
+        rippleY *= config.decayRate;
+        ripplePower *= config.decayRate;
+
+        // Clear with semi-transparent black for trail effect
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Update particles
+        particles.forEach(p => p.update(time));
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+            const p1 = particles[i];
+            for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                // Only connect if both particles are ready to reconnect
+                if (p1.reconnectTimer > 0 || p2.reconnectTimer > 0) continue;
+
+                const dx = p1.screenX - p2.screenX;
+                const dy = p1.screenY - p2.screenY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < config.connectRadius) {
+                    const alpha = (1 - dist / config.connectRadius) * config.lineAlphaFactor;
+                    const lineWidth = config.minLineWidth + (config.maxLineWidth - config.minLineWidth) * (1 - dist / config.connectRadius);
+                    ctx.beginPath();
+                    ctx.moveTo(p1.screenX, p1.screenY);
+                    ctx.lineTo(p2.screenX, p2.screenY);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.lineWidth = lineWidth;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Draw particles
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.screenX, p.screenY, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+        });
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
+</body>
+</html>
+

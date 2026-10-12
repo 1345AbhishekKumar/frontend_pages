@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Final Sock — Edition 01</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alabaster: #F9F9F6;
+    --charcoal: #1A1A1A;
+    --stone: #777777;
+    --chrome: #D4D4D4;
+    --heather: #9A9A95;
+    --spring: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--alabaster);
+    color: var(--charcoal);
+    font-family: 'Archivo', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .font-display { font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+  .font-body-serif { font-family: 'EB Garamond', serif; }
+
+  .micro-label {
+    font-family: 'Archivo', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--stone);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .chrome-border { border: 1px solid var(--chrome); }
+
+  /* Paper grain overlay — persists at every breakpoint */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.08;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    z-index: 9998;
+  }
+
+  .spring { transition: all 0.8s var(--spring); }
+  .spring-fast { transition: all 0.4s var(--spring); }
+
+  /* Reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 1.2s var(--spring), transform 1.2s var(--spring);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Hero sock fade-out */
+  .hero-sock {
+    position: absolute;
+    opacity: 1;
+    transition: opacity 0.8s var(--spring), transform 1.2s var(--spring);
+    will-change: opacity;
+  }
+  .hero-sock.faded { opacity: 0; transform: scale(0.92) translateY(8px); }
+
+  /* Parallax 3D */
+  .parallax-3d {
+    transition: transform 0.8s var(--spring);
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* Magnifier */
+  .magnifier-lens {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 1px solid var(--chrome);
+    background-repeat: no-repeat;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.4);
+    opacity: 0;
+    transition: opacity 0.4s var(--spring);
+    z-index: 10;
+  }
+  .magnifier-container:hover .magnifier-lens,
+  .magnifier-container.dragging .magnifier-lens { opacity: 1; }
+
+  /* Material stripe line */
+  .stripe-line {
+    width: 0;
+    transition: width 1.4s var(--spring);
+  }
+  .stripe-line.in { width: 100%; }
+
+  /* Counter pulse */
+  @keyframes pulse-counter {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.012); opacity: 0.92; }
+  }
+  .pulse { animation: pulse-counter 0.8s var(--spring); }
+
+  /* Overlays */
+  .checkout-overlay, .closing-door {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s var(--spring);
+  }
+  .checkout-overlay.active, .closing-door.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Replenishment card */
+  .replenish-card {
+    transition: all 0.8s var(--spring);
+    cursor: pointer;
+  }
+  .replenish-card.selected {
+    border-color: var(--charcoal);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(26,26,26,0.06);
+  }
+
+  /* Sock colors */
+  .sock-black { fill: #1a1a1a; }
+  .sock-navy { fill: #1f2a3a; }
+  .sock-charcoal { fill: #3a3a3a; }
+  .sock-brown { fill: #5b3a29; }
+  .sock-cream { fill: #d4cab8; }
+  .sock-heather { fill: #8a8a82; }
+  .sock-grey { fill: #6a6a62; }
+  .sock-rust { fill: #7a3a2a; }
+  .sock-olive { fill: #4a4a32; }
+
+  /* Trust column grain intensify */
+  .trust-col { position: relative; transition: all 0.8s var(--spring); }
+  .trust-col::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E");
+    opacity: 0;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    transition: opacity 1.4s var(--spring);
+  }
+  .trust-col.in::before { opacity: 0.18; }
+
+  /* Hide scrollbar */
+  .replenish-scroll::-webkit-scrollbar { display: none; }
+  .replenish-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+
+  .counter-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection { background: var(--charcoal); color: var(--alabaster); }
+
+  /* CTA button spring expansion */
+  .cta-button {
+    transition: all 0.8s var(--spring);
+  }
+  .cta-button:hover {
+    letter-spacing: 0.32em !important;
+    padding-left: 4rem !important;
+    padding-right: 4rem !important;
+  }
+
+  /* Floating image shadow */
+  .floating-shadow {
+    background: radial-gradient(ellipse, rgba(26,26,26,0.12), transparent 70%);
+    filter: blur(16px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .parallax-3d { transition: transform 0.6s var(--spring); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Minimal navigation -->
+<nav class="fixed top-0 left-0 right-0 z-40 px-6 md:px-10 py-5 flex justify-between items-center" style="mix-blend-mode: difference;">
+  <span class="micro-label" style="color: rgba(249,249,246,0.9);">THE FINAL SOCK</span>
+  <span class="micro-label hidden md:block" style="color: rgba(249,249,246,0.7);">EDITION 01 · HAND-LINKED TOE</span>
+  <span class="micro-label" style="color: rgba(249,249,246,0.9);">Q4 / 2,000 PAIRS</span>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     1. THE MORNING HUNT — Hero
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="hero" class="min-h-screen flex flex-col md:flex-row">
+  <!-- Left 60%: drawer image with fading socks -->
+  <div class="md:w-3/5 relative overflow-hidden chrome-border min-h-[60vh] md:min-h-screen" style="border-right: none; background: #2a2520;">
+    <img src="https://picsum.photos/seed/sock-drawer-chaos-morning-window-light/1400/1000.jpg"
+         class="absolute inset-0 w-full h-full object-cover"
+         alt="Chaotic sock drawer in morning light" />
+    <!-- Warm morning light raking across -->
+    <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(255,235,200,0.25) 0%, transparent 40%, rgba(20,15,10,0.55) 100%);"></div>
+
+    <!-- Overlaid sock SVGs that fade out one by one -->
+    <div class="hero-sock" style="top: 12%; left: 8%; transform: rotate(-15deg);" data-delay="1200">
+      <svg width="90" height="120" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-black"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 22%; left: 32%; transform: rotate(25deg);" data-delay="1600">
+      <svg width="80" height="110" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-navy"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 8%; left: 55%; transform: rotate(-30deg);" data-delay="2000">
+      <svg width="95" height="125" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-brown"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 38%; left: 12%; transform: rotate(45deg);" data-delay="2400">
+      <svg width="75" height="105" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-cream"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 48%; left: 48%; transform: rotate(-60deg);" data-delay="2800">
+      <svg width="85" height="115" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-heather"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 58%; left: 22%; transform: rotate(15deg);" data-delay="3200">
+      <svg width="88" height="118" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-grey"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 32%; left: 68%; transform: rotate(-20deg);" data-delay="3600">
+      <svg width="80" height="110" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-rust"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 68%; left: 58%; transform: rotate(50deg);" data-delay="4000">
+      <svg width="82" height="112" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-charcoal"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 18%; left: 78%; transform: rotate(-40deg);" data-delay="4400">
+      <svg width="75" height="105" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-navy"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 75%; left: 18%; transform: rotate(70deg);" data-delay="4800">
+      <svg width="80" height="110" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-olive"/></svg>
+    </div>
+    <div class="hero-sock" style="top: 52%; left: 78%; transform: rotate(-10deg);" data-delay="5200">
+      <svg width="78" height="108" viewBox="0 0 80 100"><path d="M 20 0 L 50 0 L 50 60 L 60 60 Q 70 60 70 70 L 70 90 Q 70 100 60 100 L 30 100 Q 20 100 20 90 Z" class="sock-cream"/></svg>
+    </div>
+
+    <!-- Micro label -->
+    <div class="absolute top-6 left-6 micro-label px-3 py-2" style="background: rgba(249,249,246,0.88); backdrop-filter: blur(4px);">THE PROBLEM</div>
+  </div>
+
+  <!-- Right 40%: typography -->
+  <div class="md:w-2/5 flex flex-col justify-center px-8 md:px-12 lg:px-16 py-20 md:py-0">
+    <h1 class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight">
+      Every morning,<br>
+      <em class="italic font-light">a small war.</em>
+    </h1>
+    <p class="micro-label mt-10 md:mt-14">14 pairs. 4 colors. 0 decisions worth making.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     2. THIRTEEN IN THE TRASH — Origin
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="origin" class="py-32 md:py-56 px-6">
+  <div class="max-w-[480px] mx-auto text-center reveal">
+    <p class="micro-label mb-10 md:mb-14">ORIGIN</p>
+    <p class="font-body-serif text-xl md:text-2xl leading-[1.75]" style="color: var(--charcoal);">
+      The founder, packing for a two‑week trip, counted fourteen pairs of socks in four different colours, yet spent every morning hunting for a match with intact elastic. Thirteen pairs went into the bin. One high‑grade merino pair stayed on his feet for the rest of the trip. He never went back.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     3. THE ONLY OBJECT — Product Revelation
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="product" class="py-32 md:py-48 px-6 md:px-12 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 md:gap-20">
+    <!-- Floating sock image with parallax -->
+    <div class="md:w-3/5 flex justify-center parallax-container" style="perspective: 1200px;">
+      <div class="parallax-3d relative">
+        <!-- Soft shadow on alabaster ground -->
+        <div class="absolute -bottom-12 left-1/2 -translate-x-1/2 w-3/4 h-12 rounded-full floating-shadow"></div>
+        
+        <!-- Real Studio Image in Chrome Frame -->
+        <div class="chrome-border p-2 md:p-3 relative" style="background: var(--alabaster);">
+          <img src="https://images.unsplash.com/photo-1586350977771-2a1dfa19a7be?auto=format&fit=crop&w=1000&q=80" 
+               alt="The Final Sock - Heather Grey Merino Wool" 
+               class="block mx-auto w-full max-w-md md:max-w-lg object-cover"
+               style="aspect-ratio: 4/5; filter: contrast(1.05) saturate(0.85);" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Product identity column -->
+    <div class="md:w-2/5 reveal">
+      <p class="micro-label mb-6">EDITION 01 · HAND‑LINKED TOE</p>
+      <h2 class="font-display text-6xl md:text-7xl lg:text-8xl leading-[0.92] tracking-tight">
+        The Final<br>Sock.
+      </h2>
+      <p class="font-body-serif text-base md:text-lg mt-8" style="color: var(--charcoal);">
+        $22 · Single SKU · Quarterly run capped at 2,000 pairs
+      </p>
+      <div class="mt-12 pt-6" style="border-top: 1px solid var(--chrome);">
+        <p class="micro-label mb-3">UNDYED HEATHER GREY</p>
+        <p class="font-body-serif text-base" style="color: var(--stone);">
+          Mid‑calf · Ribbed cuff · 70% Merino / 20% Nylon / 10% Elastane
+        </p>
+      </div>
+      <div class="mt-6 pt-6" style="border-top: 1px solid var(--chrome);">
+        <p class="micro-label mb-3">PACKAGING</p>
+        <p class="font-body-serif text-base" style="color: var(--stone);">
+          Unbranded vacuum‑sealed polybag. No box. No waste.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     4. SEAM AS ABSENCE — Micro-Magnification
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="seam" class="flex flex-col">
+  <!-- Top 50%: macro image with magnifier -->
+  <div class="h-[55vh] md:h-[50vh] relative magnifier-container overflow-hidden" style="border-bottom: 1px solid var(--chrome);">
+    <img id="seam-image"
+         src="https://picsum.photos/seed/merino-wool-knit-macro-hand-linked-toe-seam/1800/900.jpg"
+         class="w-full h-full object-cover"
+         alt="Macro photograph of hand-linked toe seam interior"
+         draggable="false" />
+    <div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(249,249,246,0.05), rgba(26,26,26,0.15));"></div>
+
+    <!-- Ghosted machine ridge inset (20% opacity) -->
+    <div class="absolute bottom-6 right-6 w-36 md:w-44 chrome-border p-2" style="background: rgba(249,249,246,0.92); opacity: 0.55;">
+      <img src="https://picsum.photos/seed/conventional-machine-closed-toe-ridge-comparison/300/200.jpg"
+           class="w-full h-20 md:h-24 object-cover"
+           alt="Conventional machine-closed toe ridge" />
+      <p class="micro-label mt-2 text-center" style="font-size: 9px;">CONVENTIONAL · GHOSTED</p>
+    </div>
+
+    <!-- Magnifier lens -->
+    <div class="magnifier-lens" id="magnifier-lens"></div>
+
+    <!-- Instruction -->
+    <div class="absolute top-6 left-6 micro-label px-3 py-2" style="background: rgba(249,249,246,0.88); backdrop-filter: blur(4px);">
+      DRAG TO INSPECT
+    </div>
+  </div>
+
+  <!-- Bottom 50%: copy -->
+  <div class="h-[45vh] md:h-[50vh] flex items-center justify-center px-6">
+    <h3 class="font-display text-4xl md:text-6xl lg:text-7xl text-center leading-[1.05] tracking-tight reveal max-w-4xl">
+      What you don't feel<br>
+      <em class="italic font-light">is the point.</em>
+    </h3>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     5. THE MATERIAL TRUTH — Three Pillars
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="material" class="py-32 md:py-48 px-6 md:px-12">
+  <div class="max-w-6xl mx-auto">
+    <p class="micro-label mb-16 md:mb-24 text-center">COMPOSITION</p>
+
+    <div class="space-y-20 md:space-y-28">
+      <!-- Stripe 1 -->
+      <div class="material-stripe reveal">
+        <div style="border-top: 1px solid var(--chrome);">
+          <div class="stripe-line h-px mt-px" style="background: var(--charcoal); margin-top: -1px;"></div>
+        </div>
+        <div class="flex flex-col md:flex-row items-baseline gap-6 md:gap-14 pt-10">
+          <span class="font-display text-7xl md:text-9xl leading-none" style="color: var(--charcoal);">70%</span>
+          <div class="flex-1">
+            <p class="micro-label mb-3">MERINO WOOL</p>
+            <p class="font-body-serif text-lg md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+              Temperature regulating, odour‑resistant, 72‑hour wear without washing.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stripe 2 -->
+      <div class="material-stripe reveal">
+        <div style="border-top: 1px solid var(--chrome);">
+          <div class="stripe-line h-px" style="background: var(--charcoal); margin-top: -1px;"></div>
+        </div>
+        <div class="flex flex-col md:flex-row items-baseline gap-6 md:gap-14 pt-10">
+          <span class="font-display text-7xl md:text-9xl leading-none" style="color: var(--charcoal);">20%</span>
+          <div class="flex-1">
+            <p class="micro-label mb-3">NYLON</p>
+            <p class="font-body-serif text-lg md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+              Structural memory that returns to shape after 10,000 steps.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stripe 3 -->
+      <div class="material-stripe reveal">
+        <div style="border-top: 1px solid var(--chrome);">
+          <div class="stripe-line h-px" style="background: var(--charcoal); margin-top: -1px;"></div>
+        </div>
+        <div class="flex flex-col md:flex-row items-baseline gap-6 md:gap-14 pt-10">
+          <span class="font-display text-7xl md:text-9xl leading-none" style="color: var(--charcoal);">10%</span>
+          <div class="flex-1">
+            <p class="micro-label mb-3">ELASTANE</p>
+            <p class="font-body-serif text-lg md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+              Calibrated tension at the cuff. No slip. No constriction.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     6. 36 MONTHS OF SILENCE — Cost Comparison
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="cost" class="py-32 md:py-48 px-6 md:px-12">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start gap-16 md:gap-12">
+    <!-- Left: massive $22 -->
+    <div class="md:w-3/5 reveal">
+      <!-- Small product thumbnail (Real Image) -->
+      <div class="w-24 h-24 chrome-border p-1.5 mb-12 inline-block" style="background: var(--alabaster);">
+        <img src="https://images.unsplash.com/photo-1586350977771-2a1dfa19a7be?auto=format&fit=crop&w=200&q=80" 
+             class="w-full h-full object-cover" 
+             style="filter: contrast(1.05) saturate(0.85);" 
+             alt="The Final Sock Thumbnail" />
+      </div>
+      <p class="font-display leading-[0.82] tracking-tighter" style="color: var(--charcoal); font-size: clamp(96px, 18vw, 240px);">
+        $22<br><em class="italic font-light" style="font-size: 0.4em;">once.</em>
+      </p>
+      <p class="font-body-serif text-xl md:text-2xl mt-8" style="color: var(--stone);">
+        $54 over 36 months with cotton.
+      </p>
+    </div>
+
+    <!-- Right: count-up list -->
+    <div class="md:w-2/5 md:pl-12 pt-6 md:pt-32" style="border-left: 1px solid var(--chrome);">
+      <p class="micro-label mb-10">RECLAIMED OVER 36 MONTHS</p>
+      <ul class="space-y-10 md:space-y-12">
+        <li class="flex items-baseline gap-6" style="opacity: 0.78;">
+          <span class="font-display text-6xl md:text-7xl counter-num" data-target="14" style="color: var(--charcoal);">0</span>
+          <span class="font-body-serif text-base md:text-lg" style="color: var(--stone);">fewer laundry cycles</span>
+        </li>
+        <li class="flex items-baseline gap-6" style="opacity: 0.78;">
+          <span class="font-display text-6xl md:text-7xl counter-num" data-target="5" style="color: var(--charcoal);">0</span>
+          <span class="font-body-serif text-base md:text-lg" style="color: var(--stone);">fewer replacement purchases</span>
+        </li>
+        <li class="flex items-baseline gap-6" style="opacity: 0.78;">
+          <span class="font-display text-6xl md:text-7xl counter-num" data-target="0" style="color: var(--charcoal);">0</span>
+          <span class="font-body-serif text-base md:text-lg" style="color: var(--stone);">decisions about colour</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     7. THE TRUST PROMISE — Triptych
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="trust" class="py-32 md:py-48 px-6 md:px-12" style="border-top: 1px solid var(--chrome); border-bottom: 1px solid var(--chrome);">
+  <div class="max-w-7xl mx-auto">
+    <p class="micro-label mb-16 md:mb-20 text-center">OUR THREE OBLIGATIONS</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3" style="background: var(--chrome);">
+      <div class="trust-col p-10 md:p-14 reveal" style="background: var(--alabaster); border-right: 1px solid var(--chrome);">
+        <span class="font-display text-5xl md:text-6xl block mb-10" style="color: var(--charcoal); opacity: 0.18;">01</span>
+        <p class="font-body-serif text-xl md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+          It will not slip below the calf during 10,000 steps.
+        </p>
+      </div>
+      <div class="trust-col p-10 md:p-14 reveal" style="background: var(--alabaster); border-right: 1px solid var(--chrome);">
+        <span class="font-display text-5xl md:text-6xl block mb-10" style="color: var(--charcoal); opacity: 0.18;">02</span>
+        <p class="font-body-serif text-xl md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+          It will not develop a hole at the heel or toe within 18 months of weekly wear.
+        </p>
+      </div>
+      <div class="trust-col p-10 md:p-14 reveal" style="background: var(--alabaster);">
+        <span class="font-display text-5xl md:text-6xl block mb-10" style="color: var(--charcoal); opacity: 0.18;">03</span>
+        <p class="font-body-serif text-xl md:text-2xl leading-[1.5]" style="color: var(--charcoal);">
+          It will not retain odour after 48 hours of continuous use.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     8. THE QUARTER'S YIELD — Finite Allocation
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="quarter" class="relative min-h-screen flex items-center overflow-hidden">
+  <img src="https://picsum.photos/seed/single-knitting-cell-warm-light-wool-ribbon/1920/1080.jpg"
+       class="absolute inset-0 w-full h-full object-cover"
+       alt="Single knitting cell in low warm light" />
+  <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.55) 100%);"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto w-full px-6 md:px-12 py-32">
+    <p class="micro-label mb-8" style="color: rgba(249,249,246,0.65);">CURRENT RUN · Q4</p>
+
+    <div>
+      <p class="font-display leading-[0.82] tracking-tighter counter-num"
+         id="inventory-counter"
+         style="color: var(--alabaster); font-size: clamp(96px, 20vw, 280px); display: inline-block; transform-origin: left center;">
+        1,847
+      </p>
+      <p class="font-body-serif text-base mt-4" style="color: rgba(249,249,246,0.7); letter-spacing: 0.2em; text-transform: uppercase; font-size: 13px;">
+        PAIRS REMAINING
+      </p>
+    </div>
+
+    <p class="font-body-serif text-lg md:text-xl mt-12 max-w-xl" style="color: rgba(249,249,246,0.82);">
+      When this number reaches zero, the store closes until the next run.
+    </p>
+
+    <button id="preview-closing" class="mt-12 micro-label spring inline-flex items-center gap-3 px-6 py-3"
+            style="color: var(--alabaster); border: 1px solid rgba(249,249,246,0.4);">
+      <span>PREVIEW THE CLOSING STATE</span>
+      <span>→</span>
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     9. ZERO FRICTION — 15-Second Pledge
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="checkout" class="py-32 md:py-48 px-6">
+  <div class="max-w-2xl mx-auto">
+    <!-- Polybag image -->
+    <div class="chrome-border p-2 mb-16 max-w-sm mx-auto" style="background: var(--alabaster);">
+      <img src="https://picsum.photos/seed/vacuum-sealed-polybag-concrete-floor-overhead-bulb/600/400.jpg"
+           class="w-full h-48 object-cover"
+           alt="Unbranded vacuum-sealed polybag on concrete floor" />
+    </div>
+
+    <p class="micro-label mb-8 text-center">CHECKOUT</p>
+
+    <h3 class="font-display text-3xl md:text-5xl text-center leading-[1.15] tracking-tight reveal">
+      Checkout in under 15 seconds.<br>
+      <em class="italic font-light" style="color: var(--stone);">Or longer, if you want to think about colours. (There are none.)</em>
+    </h3>
+
+    <div class="mt-14 text-center">
+      <button id="checkout-cta" class="cta-button px-10 md:px-14 py-5 md:py-6 inline-flex items-center gap-4 font-medium"
+              style="background: var(--charcoal); color: var(--alabaster); letter-spacing: 0.22em; font-size: 13px;">
+        <span>SECURE THE PAIR</span>
+        <span>→</span>
+      </button>
+      <p class="micro-label mt-6">SHIPS IN VACUUM-SEALED POLYBAG · NO BRANDING</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     10. THE ETERNAL SUBSCRIPTION — Replenishment
+     ═══════════════════════════════════════════════════════════════ -->
+<section id="replenish" class="py-32 md:py-48 overflow-hidden" style="border-top: 1px solid var(--chrome); border-bottom: 1px solid var(--chrome);">
+  <div class="max-w-7xl mx-auto px-6 md:px-12">
+    <p class="micro-label mb-14 md:mb-20">REPLENISH</p>
+
+    <div class="replenish-scroll flex gap-6 md:gap-8 overflow-x-auto pb-6 md:pb-8 -mx-6 px-6 md:mx-0 md:px-0 snap-x snap-mandatory">
+      <!-- Card 1 -->
+      <div class="replenish-card chrome-border p-8 md:p-10 flex-shrink-0 w-[85vw] md:w-[31%] snap-center"
+           data-interval="6" style="background: var(--alabaster);">
+        <div class="w-16 h-16 chrome-border p-2 mb-8" style="background: var(--alabaster);">
+          <svg viewBox="0 0 100 100" class="w-full h-full"><rect x="20" y="30" width="60" height="50" fill="#9a9a92" rx="2"/><line x1="20" y1="42" x2="80" y2="42" stroke="#5a5a52" stroke-width="0.6"/><line x1="50" y1="30" x2="50" y2="80" stroke="#5a5a52" stroke-width="0.4" opacity="0.5"/></svg>
+        </div>
+        <p class="micro-label mb-4">HEAVY DAILY WEAR</p>
+        <p class="font-display text-4xl md:text-5xl leading-tight" style="color: var(--charcoal);">Every 6 months</p>
+        <p class="font-body-serif text-base mt-6" style="color: var(--stone);">For continuous rotation.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="replenish-card chrome-border p-8 md:p-10 flex-shrink-0 w-[85vw] md:w-[31%] snap-center selected"
+           data-interval="12" style="background: var(--alabaster);">
+        <div class="w-16 h-16 chrome-border p-2 mb-8" style="background: var(--alabaster);">
+          <svg viewBox="0 0 100 100" class="w-full h-full"><rect x="20" y="30" width="60" height="50" fill="#9a9a92" rx="2"/><line x1="20" y1="42" x2="80" y2="42" stroke="#5a5a52" stroke-width="0.6"/><line x1="50" y1="30" x2="50" y2="80" stroke="#5a5a52" stroke-width="0.4" opacity="0.5"/></svg>
+        </div>
+        <p class="micro-label mb-4">STANDARD CYCLE</p>
+        <p class="font-display text-4xl md:text-5xl leading-tight" style="color: var(--charcoal);">Every 12 months</p>
+        <p class="font-body-serif text-base mt-6" style="color: var(--stone);">Default rotation.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="replenish-card chrome-border p-8 md:p-10 flex-shrink-0 w-[85vw] md:w-[31%] snap-center"
+           data-interval="18" style="background: var(--alabaster);">
+        <div class="w-16 h-16 chrome-border p-2 mb-8" style="background: var(--alabaster);">
+          <svg viewBox="0 0 100 100" class="w-full h-full"><rect x="20" y="30" width="60" height="50" fill="#9a9a92" rx="2"/><line x1="20" y1="42" x2="80" y2="42" stroke="#5a5a52" stroke-width="0.6"/><line x1="50" y1="30" x2="50" y2="80" stroke="#5a5a52" stroke-width="0.4" opacity="0.5"/></svg>
+        </div>
+        <p class="micro-label mb-4">EXTENDED ROTATION</p>
+        <p class="font-display text-4xl md:text-5xl leading-tight" style="color: var(--charcoal);">Every 18 months</p>
+        <p class="font-body-serif text-base mt-6" style="color: var(--stone);">For light use.</p>
+      </div>
+    </div>
+
+    <p class="font-body-serif text-lg md:text-xl mt-14 md:mt-20 text-center max-w-2xl mx-auto" style="color: var(--stone);">
+      No new colours. No new patterns. Just the same sock, when yours has lived its life.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     11. THE CLOSING DOOR — State Transition (overlay)
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="closing-door" class="closing-door fixed inset-0 z-[100]" style="background: #0a0a0a;">
+  <div class="absolute inset-0">
+    <img src="https://picsum.photos/seed/dark-still-knitting-machine-dimmed-thread-hanging/1920/1080.jpg"
+         class="w-full h-full object-cover opacity-25"
+         alt="Still knitting machine in dimmed light" />
+    <div class="absolute inset-0" style="background: rgba(0,0,0,0.65);"></div>
+  </div>
+
+  <div class="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
+    <p class="micro-label mb-8" style="color: rgba(249,249,246,0.45);">STATE · CLOSED</p>
+    <h2 class="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.95] mb-10" style="color: var(--alabaster);">
+      This run is<br><em class="italic font-light">complete.</em>
+    </h2>
+    <p class="font-body-serif text-lg md:text-xl mb-14 max-w-md" style="color: rgba(249,249,246,0.7);">
+      The store will reopen when the next yield is ready. Join the waitlist.
+    </p>
+
+    <form id="waitlist-form" class="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+      <input type="email" placeholder="your@email.com" required
+             class="flex-1 bg-transparent px-4 py-3 font-body-serif text-base"
+             style="border: 1px solid rgba(249,249,246,0.3); color: var(--alabaster);" />
+      <button type="submit" class="spring px-6 py-3 font-medium"
+              style="border: 1px solid var(--alabaster); color: var(--alabaster); letter-spacing: 0.22em; font-size: 12px;">
+        AWAIT THE NEXT RUN
+      </button>
+    </form>
+
+    <button id="close-closing-door" class="micro-label mt-16 spring" style="color: rgba(249,249,246,0.45);">
+      ← RETURN TO LIVE PAGE
+    </button>
+  </div>
+</div>
+
+<!-- Checkout overlay -->
+<div id="checkout-overlay" class="checkout-overlay fixed inset-0 z-[90] flex items-center justify-center px-6" style="background: rgba(26,26,26,0.94); backdrop-filter: blur(8px);">
+  <div class="max-w-md w-full p-8 md:p-10 chrome-border relative" style="background: var(--alabaster);">
+    <button id="close-checkout" class="absolute top-4 right-4 micro-label spring" style="color: var(--stone);">CLOSE ×</button>
+
+    <div class="flex justify-between items-center mb-10">
+      <p class="micro-label">CHECKOUT</p>
+      <p class="font-display text-3xl counter-num" id="checkout-timer" style="color: var(--charcoal);">15.0s</p>
+    </div>
+
+    <div class="space-y-5">
+      <div>
+        <p class="micro-label mb-1">EMAIL</p>
+        <p class="font-body-serif text-base" style="color: var(--charcoal);">customer@finalsock.com</p>
+      </div>
+      <div>
+        <p class="micro-label mb-1">ITEM</p>
+        <p class="font-body-serif text-base" style="color: var(--charcoal);">1× The Final Sock — Heather Grey — M</p>
+      </div>
+      <div>
+        <p class="micro-label mb-1">CARD</p>
+        <p class="font-body-serif text-base" style="color: var(--charcoal);">•••• •••• •••• 4242 — Exp 04/27</p>
+      </div>
+      <div>
+        <p class="micro-label mb-1">REPLENISH CYCLE</p>
+        <p class="font-body-serif text-base" style="color: var(--charcoal);">Every 12 months (standard)</p>
+      </div>
+    </div>
+
+    <div class="mt-8 pt-6 flex justify-between items-center" style="border-top: 1px solid var(--chrome);">
+      <p class="font-body-serif text-base" style="color: var(--charcoal);">Total</p>
+      <p class="font-display text-4xl" style="color: var(--charcoal);">$22.00</p>
+    </div>
+
+    <div id="checkout-status" class="mt-8 pt-6 hidden" style="border-top: 1px solid var(--chrome);">
+      <p class="font-display text-3xl text-center" style="color: var(--charcoal);">Order placed.</p>
+      <p class="micro-label mt-3 text-center">SHIPS IN 24 HOURS · VACUUM-SEALED</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     12. FOOTER — The Monolith Statement
+     ═══════════════════════════════════════════════════════════════ -->
+<footer class="py-10 px-6 md:px-12" style="border-top: 1px solid var(--chrome);">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <p class="micro-label">THE FINAL SOCK · EDITION 01</p>
+    <p class="micro-label text-center">A SINGLE SKU. PERFECTED, NOT MULTIPLIED.</p>
+    <p class="micro-label">© MMXXIV</p>
+  </div>
+</footer>
+
+<script>
+  /* ─── 1. Hero sock fade-out ─── */
+  document.addEventListener('DOMContentLoaded', () => {
+    const socks = document.querySelectorAll('.hero-sock');
+    socks.forEach(sock => {
+      const delay = parseInt(sock.dataset.delay);
+      setTimeout(() => sock.classList.add('faded'), delay);
+    });
+  });
+
+  /* ─── 2. Scroll reveal ─── */
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+  reveals.forEach(el => revealObserver.observe(el));
+
+  /* ─── 3. Material stripe line animation ─── */
+  const stripes = document.querySelectorAll('.material-stripe');
+  const stripeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const line = entry.target.querySelector('.stripe-line');
+        if (line) setTimeout(() => line.classList.add('in'), 200);
+        stripeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  stripes.forEach(el => stripeObserver.observe(el));
+
+  /* ─── 4. Trust column grain intensify ─── */
+  const trustCols = document.querySelectorAll('.trust-col');
+  const trustObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        trustObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  trustCols.forEach(el => trustObserver.observe(el));
+
+  /* ─── 5. Floating sock parallax (mouse + tilt) ─── */
+  const parallaxContainer = document.querySelector('.parallax-container');
+  const parallaxEl = document.querySelector('.parallax-3d');
+  if (parallaxContainer && parallaxEl) {
+    const isTouch = matchMedia('(hover: none)').matches;
+
+    if (!isTouch) {
+      parallaxContainer.addEventListener('mousemove', (e) => {
+        const rect = parallaxContainer.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        parallaxEl.style.transform = `translate3d(${x * 32}px, ${y * 32}px, 0) rotateY(${x * 9}deg) rotateX(${-y * 9}deg)`;
+      });
+      parallaxContainer.addEventListener('mouseleave', () => {
+        parallaxEl.style.transform = 'translate3d(0,0,0) rotateY(0) rotateX(0)';
+      });
+    }
+
+    // Device tilt for mobile
+    if (window.DeviceOrientationEvent && isTouch) {
+      window.addEventListener('deviceorientation', (e) => {
+        if (e.beta === null || e.gamma === null) return;
+        const x = Math.max(-1, Math.min(1, e.gamma / 45));
+        const y = Math.max(-1, Math.min(1, (e.beta - 45) / 45));
+        parallaxEl.style.transform = `translate3d(${x * 20}px, ${y * 20}px, 0) rotateY(${x * 7}deg) rotateX(${-y * 7}deg)`;
+      }, { passive: true });
+    }
+  }
+
+  /* ─── 6. Magnifier (drag + pinch) ─── */
+  const magContainer = document.querySelector('.magnifier-container');
+  const magLens = document.getElementById('magnifier-lens');
+  const magImage = document.getElementById('seam-image');
+  if (magContainer && magLens && magImage) {
+    const ZOOM = 2.6;
+    const LENS_SIZE = 180;
+
+    const updateLens = (clientX, clientY) => {
+      const containerRect = magContainer.getBoundingClientRect();
+      const x = clientX - containerRect.left;
+      const y = clientY - containerRect.top;
+      magLens.style.left = `${x - LENS_SIZE / 2}px`;
+      magLens.style.top = `${y - LENS_SIZE / 2}px`;
+
+      const imgRect = magImage.getBoundingClientRect();
+      const cursorX = clientX - imgRect.left;
+      const cursorY = clientY - imgRect.top;
+
+      const bgX = -(cursorX * ZOOM - LENS_SIZE / 2);
+      const bgY = -(cursorY * ZOOM - LENS_SIZE / 2);
+
+      magLens.style.backgroundImage = `url(${magImage.src})`;
+      magLens.style.backgroundSize = `${imgRect.width * ZOOM}px ${imgRect.height * ZOOM}px`;
+      magLens.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    };
+
+    magContainer.addEventListener('mousemove', (e) => updateLens(e.clientX, e.clientY));
+
+    // Touch
+    magContainer.addEventListener('touchstart', (e) => {
+      magContainer.classList.add('dragging');
+      const t = e.touches[0];
+      updateLens(t.clientX, t.clientY);
+    }, { passive: true });
+
+    magContainer.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      updateLens(t.clientX, t.clientY);
+    }, { passive: false });
+
+    magContainer.addEventListener('touchend', () => {
+      magContainer.classList.remove('dragging');
+    });
+  }
+
+  /* ─── 7. Count-up animation ─── */
+  const counters = document.querySelectorAll('.counter-num[data-target]');
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseInt(el.dataset.target);
+        if (target === 0) {
+          el.textContent = '0';
+          counterObserver.unobserve(el);
+          return;
+        }
+        const duration = 1500;
+        const start = performance.now();
+        const animate = (now) => {
+          const elapsed = now - start;
+          const t = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+          const val = Math.round(target * eased);
+          el.textContent = val;
+          if (t < 1) requestAnimationFrame(animate);
+          else el.textContent = target;
+        };
+        requestAnimationFrame(animate);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  counters.forEach(el => counterObserver.observe(el));
+
+  /* ─── 8. Inventory counter pulse + decrement ─── */
+  const invCounter = document.getElementById('inventory-counter');
+  if (invCounter) {
+    let count = 1847;
+    // Subtle pulse every 5s
+    setInterval(() => {
+      invCounter.classList.add('pulse');
+      setTimeout(() => invCounter.classList.remove('pulse'), 800);
+    }, 5000);
+
+    // Random decrement every 11-16s (simulates live sales)
+    const scheduleDecrement = () => {
+      const wait = 11000 + Math.random() * 5000;
+      setTimeout(() => {
+        const dec = Math.floor(Math.random() * 3) + 1;
+        count = Math.max(0, count - dec);
+        invCounter.textContent = count.toLocaleString();
+        invCounter.classList.add('pulse');
+        setTimeout(() => invCounter.classList.remove('pulse'), 800);
+        if (count > 0) scheduleDecrement();
+      }, wait);
+    };
+    scheduleDecrement();
+  }
+
+  /* ─── 9. 15-second checkout demo ─── */
+  const checkoutCta = document.getElementById('checkout-cta');
+  const checkoutOverlay = document.getElementById('checkout-overlay');
+  const checkoutTimer = document.getElementById('checkout-timer');
+  const checkoutStatus = document.getElementById('checkout-status');
+  const closeCheckout = document.getElementById('close-checkout');
+  let checkoutInterval;
+
+  const runCheckout = () => {
+    checkoutOverlay.classList.add('active');
+    checkoutStatus.classList.add('hidden');
+    checkoutTimer.style.color = 'var(--charcoal)';
+    let time = 15.0;
+    checkoutTimer.textContent = `${time.toFixed(1)}s`;
+
+    clearInterval(checkoutInterval);
+    checkoutInterval = setInterval(() => {
+      time -= 0.1;
+      if (time <= 0) {
+        time = 0;
+        clearInterval(checkoutInterval);
+        checkoutTimer.textContent = `0.0s`;
+        checkoutStatus.classList.remove('hidden');
+        checkoutTimer.style.color = 'var(--stone)';
+      } else {
+        checkoutTimer.textContent = `${time.toFixed(1)}s`;
+      }
+    }, 100);
+  };
+
+  if (checkoutCta) checkoutCta.addEventListener('click', runCheckout);
+  if (closeCheckout) closeCheckout.addEventListener('click', () => {
+    checkoutOverlay.classList.remove('active');
+    clearInterval(checkoutInterval);
+  });
+  if (checkoutOverlay) checkoutOverlay.addEventListener('click', (e) => {
+    if (e.target === checkoutOverlay) {
+      checkoutOverlay.classList.remove('active');
+      clearInterval(checkoutInterval);
+    }
+  });
+
+  /* ─── 10. Replenishment card selection ─── */
+  const replenishCards = document.querySelectorAll('.replenish-card');
+  replenishCards.forEach(card => {
+    card.addEventListener('click', () => {
+      replenishCards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  /* ─── 11. Closing door takeover ─── */
+  const previewBtn = document.getElementById('preview-closing');
+  const closingDoor = document.getElementById('closing-door');
+  const closeClosing = document.getElementById('close-closing-door');
+
+  if (previewBtn) previewBtn.addEventListener('click', () => {
+    closingDoor.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+  if (closeClosing) closeClosing.addEventListener('click', () => {
+    closingDoor.classList.remove('active');
+    document.body.style.overflow = '';
+  });
+
+  // Waitlist form
+  const waitlistForm = document.getElementById('waitlist-form');
+  if (waitlistForm) {
+    waitlistForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = waitlistForm.querySelector('button[type="submit"]');
+      btn.textContent = 'YOU ARE ON THE LIST';
+      btn.style.background = 'var(--alabaster)';
+      btn.style.color = 'var(--charcoal)';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+    });
+  }
+
+  /* ─── Escape key closes overlays ─── */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (closingDoor && closingDoor.classList.contains('active')) {
+        closingDoor.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      if (checkoutOverlay && checkoutOverlay.classList.contains('active')) {
+        checkoutOverlay.classList.remove('active');
+        clearInterval(checkoutInterval);
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
